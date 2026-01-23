@@ -1,0 +1,145 @@
+.friendsList {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: var(--surface-dark);
+  border-radius: 8px;
+  color: var(--text-secondary);
+}
+
+.searchBox input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.searchBox input::placeholder {
+  color: var(--text-muted);
+}
+
+.header {
+  padding: 0 4px;
+}
+
+.header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.friendItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 150ms ease;
+}
+
+.friendItem:hover {
+  background-color: var(--surface-dark);
+}
+
+.friendInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--surface-dark);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-accent), #00CCB3);
+  color: var(--bg-dark);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.onlineIndicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #1DB954;
+  border: 2px solid var(--bg-dark);
+}
+
+.friendDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.friendName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.friendStatus {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.friendActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  transition: all 150ms ease;
+}
+
+.actionButton:hover {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+}

@@ -1,0 +1,118 @@
+.socialPage {
+  display: flex;
+  height: 100%;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 150ms ease;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-dark);
+}
+
+.tab.active {
+  color: var(--primary-accent);
+  background-color: rgba(0, 255, 217, 0.1);
+}
+
+.addFriendButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: var(--primary-accent);
+  color: var(--bg-dark);
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: auto;
+  transition: all 150ms ease;
+}
+
+.addFriendButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 255, 217, 0.3);
+}
+
+.chatContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+  .tabs {
+    gap: 12px;
+  }
+
+  .tab {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .addFriendButton {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .tabs {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .addFriendButton {
+    padding: 6px 10px;
+    font-size: 12px;
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabs {
+    gap: 4px;
+  }
+
+  .tab {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}

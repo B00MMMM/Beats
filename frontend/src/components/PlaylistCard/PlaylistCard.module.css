@@ -1,0 +1,118 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 200ms ease;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.card:hover {
+  background-color: var(--surface-dark);
+  transform: translateY(-4px);
+}
+
+.imageContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--surface-dark);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.card:hover .playOverlay {
+  opacity: 1;
+}
+
+.playButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--primary-accent);
+  color: var(--bg-dark);
+  transition: all 200ms ease;
+}
+
+.playButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(0, 255, 217, 0.4);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artist {
+  font-size: 14px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .card {
+    padding: 12px;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+
+  .artist {
+    font-size: 12px;
+  }
+
+  .playButton {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 8px;
+  }
+
+  .title {
+    font-size: 13px;
+  }
+
+  .artist {
+    font-size: 11px;
+  }
+}

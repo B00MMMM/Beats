@@ -1,0 +1,147 @@
+.row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 80px 80px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  color: var(--text-secondary);
+}
+
+.row:hover {
+  background-color: var(--surface-dark);
+  color: var(--text-primary);
+}
+
+.row.playing {
+  color: var(--primary-accent);
+}
+
+.number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: inherit;
+}
+
+.waveform {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artist {
+  font-size: 14px;
+  color: inherit;
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.duration {
+  font-size: 14px;
+  color: inherit;
+  opacity: 0.7;
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  transition: all 150ms ease;
+}
+
+.row:hover .actionButton {
+  opacity: 1;
+}
+
+.actionButton:hover {
+  color: var(--primary-accent);
+}
+
+.liked {
+  color: #1DB954;
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+  .row {
+    grid-template-columns: 35px 1fr 1fr 70px 70px;
+    gap: 12px;
+    padding: 6px 12px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .row {
+    grid-template-columns: 30px 1fr 50px;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .artist {
+    display: none;
+  }
+
+  .duration {
+    display: none;
+  }
+
+  .actions {
+    gap: 4px;
+  }
+
+  .actionButton {
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .row {
+    grid-template-columns: 25px 1fr 40px;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .title {
+    font-size: 13px;
+  }
+
+  .number {
+    font-size: 12px;
+  }
+}

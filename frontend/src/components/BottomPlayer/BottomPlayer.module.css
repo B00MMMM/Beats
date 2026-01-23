@@ -1,0 +1,317 @@
+.bottomPlayer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: var(--right-panel-w);
+  height: 90px;
+  background-color: var(--bg-dark);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 200;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 30%;
+}
+
+.trackInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.albumArt {
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.trackDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trackTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.trackArtist {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  transition: all 150ms ease;
+}
+
+.iconButton:hover {
+  color: var(--text-primary);
+}
+
+.centerSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 600px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.controlButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  transition: all 150ms ease;
+}
+
+.controlButton:hover {
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+
+.playButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--text-primary);
+  color: var(--bg-dark);
+  transition: all 150ms ease;
+}
+
+.playButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.progressSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.time {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: center;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background-color: var(--surface-dark);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--text-primary);
+  border-radius: 2px;
+  transition: width 100ms ease;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 30%;
+  justify-content: flex-end;
+}
+
+.volumeControl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.volumeSlider {
+  width: 100px;
+  height: 4px;
+  background-color: var(--surface-dark);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--text-primary);
+  cursor: pointer;
+}
+
+.volumeSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--text-primary);
+  cursor: pointer;
+  border: none;
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+  .bottomPlayer {
+    padding: 0 12px;
+  }
+
+  .leftSection {
+    flex: 0 0 25%;
+  }
+
+  .rightSection {
+    flex: 0 0 25%;
+  }
+
+  .volumeSlider {
+    width: 80px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .bottomPlayer {
+    display: none; /* Hide full player on mobile, use mini player instead */
+  }
+
+  .leftSection {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .trackInfo {
+    gap: 8px;
+  }
+
+  .albumArt {
+    width: 48px;
+    height: 48px;
+  }
+
+  .trackTitle {
+    font-size: 13px;
+  }
+
+  .trackArtist {
+    font-size: 11px;
+  }
+
+  .iconButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .centerSection {
+    flex: 1;
+    max-width: none;
+  }
+
+  .controls {
+    gap: 12px;
+  }
+
+  .controlButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .playButton {
+    width: 36px;
+    height: 36px;
+  }
+
+  .progressSection {
+    gap: 8px;
+  }
+
+  .time {
+    font-size: 10px;
+    min-width: 35px;
+  }
+
+  .rightSection {
+    flex: 0 0 auto;
+    gap: 8px;
+  }
+
+  .volumeControl {
+    display: none;
+  }
+
+  .volumeSlider {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .bottomPlayer {
+    padding: 0 8px;
+  }
+
+  .trackDetails {
+    display: none;
+  }
+
+  .albumArt {
+    width: 40px;
+    height: 40px;
+  }
+
+  .controls {
+    gap: 8px;
+  }
+
+  .controlButton {
+    width: 24px;
+    height: 24px;
+  }
+
+  .playButton {
+    width: 32px;
+    height: 32px;
+  }
+
+  .progressSection {
+    gap: 4px;
+  }
+
+  .time {
+    font-size: 9px;
+    min-width: 30px;
+  }
+}

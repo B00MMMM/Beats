@@ -1,0 +1,10 @@
+.centeredLoaderContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  min-height: 300px;
+  grid-column: 1 / -1;
+  /* Span all columns if in grid */
+}

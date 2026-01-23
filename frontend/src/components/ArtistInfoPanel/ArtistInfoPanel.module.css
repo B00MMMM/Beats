@@ -1,0 +1,194 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0;
+  background-color: transparent;
+  flex: 1;
+  min-height: 0;
+}
+
+.albumArtContainer {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--surface-dark);
+}
+
+.albumArt {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.songTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.artistName {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.listeners {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.listenerCount {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.followButton {
+  padding: 6px 16px;
+  border-radius: 20px;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 150ms ease;
+}
+
+.followButton:hover {
+  border-color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.followButton.following {
+  background-color: var(--surface-dark);
+  border-color: var(--primary-accent);
+  color: var(--primary-accent);
+}
+
+.bio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bioTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bioText {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 24px;
+  background-color: var(--primary-accent);
+  color: var(--bg-dark);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 150ms ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.addButton:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 255, 217, 0.3);
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+  .panel {
+    gap: 20px;
+  }
+
+  .songTitle {
+    font-size: 20px;
+  }
+
+  .artistName {
+    font-size: 14px;
+  }
+
+  .bioTitle {
+    font-size: 14px;
+  }
+
+  .bioText {
+    font-size: 13px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .panel {
+    gap: 16px;
+  }
+
+  .songTitle {
+    font-size: 18px;
+  }
+
+  .artistName {
+    font-size: 13px;
+  }
+
+  .listeners {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .listenerCount {
+    font-size: 12px;
+  }
+
+  .followButton {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .bioTitle {
+    font-size: 13px;
+  }
+
+  .bioText {
+    font-size: 12px;
+  }
+
+  .addButton {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .songTitle {
+    font-size: 16px;
+  }
+
+  .addButton {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}

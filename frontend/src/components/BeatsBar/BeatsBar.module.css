@@ -1,0 +1,7 @@
+.beatsBar {
+    width: 100%;
+    height: 60px;
+    background: transparent;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
