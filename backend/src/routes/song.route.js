@@ -1,12 +1,10 @@
 import { Router } from "express";
-import { protectRoute, requireAdmin } from "../middleware/auth.middleware.js";
-import { getAllSongs, getFeaturedSongs, getMadeForYouSongs, getTrendingSongs } from "../controller/song.controller.js";
+import { getTrendingSongs, searchSongs, streamSong } from "../controller/song.controller.js";
 
 const router = Router();
 
-router.get("/", protectRoute, requireAdmin, getAllSongs);
-router.get("/featured", getFeaturedSongs);
-router.get("/made-for-you", getMadeForYouSongs);
 router.get("/trending", getTrendingSongs);
+router.get("/search", searchSongs);
+router.get("/stream/:deezerId", streamSong);
 
 export default router;

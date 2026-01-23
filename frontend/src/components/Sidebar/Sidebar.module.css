@@ -1,0 +1,256 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 240px;
+  height: 100vh;
+  background-color: var(--bg-dark);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-accent);
+  margin-bottom: 32px;
+  padding: 0 8px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 150ms ease;
+}
+
+.menuItem:hover {
+  background-color: var(--surface-dark);
+  color: var(--text-primary);
+}
+
+.menuItem.active {
+  color: var(--primary-accent);
+  background-color: rgba(0, 255, 217, 0.1);
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 16px 0;
+}
+
+.profileMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.library {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.libraryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+
+.libraryHeader h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.libraryActions {
+  display: flex;
+  gap: 8px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  transition: all 150ms ease;
+}
+
+.iconButton:hover {
+  background-color: var(--surface-dark);
+  color: var(--text-primary);
+}
+
+.playlistMenu {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.playlistMenu button {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
+  transition: all 150ms ease;
+}
+
+.playlistMenu button:hover {
+  color: var(--text-primary);
+}
+
+.playlistMenu button:first-child {
+  color: var(--text-primary);
+  border-bottom-color: var(--primary-accent);
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--surface-dark);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.searchBox input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.searchBox input::placeholder {
+  color: var(--text-muted);
+}
+
+.playlistList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.playlistItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-align: left;
+  transition: all 150ms ease;
+}
+
+.playlistItem:hover {
+  background-color: var(--surface-dark);
+}
+
+.playlistIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface-dark);
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.playlistInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.playlistName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.playlistMeta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+    padding: 20px 12px;
+  }
+
+  .logo {
+    font-size: 20px;
+    margin-bottom: 24px;
+  }
+
+  .menuItem {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 300;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .logo {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 100%;
+  }
+
+  .logo {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .menuItem {
+    padding: 12px 16px;
+  }
+}
