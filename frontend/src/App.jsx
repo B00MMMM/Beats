@@ -9,6 +9,7 @@ import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
 import SearchPage from './pages/SearchPage'
 import SongPage from './pages/SongPage'
+import FavoritesPage from './pages/FavoritesPage'
 
 function App() {
   return (
@@ -25,7 +26,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchPage />} />
-            <Route path="/favorites" element={<HomePage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/playlist/:id" element={<PlaylistPage />} />
             <Route path="/music/:id" element={<MusicDetailsPage />} />
             <Route path="/friends" element={<SocialPage />} />

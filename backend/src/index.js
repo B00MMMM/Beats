@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-import { clerkMiddleware } from "@clerk/express";   
+import { clerkMiddleware } from "@clerk/express";
 import fileUpload from "express-fileupload";
 import path from "path";
 import cors from "cors";
@@ -9,8 +9,9 @@ import { connectDB } from "./lib/db.js";
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
 import songRoutes from "./routes/song.route.js";
+import playlistRoutes from "./routes/playlist.route.js";
 
-
+// ... (deps)
 
 // Load environment variables from .env file
 
@@ -32,22 +33,23 @@ app.use(
         useTempFiles: true,
         tempFileDir: path.join(__dirname, "tmp"),
         createParentPath: true,
-        limits:{
-            fileSize:10* 1024 * 1024, //10MB maximum file size
-        } 
+        limits: {
+            fileSize: 10 * 1024 * 1024, //10MB maximum file size
+        }
     })
 );
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/songs", songRoutes);
+app.use("/api/playlists", playlistRoutes);
 
 //error handler
 app.use((err, req, res, next) => {
     res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message });
 });
 
-app.listen(PORT, () =>{
+app.listen(PORT, () => {
     console.log("Sever is running on port " + PORT);
     connectDB();
 })

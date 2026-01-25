@@ -1,6 +1,7 @@
 .row {
   display: grid;
-  grid-template-columns: 40px 1fr 1fr 80px 80px;
+  /* # | Title(Img+Text) | Artist | Date | Duration | Actions */
+  grid-template-columns: 40px 4fr 3fr 2fr 60px 40px;
   align-items: center;
   gap: 16px;
   padding: 8px 16px;
@@ -11,12 +12,13 @@
 }
 
 .row:hover {
-  background-color: var(--surface-dark);
+  background-color: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
 }
 
 .row.playing {
   color: var(--primary-accent);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .number {
@@ -32,21 +34,50 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
 }
 
+.titleColumn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.rowCover {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.titleInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  color: inherit;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mobileArtist {
+  display: none;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .artist {
@@ -56,6 +87,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dateAdded {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .duration {
@@ -76,8 +112,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
   opacity: 0;
   transition: all 150ms ease;
 }
@@ -87,17 +127,20 @@
 }
 
 .actionButton:hover {
-  color: var(--primary-accent);
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
 }
 
 .liked {
   color: #1DB954;
+  opacity: 1;
 }
 
 /* Tablet Responsive */
 @media (max-width: 1024px) {
   .row {
-    grid-template-columns: 35px 1fr 1fr 70px 70px;
+    grid-template-columns: 35px 4fr 2fr 1fr 50px 40px;
     gap: 12px;
     padding: 6px 12px;
   }
@@ -106,17 +149,31 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .row {
-    grid-template-columns: 30px 1fr 50px;
+    grid-template-columns: 30px 1fr 40px 40px;
+    /* # | Title | Duration | Actions */
     gap: 8px;
     padding: 8px 12px;
+  }
+
+  .rowCover {
+    width: 32px;
+    height: 32px;
   }
 
   .artist {
     display: none;
   }
 
-  .duration {
+  .dateAdded {
     display: none;
+  }
+
+  .mobileArtist {
+    display: block;
+  }
+
+  .duration {
+    font-size: 12px;
   }
 
   .actions {
@@ -125,23 +182,12 @@
 
   .actionButton {
     opacity: 1;
-    width: 20px;
-    height: 20px;
   }
 }
 
 @media (max-width: 480px) {
   .row {
-    grid-template-columns: 25px 1fr 40px;
     gap: 6px;
     padding: 6px 8px;
-  }
-
-  .title {
-    font-size: 13px;
-  }
-
-  .number {
-    font-size: 12px;
   }
 }

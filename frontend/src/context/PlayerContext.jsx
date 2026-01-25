@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import axios from '../api/axios';
 
 const PlayerContext = createContext();
 
@@ -14,6 +16,15 @@ export const PlayerProvider = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef(null);
 
+  const { getToken, userId } = useAuth();
+
+  // Queue & Playlist State
+  const [queue, setQueue] = useState([]);
+  const [originalQueue, setOriginalQueue] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [isShuffled, setIsShuffled] = useState(false);
+  const [likedSongs, setLikedSongs] = useState(new Set());
+
   useEffect(() => {
     if (currentTrack) {
       localStorage.setItem('lastPlayed', JSON.stringify(currentTrack));
@@ -23,8 +34,122 @@ export const PlayerProvider = ({ children }) => {
           audioRef.current.play();
         }
       }
+
+      // Record History
+      const recordHistory = async () => {
+        try {
+          const token = await getToken();
+          if (token) {
+            await axios.post('/users/history',
+              { songData: currentTrack },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+          }
+        } catch (error) {
+          console.error("Error recording history:", error);
+        }
+      };
+
+      if (userId) {
+        recordHistory();
+      }
+
     }
   }, [currentTrack?.deezerId]);
+
+  // Enrich track data if sparse (e.g. from Liked Songs)
+  useEffect(() => {
+    const enrichTrackData = async () => {
+      if (currentTrack?.deezerId && (
+        typeof currentTrack.artist === 'string' ||
+        !currentTrack.album ||
+        currentTrack.rank === undefined ||
+        currentTrack.explicit_lyrics === undefined ||
+        !currentTrack.album.release_date
+      )) {
+        try {
+          // Use the proxy endpoint directly
+          const response = await axios.get(`http://localhost:5000/api/songs/${currentTrack.deezerId}`);
+          const fullTrack = response.data;
+
+          setCurrentTrack(prev => ({
+            ...prev,
+            ...fullTrack,
+            deezerId: prev.deezerId // Ensure ID consistency
+          }));
+        } catch (error) {
+          console.error("Error enriching track data:", error);
+        }
+      }
+    };
+
+    enrichTrackData();
+  }, [currentTrack]);
+
+  const fetchLikedSongs = async () => {
+    if (!userId) return;
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const res = await axios.get('/users/favorites', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Assuming favorites return an array of objects with deezerId
+      const ids = new Set(res.data.map(song => String(song.deezerId)));
+      setLikedSongs(ids);
+    } catch (error) {
+      console.error("Error fetching liked songs:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      fetchLikedSongs();
+    }
+  }, [userId]);
+
+  const toggleLike = async (song) => {
+    if (!userId || !song) return;
+    const songId = String(song.deezerId || song.id);
+
+    // Optimistic update
+    const isLiked = likedSongs.has(songId);
+    const newLikedSongs = new Set(likedSongs);
+    if (isLiked) {
+      newLikedSongs.delete(songId);
+    } else {
+      newLikedSongs.add(songId);
+    }
+    setLikedSongs(newLikedSongs);
+
+    try {
+      const token = await getToken();
+      await axios.post('/users/like',
+        { songData: song },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // We could refetch or trust the optimistic update.
+      // If the server returns existing status, we can verify.
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      // Revert on error
+      if (isLiked) {
+        newLikedSongs.add(songId);
+      } else {
+        newLikedSongs.delete(songId);
+      }
+      setLikedSongs(new Set(newLikedSongs));
+    }
+  };
+
+  useEffect(() => {
+    // Determine current index based on track whenever queue changes (or we fall out of sync)
+    if (currentTrack && queue.length > 0) {
+      const idx = queue.findIndex(t => t.deezerId === currentTrack.deezerId);
+      if (idx !== -1) setCurrentIndex(idx);
+    }
+  }, [queue, currentTrack?.deezerId]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -40,10 +165,101 @@ export const PlayerProvider = ({ children }) => {
     if (track?.deezerId === currentTrack?.deezerId) {
       togglePlayPause();
     } else {
+      // If playing a single track not in queue, reset queue often, but for now simple fallback
+      // Ideally, single play might clear queue or be "next up"
+      setQueue([track]);
+      setOriginalQueue([track]);
+      setCurrentIndex(0);
       setCurrentTrack(track);
       setIsPlaying(true);
     }
   };
+
+  const playPlaylist = (songs, startIndex = 0) => {
+    if (!songs || songs.length === 0) return;
+
+    setOriginalQueue(songs);
+
+    if (isShuffled) {
+      const shuffled = [...songs];
+      // Keep the start track first, shuffle others
+      const first = shuffled[startIndex];
+      const others = shuffled.filter((_, i) => i !== startIndex);
+      // Fisher-Yates shuffle
+      for (let i = others.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [others[i], others[j]] = [others[j], others[i]];
+      }
+      const NEW_QUEUE = [first, ...others];
+      setQueue(NEW_QUEUE);
+      setCurrentIndex(0);
+      setCurrentTrack(NEW_QUEUE[0]);
+    } else {
+      setQueue(songs);
+      setCurrentIndex(startIndex);
+      setCurrentTrack(songs[startIndex]);
+    }
+    setIsPlaying(true);
+  };
+
+  const toggleShuffle = () => {
+    const newShuffleState = !isShuffled;
+    setIsShuffled(newShuffleState);
+
+    if (newShuffleState) {
+      // Turn Shuffle ON
+      if (queue.length > 0) {
+        const shuffled = [...originalQueue];
+        // Keep current playing song first if possible
+        const current = currentTrack;
+        const others = shuffled.filter(s => s.deezerId !== current?.deezerId);
+
+        for (let i = others.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [others[i], others[j]] = [others[j], others[i]];
+        }
+
+        const newQ = current ? [current, ...others] : others;
+        setQueue(newQ);
+        setCurrentIndex(0);
+      }
+    } else {
+      // Turn Shuffle OFF - restore original order
+      setQueue(originalQueue);
+      // Find where we are in original queue
+      const idx = originalQueue.findIndex(s => s.deezerId === currentTrack?.deezerId);
+      setCurrentIndex(idx !== -1 ? idx : 0);
+    }
+  };
+
+  const playNext = () => {
+    if (queue.length === 0) return;
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < queue.length) {
+      setCurrentIndex(nextIndex);
+      setCurrentTrack(queue[nextIndex]);
+      setIsPlaying(true);
+    } else {
+      // End of playlist
+      setIsPlaying(false);
+    }
+  };
+
+  const playPrevious = () => {
+    if (queue.length === 0) return;
+    const prevIndex = currentIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentIndex(prevIndex);
+      setCurrentTrack(queue[prevIndex]);
+      setIsPlaying(true);
+    } else {
+      // restart song or stop?
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  // Auto play next on end
+  // We need to modify the onEnded handler in the audio tag return below
 
   const pauseTrack = () => {
     setIsPlaying(false);
@@ -72,12 +288,25 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const [volume, setVolume] = useState(50);
+  const [isMuted, setIsMuted] = useState(false);
+  const previousVolumeRef = useRef(50);
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
+      audioRef.current.volume = isMuted ? 0 : volume / 100;
     }
-  }, [volume]);
+  }, [volume, isMuted]);
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setIsMuted(false);
+      setVolume(previousVolumeRef.current);
+    } else {
+      previousVolumeRef.current = volume;
+      setIsMuted(true);
+      setVolume(0);
+    }
+  };
 
 
 
@@ -129,13 +358,24 @@ export const PlayerProvider = ({ children }) => {
     volume,
     setVolume,
     playTrack,
+    playPlaylist,
+    playNext,
+    playPrevious,
+    toggleShuffle,
+    queue,
+    isShuffled,
     pauseTrack,
     togglePlayPause,
     setCurrentTrack,
     setIsPlaying,
     handleProgressBarClick,
     audioRef,
-    analyser // Expose analyser
+    analyser, // Expose analyser
+    isMuted,
+    toggleMute,
+    likedSongs,
+    toggleLike,
+    fetchLikedSongs
   };
 
   return (
@@ -146,7 +386,14 @@ export const PlayerProvider = ({ children }) => {
         crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={() => {
+          // Auto play next
+          if (queue.length > 0) {
+            playNext();
+          } else {
+            setIsPlaying(false);
+          }
+        }}
       />
       {children}
     </PlayerContext.Provider>
