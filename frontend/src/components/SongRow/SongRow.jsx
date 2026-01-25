@@ -1,12 +1,14 @@
-import { Heart, MoreVertical, Music } from 'lucide-react'
+import { Heart, MoreVertical, Music, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import styles from './SongRow.module.css'
 
-function SongRow({ 
-  number, 
-  title, 
-  artist, 
-  duration, 
+function SongRow({
+  number,
+  cover,
+  title,
+  artist,
+  dateAdded,
+  duration,
   isPlaying = false,
   isLiked = false,
   onPlay,
@@ -14,7 +16,7 @@ function SongRow({
   onMore
 }) {
   return (
-    <div 
+    <div
       className={`${styles.row} ${isPlaying ? styles.playing : ''}`}
       onClick={onPlay}
     >
@@ -25,32 +27,34 @@ function SongRow({
           <span>{number}</span>
         )}
       </div>
-      <div className={styles.title}>{title}</div>
+
+      <div className={styles.titleColumn}>
+        {cover && <img src={cover} alt={title} className={styles.rowCover} />}
+        <div className={styles.titleInfo}>
+          <div className={styles.title}>{title}</div>
+          <div className={styles.mobileArtist}>{artist}</div>
+        </div>
+      </div>
+
       <div className={styles.artist}>{artist || ''}</div>
+      <div className={styles.dateAdded}>{dateAdded || ''}</div>
       <div className={styles.duration}>{duration}</div>
+
       <div className={styles.actions}>
-        <button 
+        <button
           className={styles.actionButton}
           onClick={(e) => {
             e.stopPropagation()
             onLike?.()
           }}
         >
-          <Heart 
-            size={16} 
-            fill={isLiked ? 'currentColor' : 'none'}
+          <Heart
+            size={16}
+            fill={isLiked ? '#00FFD9' : 'none'}
             className={isLiked ? styles.liked : ''}
           />
         </button>
-        <button 
-          className={styles.actionButton}
-          onClick={(e) => {
-            e.stopPropagation()
-            onMore?.()
-          }}
-        >
-          <MoreVertical size={16} />
-        </button>
+        {/* Removed redundant More button as it's often user preference, kept heart */}
       </div>
     </div>
   )

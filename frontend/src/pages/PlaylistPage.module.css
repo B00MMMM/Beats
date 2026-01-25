@@ -1,6 +1,10 @@
 .playlistPage {
   display: flex;
   height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(to bottom, #00453e 0%, #121212 50%);
+  /* Dark cyan to black */
 }
 
 .mainContent {
@@ -8,173 +12,418 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto;
+  padding: 0;
+  /* Remove padding here, move to children for full bleed header */
+  position: relative;
+  z-index: 1;
 }
 
 .playlistHeader {
   display: flex;
-  gap: 24px;
+  gap: 32px;
   align-items: flex-end;
+  padding: 80px 32px 32px 32px;
+  /* Large top padding for premium feel */
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.3) 100%);
 }
 
 .coverContainer {
-  width: 200px;
-  height: 200px;
+  width: 232px;
+  height: 232px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 4px;
+  /* More Spotify-like sharper corners */
   overflow: hidden;
   background-color: var(--surface-dark);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+  position: relative;
+  cursor: pointer;
 }
 
 .cover {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.coverContainer:hover .cover {
+  transform: scale(1.02);
+}
+
+.placeholderCover {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #282828;
+  color: #7f7f7f;
+}
+
+.coverOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s;
+  gap: 8px;
+}
+
+.coverContainer:hover .coverOverlay {
+  opacity: 1;
 }
 
 .playlistInfo {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   padding-bottom: 8px;
 }
 
-.playlistName {
-  font-size: 48px;
+.type {
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
+  color: white;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
-.playlistActions {
+.playlistName {
+  font-size: 82px;
+  /* Huge premium font */
+  font-weight: 900;
+  color: white;
+  line-height: 1;
+  cursor: pointer;
+  letter-spacing: -2px;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+.userIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.titleInput {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: white;
+  font-size: 64px;
+  font-weight: 900;
+  padding: 8px;
+  width: 100%;
+}
+
+.descInput {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  padding: 8px;
+  width: 100%;
+  resize: vertical;
+}
+
+.editActions {
   display: flex;
   gap: 12px;
 }
 
-.playButton {
+.editActions button {
+  padding: 8px 24px;
+  border-radius: 9999px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+}
+
+.editActions button:first-child {
+  background-color: white;
+  color: black;
+}
+
+.editActions button:last-child {
+  background-color: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.actionsBar {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 32px;
+  padding: 24px 32px;
+  position: sticky;
+  /* Sticky play bar? Maybe just static for now */
+  top: 0;
+  z-index: 10;
+}
+
+.playButtonMain {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: var(--primary-accent);
-  color: var(--bg-dark);
-  transition: all 150ms ease;
+  background-color: #00FFD9;
+  /* Cyan Theme */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
-.playButton:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 16px rgba(0, 255, 217, 0.4);
+.playButtonMain:hover {
+  transform: scale(1.05);
+  background-color: #00e6c3;
 }
 
 .songsTable {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  padding: 0 32px 32px 32px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(18, 18, 18, 1) 200px);
 }
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 40px 1fr 1fr 80px 80px;
+  /* Match SongRow CSS grid */
+  grid-template-columns: 40px 4fr 3fr 2fr 60px 40px;
   align-items: center;
   gap: 16px;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #b3b3b3;
+  font-size: 13px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
 }
 
-.headerNumber {
-  text-align: center;
+.songRowWrapper {
+  position: relative;
+  border-radius: 4px;
 }
 
-.headerTitle {
-  color: var(--text-secondary);
+.songRowWrapper:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.headerArtist {
-  color: var(--text-secondary);
+.songRowWrapper:hover .deleteButton {
+  opacity: 1;
 }
 
-.headerDuration {
+.deleteButton {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.deleteButton:hover {
+  color: white;
+}
+
+.searchSection {
+  margin: 0 32px 48px 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 24px;
+}
+
+.searchHeader {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  margin-bottom: 24px;
 }
 
-.tableBody {
+.searchHeader h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background: #2a2a2a;
+  border-radius: 4px;
+  padding: 10px 14px;
+  width: 360px;
+  gap: 12px;
+  transition: background 0.2s;
+}
+
+.searchBar:focus-within {
+  background: #333;
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.searchBar input {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 14px;
+  flex: 1;
+}
+
+.searchBar input:focus {
+  outline: none;
+}
+
+.searchResults {
   display: flex;
   flex-direction: column;
 }
 
-/* Tablet Responsive */
+.searchResultItem {
+  display: grid;
+  grid-template-columns: 48px 1fr 100px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.searchResultItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.searchResultItem img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.resultInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.resultTitle {
+  font-size: 15px;
+  font-weight: 500;
+  color: white;
+}
+
+.resultArtist {
+  font-size: 13px;
+  color: #b3b3b3;
+}
+
+.addButton {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  padding: 6px 20px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  justify-self: end;
+}
+
+.addButton:hover {
+  border-color: white;
+  transform: scale(1.05);
+}
+
+/* Responsive adjustments */
 @media (max-width: 1024px) {
+  .tableHeader {
+    grid-template-columns: 35px 4fr 2fr 1fr 50px 40px;
+  }
+}
+
+@media (max-width: 768px) {
   .playlistHeader {
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 32px 16px;
   }
 
   .coverContainer {
     width: 180px;
     height: 180px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
   }
 
   .playlistName {
     font-size: 40px;
   }
-}
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .playlistHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .coverContainer {
-    width: 160px;
-    height: 160px;
-  }
-
-  .playlistName {
-    font-size: 32px;
+  .meta {
+    justify-content: center;
   }
 
   .tableHeader {
-    grid-template-columns: 30px 1fr 60px;
-    gap: 12px;
-    padding: 8px 12px;
-  }
-
-  .headerArtist {
     display: none;
+    /* Hide header on mobile if simpler view preferred */
   }
 
-  .headerDuration {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .coverContainer {
-    width: 140px;
-    height: 140px;
+  .songsTable {
+    padding: 0 16px 24px 16px;
   }
 
-  .playlistName {
-    font-size: 24px;
-  }
-
-  .tableHeader {
-    grid-template-columns: 25px 1fr 50px;
-    gap: 8px;
-    padding: 6px 8px;
-    font-size: 11px;
+  .actionsBar {
+    justify-content: center;
   }
 }

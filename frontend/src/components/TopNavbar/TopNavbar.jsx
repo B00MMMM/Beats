@@ -17,13 +17,13 @@ function TopNavbar() {
   return (
     <div className={styles.topNavbar}>
       <div className={styles.leftSection}>
-        <button className={styles.navButton}>
+        <button className={styles.navButton} onClick={() => navigate(-1)}>
           <ChevronLeft size={20} />
         </button>
-        <button className={styles.navButton}>
+        <button className={styles.navButton} onClick={() => navigate(1)}>
           <ChevronRight size={20} />
         </button>
-        <button className={styles.homeButton}>
+        <button className={styles.homeButton} onClick={() => navigate('/')}>
           <span>Home</span>
         </button>
       </div>

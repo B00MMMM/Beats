@@ -10,6 +10,8 @@
   padding: 24px 16px;
   overflow-y: auto;
   z-index: 100;
+  padding-bottom: 100px;
+  /* Space for BottomPlayer */
 }
 
 .logo {

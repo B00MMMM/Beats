@@ -1,21 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, Search, Heart, Users, User, Settings, Plus, MoreVertical } from 'lucide-react'
 import Logo from '../Logo/Logo'
 import styles from './Sidebar.module.css'
+import { useAuth, useUser } from '@clerk/clerk-react'
+import axios from '../../api/axios'
 
 function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { getToken } = useAuth()
+  const { user } = useUser()
   const [showPlaylistMenu, setShowPlaylistMenu] = useState(false)
+  const [playlists, setPlaylists] = useState([])
+  const [isLoading, setIsLoading] = useState(false);
 
-  const playlists = [
-    { id: 1, name: 'Liked Songs', icon: 'heart', count: 247 },
-    { id: 2, name: 'Workout Mix', icon: 'dumbbell', count: 38 },
-    { id: 3, name: 'Chill Vibes', icon: 'sunset', count: 92 },
-    { id: 4, name: 'Party Hits', icon: 'party', count: 156 },
-    { id: 5, name: 'Focus Flow', icon: 'focus', count: 64 }
-  ]
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      try {
+        const token = await getToken();
+        const response = await axios.get('/playlists/my', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setPlaylists(response.data);
+      } catch (error) {
+        console.error("Error fetching playlists:", error);
+      }
+    };
+
+    if (user) {
+      fetchPlaylists();
+    }
+  }, [user, getToken]); // Add dependencies or handle refresh events (e.g. via Context)
+
+  const handleCreatePlaylist = async () => {
+    try {
+      if (isLoading) return;
+      setIsLoading(true);
+      const token = await getToken();
+      const response = await axios.post('/playlists',
+        {
+          title: `My Playlist #${playlists.length + 1}`,
+          description: "New playlist"
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const newPlaylist = response.data;
+      setPlaylists([newPlaylist, ...playlists]);
+      navigate(`/playlist/${newPlaylist._id}`);
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const menuItems = [
     { icon: Home, label: 'Home', path: '/' },
@@ -56,10 +95,7 @@ function Sidebar() {
       <div className={styles.divider}></div>
 
       <div className={styles.profileMenu}>
-        <button className={styles.menuItem}>
-          <User size={20} />
-          <span>Profile</span>
-        </button>
+        {/* Profile removed as per user request (Clerk handles it) */}
         <button className={styles.menuItem}>
           <Settings size={20} />
           <span>Settings</span>
@@ -70,10 +106,10 @@ function Sidebar() {
         <div className={styles.libraryHeader}>
           <h2>Your Library</h2>
           <div className={styles.libraryActions}>
-            <button className={styles.iconButton}>
+            <button className={styles.iconButton} onClick={handleCreatePlaylist} disabled={isLoading}>
               <Plus size={20} />
             </button>
-            <button 
+            <button
               className={styles.iconButton}
               onClick={() => setShowPlaylistMenu(!showPlaylistMenu)}
             >
@@ -98,20 +134,20 @@ function Sidebar() {
         <div className={styles.playlistList}>
           {playlists.map((playlist) => (
             <button
-              key={playlist.id}
-              className={styles.playlistItem}
-              onClick={() => navigate(`/playlist/${playlist.id}`)}
+              key={playlist._id}
+              className={`${styles.playlistItem} ${location.pathname === `/playlist/${playlist._id}` ? styles.active : ''}`}
+              onClick={() => navigate(`/playlist/${playlist._id}`)}
             >
               <div className={styles.playlistIcon}>
-                {playlist.icon === 'heart' && <Heart size={16} fill="currentColor" />}
-                {playlist.icon === 'dumbbell' && <span>🏋️</span>}
-                {playlist.icon === 'sunset' && <span>🌅</span>}
-                {playlist.icon === 'party' && <span>🎉</span>}
-                {playlist.icon === 'focus' && <span>🎯</span>}
+                {playlist.imageUrl ? (
+                  <img src={playlist.imageUrl} alt={playlist.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span>🎵</span>
+                )}
               </div>
               <div className={styles.playlistInfo}>
-                <span className={styles.playlistName}>{playlist.name}</span>
-                <span className={styles.playlistMeta}>Playlist • {playlist.count} songs</span>
+                <span className={styles.playlistName}>{playlist.title}</span>
+                <span className={styles.playlistMeta}>Playlist • {user?.firstName || 'User'}</span>
               </div>
             </button>
           ))}
