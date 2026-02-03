@@ -1,14 +1,15 @@
 .row {
   display: grid;
-  /* # | Title(Img+Text) | Artist | Date | Duration | Actions */
-  grid-template-columns: 40px 4fr 3fr 2fr 60px 40px;
+  /* Index | Title | Artist | Date | Duration | Actions */
+  grid-template-columns: 40px 4fr 2fr 2fr 60px 80px;
   align-items: center;
   gap: 16px;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 150ms ease;
-  color: var(--text-secondary);
+  transition: background-color 0.2s;
+  color: white;
+  font-size: 14px;
 }
 
 .row:hover {
@@ -135,6 +136,11 @@
 .liked {
   color: #1DB954;
   opacity: 1;
+}
+
+.deleteButton:hover {
+  color: #ff5555;
+  /* distinct delete color */
 }
 
 /* Tablet Responsive */

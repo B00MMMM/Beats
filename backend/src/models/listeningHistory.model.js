@@ -20,10 +20,12 @@ const listeningHistorySchema = new mongoose.Schema(
             type: Date,
             default: Date.now,
         },
+        count: { type: Number, default: 1 },
     },
     { timestamps: true }
 );
 
 listeningHistorySchema.index({ userId: 1, listenedAt: -1 });
+listeningHistorySchema.index({ userId: 1, deezerId: 1 }); // Optimize lookup for upsert
 
 export const ListeningHistory = mongoose.model("ListeningHistory", listeningHistorySchema);

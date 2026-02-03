@@ -350,6 +350,35 @@ export const PlayerProvider = ({ children }) => {
     }
   }, []);
 
+  // Playlist Global State
+  const [playlists, setPlaylists] = useState([]);
+
+  const fetchPlaylists = async () => {
+    if (!userId) {
+      setPlaylists([]);
+      return;
+    }
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await axios.get('/playlists/my', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      fetchPlaylists();
+    } else {
+      setPlaylists([]);
+    }
+  }, [userId]);
+
   const value = {
     currentTrack,
     isPlaying,
@@ -375,7 +404,10 @@ export const PlayerProvider = ({ children }) => {
     toggleMute,
     likedSongs,
     toggleLike,
-    fetchLikedSongs
+    fetchLikedSongs,
+    playlists,      // Exported
+    fetchPlaylists, // Exported
+    setPlaylists    // Exported (optional, but useful)
   };
 
   return (

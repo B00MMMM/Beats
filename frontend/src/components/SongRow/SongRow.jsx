@@ -13,7 +13,7 @@ function SongRow({
   isLiked = false,
   onPlay,
   onLike,
-  onMore
+  onDelete
 }) {
   return (
     <div
@@ -54,7 +54,17 @@ function SongRow({
             className={isLiked ? styles.liked : ''}
           />
         </button>
-        {/* Removed redundant More button as it's often user preference, kept heart */}
+        {onDelete && (
+          <button
+            className={`${styles.actionButton} ${styles.deleteButton}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
     </div>
   )

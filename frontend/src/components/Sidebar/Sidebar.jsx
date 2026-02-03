@@ -4,6 +4,7 @@ import { Home, Search, Heart, Users, User, Settings, Plus, MoreVertical } from '
 import Logo from '../Logo/Logo'
 import styles from './Sidebar.module.css'
 import { useAuth, useUser } from '@clerk/clerk-react'
+import { usePlayer } from '../../context/PlayerContext'
 import axios from '../../api/axios'
 
 function Sidebar() {
@@ -11,27 +12,11 @@ function Sidebar() {
   const location = useLocation()
   const { getToken } = useAuth()
   const { user } = useUser()
-  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false)
-  const [playlists, setPlaylists] = useState([])
+  const { playlists, fetchPlaylists } = usePlayer() // Use global state
+  const [searchTerm, setSearchTerm] = useState('') // Local search state
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchPlaylists = async () => {
-      try {
-        const token = await getToken();
-        const response = await axios.get('/playlists/my', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setPlaylists(response.data);
-      } catch (error) {
-        console.error("Error fetching playlists:", error);
-      }
-    };
-
-    if (user) {
-      fetchPlaylists();
-    }
-  }, [user, getToken]); // Add dependencies or handle refresh events (e.g. via Context)
+  // Removed local fetching effect - handled in Context now
 
   const handleCreatePlaylist = async () => {
     try {
@@ -46,8 +31,10 @@ function Sidebar() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // Refresh global list
+      await fetchPlaylists();
+
       const newPlaylist = response.data;
-      setPlaylists([newPlaylist, ...playlists]);
       navigate(`/playlist/${newPlaylist._id}`);
     } catch (error) {
       console.error("Error creating playlist:", error);
@@ -68,6 +55,11 @@ function Sidebar() {
     if (path === '/search') return location.pathname === '/search' || location.pathname.startsWith('/music')
     return location.pathname.startsWith(path)
   }
+
+  // Filter logic
+  const filteredPlaylists = playlists.filter(playlist =>
+    playlist.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className={styles.sidebar}>
@@ -109,30 +101,21 @@ function Sidebar() {
             <button className={styles.iconButton} onClick={handleCreatePlaylist} disabled={isLoading}>
               <Plus size={20} />
             </button>
-            <button
-              className={styles.iconButton}
-              onClick={() => setShowPlaylistMenu(!showPlaylistMenu)}
-            >
-              <MoreVertical size={20} />
-            </button>
           </div>
         </div>
-
-        {showPlaylistMenu && (
-          <div className={styles.playlistMenu}>
-            <button>Playlists</button>
-            <button>Artists</button>
-            <button>Albums</button>
-          </div>
-        )}
 
         <div className={styles.searchBox}>
           <Search size={16} />
-          <input type="text" placeholder="Search in library" />
+          <input
+            type="text"
+            placeholder="Search in library"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
         <div className={styles.playlistList}>
-          {playlists.map((playlist) => (
+          {filteredPlaylists.map((playlist) => (
             <button
               key={playlist._id}
               className={`${styles.playlistItem} ${location.pathname === `/playlist/${playlist._id}` ? styles.active : ''}`}

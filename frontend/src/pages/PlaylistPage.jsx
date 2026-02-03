@@ -6,12 +6,14 @@ import styles from './PlaylistPage.module.css'
 import { useAuth } from '@clerk/clerk-react'
 import axios from '../api/axios'
 import { usePlayer } from '../context/PlayerContext'
+import Loader from '../components/Loader/Loader'
+import centeredLoaderStyles from '../components/Loader/CenteredLoader.module.css'
 
 function PlaylistPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { getToken } = useAuth()
-  const { playTrack, playPlaylist, currentTrack, isPlaying, togglePlayPause, likedSongs, toggleLike } = usePlayer()
+  const { playTrack, playPlaylist, currentTrack, isPlaying, togglePlayPause, likedSongs, toggleLike, fetchPlaylists } = usePlayer()
 
   const [playlist, setPlaylist] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -56,6 +58,7 @@ function PlaylistPage() {
       )
       setPlaylist(prev => ({ ...prev, title: editTitle, description: editDesc }))
       setIsEditing(false)
+      fetchPlaylists(); // Refresh Sidebar
     } catch (error) {
       console.error("Error updating playlist:", error)
     }
@@ -244,16 +247,8 @@ function PlaylistPage() {
                   onPlay={() => playPlaylist(playlist.songs, index)}
                   isLiked={likedSongs.has(String(song.deezerId || song._id))}
                   onLike={() => toggleLike(song)}
+                  onDelete={() => handleRemoveSong(song._id)}
                 />
-                <button
-                  className={styles.deleteButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveSong(song._id);
-                  }}
-                >
-                  <Trash2 size={16} />
-                </button>
               </div>
             ))}
           </div>
@@ -279,18 +274,29 @@ function PlaylistPage() {
           </div>
 
           <div className={styles.searchResults}>
-            {searchResults.map(song => (
-              <div key={song.deezerId} className={styles.searchResultItem}>
-                <img src={song.cover} alt={song.title} />
-                <div className={styles.resultInfo}>
-                  <span className={styles.resultTitle}>{song.title}</span>
-                  <span className={styles.resultArtist}>{song.artist.name}</span>
-                </div>
-                <button className={styles.addButton} onClick={() => handleAddSong(song)}>
-                  Add
-                </button>
+            {isSearching ? (
+              <div className={centeredLoaderStyles.centeredLoaderContainer}>
+                <Loader />
               </div>
-            ))}
+            ) : (
+              searchResults.map(song => (
+                <div key={song.deezerId} className={styles.searchResultItem}>
+                  <div className={styles.resultImageContainer} onClick={() => playTrack(song)}>
+                    <img src={song.cover} alt={song.title} />
+                    <div className={styles.resultPlayOverlay}>
+                      <Play size={20} fill="white" />
+                    </div>
+                  </div>
+                  <div className={styles.resultInfo}>
+                    <span className={styles.resultTitle}>{song.title}</span>
+                    <span className={styles.resultArtist}>{song.artist.name}</span>
+                  </div>
+                  <button className={styles.addButton} onClick={() => handleAddSong(song)}>
+                    Add
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
