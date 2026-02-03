@@ -17,10 +17,20 @@ function SearchPage() {
   useEffect(() => {
     if (query) {
       const fetchSearch = async () => {
+        const cacheKey = `search_cache_${query}`;
+        const cachedResults = sessionStorage.getItem(cacheKey);
+
+        if (cachedResults) {
+          setResults(JSON.parse(cachedResults));
+          setLoading(false);
+          return;
+        }
+
         try {
           setLoading(true); // Set loading to true before fetching
           const response = await axios.get(`/songs/search?q=${query}`);
           setResults(response.data);
+          sessionStorage.setItem(cacheKey, JSON.stringify(response.data));
         } catch (error) {
           console.error('Error fetching search results:', error);
         } finally {

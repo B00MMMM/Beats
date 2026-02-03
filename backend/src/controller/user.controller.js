@@ -6,25 +6,30 @@ export const toggleLike = async (req, res) => {
     try {
         const userId = req.auth.userId;
         const { songData } = req.body;
+        const deezerId = String(songData.id || songData.deezerId);
 
-        const existing = await ListeningHistory.findOne({
-            userId,
-            deezerId: String(songData.id || songData.deezerId),
-            isLiked: true
-        });
+        let entry = await ListeningHistory.findOne({ userId, deezerId });
 
-        if (existing) {
-            await ListeningHistory.findByIdAndDelete(existing._id);
-            return res.json({ isLiked: false });
+        if (entry) {
+            entry.isLiked = !entry.isLiked;
+            await entry.save();
+            return res.json({ isLiked: entry.isLiked });
         } else {
+            // Create new entry, count 0 since not played yet via this action (unless called after play)
+            // But wait, if they like it, it's just a like. count default is 1 in model? 
+            // I should default count to 0 in code if created via like? 
+            // Or just let it be 1? 
+            // Technically "Like" isn't a "Play". 
+            // Let's set count to 0 if created via Like.
             await ListeningHistory.create({
                 userId,
-                deezerId: String(songData.id || songData.deezerId),
+                deezerId,
                 title: songData.title,
                 artist: songData.artist?.name || songData.artist,
                 cover: songData.cover || songData.album?.cover_medium,
                 duration: songData.duration,
-                isLiked: true
+                isLiked: true,
+                count: 0 // Not played yet
             });
             return res.json({ isLiked: true });
         }
@@ -61,25 +66,50 @@ export const addListeningHistory = async (req, res) => {
     try {
         const userId = req.auth.userId;
         const { songData } = req.body;
+        const deezerId = String(songData.id || songData.deezerId);
 
         if (!songData) {
             return res.status(400).json({ message: "Song data required" });
         }
 
-        // Store history directly without creating a Song document
-        await ListeningHistory.create({
-            userId,
-            deezerId: String(songData.id || songData.deezerId),
-            title: songData.title,
-            artist: songData.artist?.name || songData.artist, // Handle object or string
-            cover: songData.cover || songData.album?.cover_medium,
-            duration: songData.duration,
-        });
+        let entry = await ListeningHistory.findOne({ userId, deezerId });
+
+        if (entry) {
+            entry.count += 1;
+            entry.listenedAt = Date.now();
+            await entry.save();
+        } else {
+            await ListeningHistory.create({
+                userId,
+                deezerId,
+                title: songData.title,
+                artist: songData.artist?.name || songData.artist,
+                cover: songData.cover || songData.album?.cover_medium,
+                duration: songData.duration,
+                count: 1,
+                listenedAt: Date.now()
+            });
+        }
 
         res.status(201).json({ message: "History recorded" });
 
     } catch (error) {
         console.error("Error adding history:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const getListeningHistory = async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+        // Fetch where count > 0 (actually played) or just all? 
+        // User asked for "Recent plays". So implied "played".
+        const history = await ListeningHistory.find({ userId, count: { $gt: 0 } })
+            .sort({ listenedAt: -1 })
+            .limit(20);
+        res.json(history);
+    } catch (error) {
+        console.error("Error fetching history:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };

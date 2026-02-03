@@ -1,0 +1,118 @@
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    max-width: 100%;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+}
+
+.carouselWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.controlButton {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    background-color: rgba(40, 40, 40, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+    /* Always visible */
+}
+
+.controlButton:hover:not(:disabled) {
+    background-color: #333;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.controlButton.left {
+    left: 0;
+}
+
+.controlButton.right {
+    right: 0;
+}
+
+.controlButton:disabled {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.scrollContainer {
+    display: grid;
+    grid-auto-flow: column;
+    gap: 24px;
+    overflow-x: hidden;
+    /* Disable manual scroll */
+    scroll-behavior: smooth;
+    padding: 4px 0;
+}
+
+.scrollContainer::-webkit-scrollbar {
+    display: none;
+}
+
+/* 1 Row Layout */
+.singleRow {
+    grid-template-rows: 1fr;
+}
+
+/* 2 Row Layout */
+.doubleRow {
+    grid-template-rows: repeat(2, 1fr);
+    height: auto;
+}
+
+.scrollContainer>* {
+    width: 180px;
+    scroll-snap-align: start;
+}
+
+.disableInteraction>* {
+    pointer-events: none;
+    transition: none;
+    /* Prevent hover animations from getting stuck */
+}
+
+@media (max-width: 768px) {
+    .title {
+        font-size: 20px;
+    }
+
+    .controlButton {
+        display: none;
+        /* Hide on mobile */
+    }
+
+    .scrollContainer {
+        gap: 16px;
+    }
+
+    .scrollContainer>* {
+        width: 140px;
+    }
+}
