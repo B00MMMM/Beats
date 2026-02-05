@@ -2,7 +2,7 @@ import { Search, MessageCircle, MoreVertical } from 'lucide-react'
 import { useState } from 'react'
 import styles from './FriendsList.module.css'
 
-function FriendsList({ friends, onFriendClick, activeTab = 'all' }) {
+function FriendsList({ friends, onFriendClick, activeTab = 'all', loading = false }) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredFriends = friends.filter(friend => {
@@ -11,6 +11,14 @@ function FriendsList({ friends, onFriendClick, activeTab = 'all' }) {
     if (activeTab === 'all') return matchesSearch
     return matchesSearch
   })
+
+  if (loading) {
+    return (
+      <div className={styles.friendsList}>
+        <div className={styles.loading}>Loading friends...</div>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.friendsList}>
@@ -31,36 +39,42 @@ function FriendsList({ friends, onFriendClick, activeTab = 'all' }) {
       </div>
 
       <div className={styles.list}>
-        {filteredFriends.map((friend) => (
-          <div key={friend.id} className={styles.friendItem}>
-            <div className={styles.friendInfo} onClick={() => onFriendClick?.(friend)}>
-              <div className={styles.avatar}>
-                {friend.avatar ? (
-                  <img src={friend.avatar} alt={friend.name} />
-                ) : (
-                  <div className={styles.avatarPlaceholder}>
-                    {friend.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                {friend.status === 'online' && <div className={styles.onlineIndicator} />}
-              </div>
-              <div className={styles.friendDetails}>
-                <span className={styles.friendName}>{friend.name}</span>
-                <span className={styles.friendStatus}>
-                  {friend.status === 'online' ? 'Online' : 'Offline'}
-                </span>
-              </div>
-            </div>
-            <div className={styles.friendActions}>
-              <button className={styles.actionButton}>
-                <MessageCircle size={18} />
-              </button>
-              <button className={styles.actionButton}>
-                <MoreVertical size={18} />
-              </button>
-            </div>
+        {filteredFriends.length === 0 ? (
+          <div className={styles.emptyState}>
+            {activeTab === 'online' ? 'No friends online' : 'No friends found'}
           </div>
-        ))}
+        ) : (
+          filteredFriends.map((friend) => (
+            <div key={friend.id} className={styles.friendItem}>
+              <div className={styles.friendInfo} onClick={() => onFriendClick?.(friend)}>
+                <div className={styles.avatar}>
+                  {friend.avatar ? (
+                    <img src={friend.avatar} alt={friend.name} />
+                  ) : (
+                    <div className={styles.avatarPlaceholder}>
+                      {friend.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  {friend.status === 'online' && <div className={styles.onlineIndicator} />}
+                </div>
+                <div className={styles.friendDetails}>
+                  <span className={styles.friendName}>{friend.name}</span>
+                  <span className={styles.friendStatus}>
+                    {friend.status === 'online' ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              </div>
+              <div className={styles.friendActions}>
+                <button className={styles.actionButton} onClick={() => onFriendClick?.(friend)}>
+                  <MessageCircle size={18} />
+                </button>
+                <button className={styles.actionButton}>
+                  <MoreVertical size={18} />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

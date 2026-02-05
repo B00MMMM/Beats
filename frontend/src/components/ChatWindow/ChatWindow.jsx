@@ -1,9 +1,15 @@
-import { Smile, Share2, Send, Music } from 'lucide-react'
-import { useState } from 'react'
+import { Smile, Share2, Send, Music, ArrowLeft } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
 import styles from './ChatWindow.module.css'
 
-function ChatWindow({ friend, messages = [], onSendMessage }) {
+function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
   const [message, setMessage] = useState('')
+  const messagesEndRef = useRef(null)
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const handleSend = () => {
     if (message.trim()) {
@@ -15,6 +21,9 @@ function ChatWindow({ friend, messages = [], onSendMessage }) {
   return (
     <div className={styles.chatWindow}>
       <div className={styles.chatHeader}>
+        <button className={styles.backButton} onClick={onBack}>
+          <ArrowLeft size={20} />
+        </button>
         <div className={styles.friendInfo}>
           <div className={styles.avatar}>
             {friend?.avatar ? (
@@ -28,41 +37,50 @@ function ChatWindow({ friend, messages = [], onSendMessage }) {
           </div>
           <div>
             <h3 className={styles.friendName}>{friend?.name || 'Friend'}</h3>
-            <span className={styles.status}>Now At 08.00</span>
+            <span className={styles.status}>
+              {friend?.status === 'online' ? 'Online' : 'Offline'}
+            </span>
           </div>
         </div>
       </div>
 
       <div className={styles.messages}>
-        {messages.map((msg, index) => (
-          <div key={index} className={`${styles.message} ${msg.isOwn ? styles.own : ''}`}>
-            {!msg.isOwn && (
-              <div className={styles.messageAvatar}>
-                {msg.avatar ? (
-                  <img src={msg.avatar} alt={msg.sender} />
-                ) : (
-                  <div className={styles.avatarPlaceholder}>
-                    {msg.sender?.charAt(0).toUpperCase()}
+        {messages.length === 0 ? (
+          <div className={styles.emptyMessages}>
+            <p>No messages yet. Start a conversation!</p>
+          </div>
+        ) : (
+          messages.map((msg, index) => (
+            <div key={msg.id || index} className={`${styles.message} ${msg.isOwn ? styles.own : ''}`}>
+              {!msg.isOwn && (
+                <div className={styles.messageAvatar}>
+                  {msg.avatar ? (
+                    <img src={msg.avatar} alt={msg.sender} />
+                  ) : (
+                    <div className={styles.avatarPlaceholder}>
+                      {msg.sender?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className={styles.messageContent}>
+                {!msg.isOwn && <span className={styles.senderName}>{msg.sender}</span>}
+                {msg.type === 'music' ? (
+                  <div className={styles.musicMessage}>
+                    <Music size={16} />
+                    <span>{msg.content}</span>
                   </div>
+                ) : (
+                  <p className={styles.messageText}>{msg.content}</p>
+                )}
+                {msg.timestamp && (
+                  <span className={styles.timestamp}>{msg.timestamp}</span>
                 )}
               </div>
-            )}
-            <div className={styles.messageContent}>
-              {!msg.isOwn && <span className={styles.senderName}>{msg.sender}</span>}
-              {msg.type === 'music' ? (
-                <div className={styles.musicMessage}>
-                  <Music size={16} />
-                  <span>{msg.content}</span>
-                </div>
-              ) : (
-                <p className={styles.messageText}>{msg.content}</p>
-              )}
-              {msg.timestamp && (
-                <span className={styles.timestamp}>{msg.timestamp}</span>
-              )}
             </div>
-          </div>
-        ))}
+          ))
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className={styles.inputArea}>
