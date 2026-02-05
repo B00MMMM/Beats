@@ -1,80 +1,170 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, UserPlus } from 'lucide-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
+import { initSocket, getSocket, disconnectSocket } from '../lib/socket'
+import axios from '../api/axios'
 import styles from './SocialPage.module.css'
 
 function SocialPage() {
+  const { getToken, userId } = useAuth()
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState('all')
   const [selectedFriend, setSelectedFriend] = useState(null)
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: 'Meysia',
-      content: 'Good Morning #Dion',
-      isOwn: false,
-      timestamp: '08:00'
-    },
-    {
-      id: 2,
-      sender: 'Broddy',
-      content: 'Hello Guys, I Have The Latest Music Recommendation',
-      isOwn: false,
-      timestamp: '08:00'
-    },
-    {
-      id: 3,
-      sender: 'Broddy',
-      content: 'Taylor Swift - Anti Hero',
-      type: 'music',
-      isOwn: false,
-      timestamp: '08:00'
-    },
-    {
-      id: 4,
-      sender: 'Wanda',
-      content: 'Oh Yeahh....I Like This Song #Brody',
-      isOwn: false,
-      timestamp: '08:00'
-    },
-    {
-      id: 5,
-      sender: 'Chellina',
-      content: 'Nice Song #Brody',
-      isOwn: false,
-      timestamp: '08:00'
-    }
-  ])
+  const [messages, setMessages] = useState([])
+  const [friends, setFriends] = useState([])
+  const [onlineUsers, setOnlineUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [socket, setSocket] = useState(null)
 
-  const friends = [
-    { id: 1, name: '-neurolancer', status: 'offline' },
-    { id: 2, name: 'Amal Sumesh Gama', status: 'offline' },
-    { id: 3, name: 'Anumolpp', status: 'offline' },
-    { id: 4, name: 'AuRa', status: 'offline' },
-    { id: 5, name: 'Dex', status: 'offline' },
-    { id: 6, name: 'Dinraj', status: 'offline' },
-    { id: 7, name: 'Eldrich Ahlers', status: 'offline' },
-    { id: 8, name: 'GHOST', status: 'offline' },
-    { id: 9, name: 'Guts', status: 'offline' },
-    { id: 10, name: 'Meysia', status: 'online' },
-    { id: 11, name: 'Broddy', status: 'online' },
-    { id: 12, name: 'Wanda', status: 'online' },
-    { id: 13, name: 'Chellina', status: 'online' }
-  ]
+  // Initialize socket connection
+  useEffect(() => {
+    if (userId) {
+      const socketInstance = initSocket(userId)
+      setSocket(socketInstance)
+
+      // Listen for online users updates
+      socketInstance.on('onlineUsers', (users) => {
+        setOnlineUsers(users)
+      })
+
+      // Listen for new messages
+      socketInstance.on('newMessage', (message) => {
+        setMessages(prev => [...prev, {
+          ...message,
+          isOwn: false,
+          sender: message.senderInfo?.fullName || 'Unknown',
+          timestamp: new Date(message.createdAt).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
+        }])
+      })
+
+      return () => {
+        disconnectSocket()
+      }
+    }
+  }, [userId])
+
+  // Fetch users (friends)
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = await getToken()
+        if (!token) return
+
+        const response = await axios.get('/chat/users', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+
+        const usersData = response.data.map(u => ({
+          id: u.clerkId,
+          name: u.fullName,
+          avatar: u.imageUrl,
+          status: onlineUsers.includes(u.clerkId) ? 'online' : 'offline'
+        }))
+
+        setFriends(usersData)
+      } catch (error) {
+        console.error('Error fetching users:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [getToken, onlineUsers])
+
+  // Fetch messages when a friend is selected
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!selectedFriend) {
+        setMessages([])
+        return
+      }
+
+      try {
+        const token = await getToken()
+        if (!token) return
+
+        const response = await axios.get(`/chat/messages/${selectedFriend.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+
+        const messagesData = response.data.map(msg => ({
+          id: msg._id,
+          sender: msg.senderId === userId ? 'You' : selectedFriend.name,
+          content: msg.content,
+          isOwn: msg.senderId === userId,
+          timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
+        }))
+
+        setMessages(messagesData)
+      } catch (error) {
+        console.error('Error fetching messages:', error)
+      }
+    }
+
+    fetchMessages()
+  }, [selectedFriend, getToken, userId])
 
   const handleFriendClick = (friend) => {
     setSelectedFriend(friend)
   }
 
-  const handleSendMessage = (text) => {
-    const newMessage = {
-      id: messages.length + 1,
-      sender: 'You',
-      content: text,
-      isOwn: true,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  const handleSendMessage = async (text) => {
+    if (!selectedFriend || !text.trim()) return
+
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      // Save message to database
+      const response = await axios.post('/chat/messages', {
+        recipientId: selectedFriend.id,
+        content: text
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      // Add message to local state
+      const newMessage = {
+        id: response.data._id,
+        sender: 'You',
+        content: text,
+        isOwn: true,
+        timestamp: new Date().toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      }
+      setMessages(prev => [...prev, newMessage])
+
+      // Emit via socket for real-time delivery
+      const socketInstance = getSocket()
+      if (socketInstance) {
+        socketInstance.emit('sendMessage', {
+          recipientId: selectedFriend.id,
+          content: text,
+          senderId: userId,
+          senderInfo: {
+            fullName: user?.fullName || 'You',
+            imageUrl: user?.imageUrl
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
     }
-    setMessages([...messages, newMessage])
+  }
+
+  const handleBackToList = () => {
+    setSelectedFriend(null)
   }
 
   return (
@@ -118,6 +208,7 @@ function SocialPage() {
               friend={selectedFriend}
               messages={messages}
               onSendMessage={handleSendMessage}
+              onBack={handleBackToList}
             />
           </div>
         ) : (
@@ -125,6 +216,7 @@ function SocialPage() {
             friends={friends}
             activeTab={activeTab}
             onFriendClick={handleFriendClick}
+            loading={loading}
           />
         )}
       </div>
