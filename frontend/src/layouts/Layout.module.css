@@ -23,6 +23,17 @@
   right: 0;
 }
 
+/* Song Page specific - extend to full height */
+.mainContent.songPageMain {
+  top: 0;
+  bottom: 0;
+}
+
+.contentArea.songPageContent {
+  padding: 0;
+  overflow: hidden;
+}
+
 .contentArea {
   flex: 1;
   overflow-y: auto;
@@ -93,6 +104,11 @@
     bottom: calc(var(--mini-player-h) + var(--bottom-nav-h));
   }
 
+  .mainContent.songPageMain {
+    top: 0;
+    bottom: 0;
+  }
+
   .topbarShell {
     left: 0;
   }
@@ -100,6 +116,10 @@
   .contentArea {
     padding: 16px;
     padding-bottom: 16px;
+  }
+
+  .contentArea.songPageContent {
+    padding: 0;
   }
 
   .rightPanel {
