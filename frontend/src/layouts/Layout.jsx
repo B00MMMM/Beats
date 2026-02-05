@@ -14,11 +14,11 @@ function Layout({ children }) {
   return (
     <div className={styles.layout}>
       {!location.pathname.startsWith('/song/') && <Sidebar />}
-      <div className={`${styles.mainContent} ${location.pathname.startsWith('/song/') ? styles.fullWidthContent : ''}`}>
+      <div className={`${styles.mainContent} ${location.pathname.startsWith('/song/') ? styles.fullWidthContent : ''} ${location.pathname.startsWith('/song/') ? styles.songPageMain : ''}`}>
         <div className={styles.topbarShell}>
           {!location.pathname.startsWith('/song/') && <TopNavbar />}
         </div>
-        <div className={styles.contentArea}>
+        <div className={`${styles.contentArea} ${location.pathname.startsWith('/song/') ? styles.songPageContent : ''}`}>
           {children}
         </div>
       </div>

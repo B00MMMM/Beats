@@ -1,103 +1,171 @@
+/* =====================================================
+   SONG PAGE STYLES
+   Beats Music Player - Enhanced Song Page with Visualizer
+   ===================================================== */
+
+/* Wrapper */
 .songPageWrapper {
   height: 100vh;
   width: 100%;
   overflow: hidden;
   position: relative;
-  background-color: #050505;
+  background-color: #000;
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* Main Song Page Container */
 .songPage {
+  position: relative;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 20px;
+  height: 100vh;
+  width: 100%;
+  padding: 0;
   box-sizing: border-box;
-  background: radial-gradient(circle at 50% 30%, rgba(0, 255, 255, 0.05), transparent 70%);
+  transition: all 0.5s ease;
+  overflow: hidden;
 }
 
+/* Header */
 .header {
   position: fixed;
-  top: 20px;
-  left: 20px;
-  right: 20px;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: calc(100% - 40px);
-  margin-bottom: 2rem;
-  padding: 0 10px;
+  padding: 20px 24px;
+  margin-bottom: 40px;
   z-index: 100;
-}
-
-.headerTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #00ffff;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
 }
 
 .backButton {
   color: #fff;
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 8px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
 }
 
 .backButton:hover {
-  color: #00ffff;
-  transform: scale(1.1);
-  text-shadow: 0 0 8px #00ffff;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
 }
 
-.placeholder {
-  width: 32px;
+.headerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary-accent);
+  text-shadow: 0 0 15px rgba(0, 255, 217, 0.5);
 }
 
-.songContent {
+.headerActions {
+  display: flex;
+  gap: 8px;
+  min-width: 40px;
+}
+
+/* Loading State */
+.loadingContainer {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  gap: 2rem;
-  padding-top: 80px;
-  padding-bottom: 2rem;
-  overflow-y: auto;
+  gap: 16px;
 }
 
-.songContent::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
+.loadingSpinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--primary-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Main Content */
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 100px 40px 80px;
+  gap: 20px;
+  overflow: hidden;
+}
+
+/* Content Row - Flexbox for desktop layout */
+.contentRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 1100px;
+}
+
+@media (min-width: 1024px) {
+  .contentRow {
+    flex-direction: row;
+    align-items: center;
+    gap: 48px;
+  }
+}
+
+/* Album Art Section */
+.albumArtSection {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .albumArtContainer {
   position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  max-width: 380px;
-  box-shadow: 0 0 30px rgba(0, 255, 255, 0.15), 0 20px 50px rgba(0, 0, 0, 0.8);
-  border-radius: 16px;
+  width: 280px;
+  height: 280px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.8);
   transition: transform 0.3s ease;
-  border: 1px solid rgba(0, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .albumArtContainer {
+    width: 320px;
+    height: 320px;
+  }
+}
+
+@media (min-height: 800px) {
+  .albumArtContainer {
+    width: 360px;
+    height: 360px;
+  }
 }
 
 .albumArtContainer:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 40px rgba(0, 255, 255, 0.25), 0 20px 50px rgba(0, 0, 0, 0.9);
-  border-color: rgba(0, 255, 255, 0.3);
 }
 
 .albumArt {
@@ -106,162 +174,459 @@
   object-fit: cover;
 }
 
-.visualizerBtn {
+.albumGlow {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 40px;
-  height: 40px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  border: 1px solid #00ffff;
-  border-radius: 50%;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  opacity: 1;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  inset: 0;
+  opacity: 0.2;
+  filter: blur(80px);
+  transform: scale(0.8);
+  z-index: -1;
+  pointer-events: none;
 }
 
-.visualizerBtn:hover {
-  background: rgba(0, 255, 255, 0.1);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
-  transform: scale(1.05);
-}
-
-.visualizerBtn .bar {
-  width: 4px;
-  background: #00ffff;
-  border-radius: 2px;
-  animation: bounce 1s infinite ease-in-out;
-}
-
-.visualizerBtn .bar:nth-child(1) {
-  height: 40%;
-  animation-delay: 0s;
-}
-
-.visualizerBtn .bar:nth-child(2) {
-  height: 70%;
-  animation-delay: 0.1s;
-}
-
-.visualizerBtn .bar:nth-child(3) {
-  height: 50%;
-  animation-delay: 0.2s;
-}
-
-@keyframes bounce {
-
-  0%,
-  100% {
-    transform: scaleY(0.5);
-    opacity: 0.7;
-  }
-
-  50% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-.songDetails {
+/* Details Section */
+.detailsSection {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 16px;
   width: 100%;
+  max-width: 450px;
+}
+
+@media (min-width: 1024px) {
+  .detailsSection {
+    padding-top: 0;
+  }
+}
+
+/* Song Info */
+.songInfo {
   text-align: center;
-  margin-bottom: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .songInfo {
+    text-align: left;
+  }
 }
 
 .title {
-  font-size: 2.2rem;
-  font-weight: 800;
-  margin: 0 0 8px 0;
-  line-height: 1.1;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  line-height: 1.2;
   color: #fff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 2.25rem;
+  }
 }
 
 .artist {
   font-size: 1.1rem;
   font-weight: 500;
-  color: #00ffff;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  color: var(--primary-accent);
+  margin: 0 0 4px;
 }
 
-.infoGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+.albumInfo {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .actionButtons {
+    justify-content: flex-start;
+  }
+}
+
+.actionBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.actionBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.actionBtnActive {
+  background: rgba(0, 255, 217, 0.2);
+  color: var(--primary-accent);
+}
+
+.actionBtnActive:hover {
+  background: rgba(0, 255, 217, 0.3);
+}
+
+.heartFilled {
+  fill: var(--primary-accent);
+  color: var(--primary-accent);
+}
+
+/* Progress Section */
+.progressSection {
   width: 100%;
-  margin-top: 30px;
+  max-width: 600px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  transition: height 0.2s ease;
+}
+
+.progressBar:hover {
+  height: 8px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+.progressThumb {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.progressBar:hover .progressThumb {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.timeContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Controls Row - contains playback controls and volume */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  gap: 16px;
+}
+
+/* Playback Controls */
+.playbackControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.controlBtn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.controlBtn:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.controlBtnActive {
+  color: var(--primary-accent);
+}
+
+.repeatBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  background: var(--primary-accent);
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.playBtn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary-accent);
+  border: none;
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 24px rgba(0, 255, 217, 0.4);
+}
+
+.playBtn:hover {
+  background: #00e6c3;
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px rgba(0, 255, 217, 0.5);
+}
+
+/* Volume Section */
+.volumeSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.volumeBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.volumeBtn:hover {
+  color: #fff;
+}
+
+.volumeSlider {
+  width: 100px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.volumeSlider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.volumeSlider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: none;
+}
+
+/* Info Cards */
+.infoCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 1100px;
+  margin-top: auto;
+  padding-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .infoCards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .infoCard {
-  background: rgba(10, 10, 15, 0.6);
-  border: 1px solid rgba(0, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
   transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 }
 
 .infoCard:hover {
-  background: rgba(10, 10, 15, 0.8);
-  border-color: rgba(0, 255, 255, 0.2);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(0, 255, 217, 0.2);
   transform: translateY(-2px);
 }
 
 .infoCard h3 {
-  font-size: 0.85rem;
+  font-size: 11px;
   font-weight: 700;
-  margin: 0 0 16px 0;
-  color: #888;
   text-transform: uppercase;
   letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 10px;
 }
 
-.artistCircle {
-  width: 64px;
-  height: 64px;
+.artistCardInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.artistAvatar {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 16px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-  border: 2px solid #00ffff;
+  border: 2px solid rgba(0, 255, 217, 0.5);
 }
 
-.cardText {
-  color: #fff;
+.artistDetails {
+  flex: 1;
+}
+
+.artistCardName {
   font-size: 1rem;
   font-weight: 600;
+  color: #fff;
+  margin: 0 0 4px;
+}
+
+.artistFans {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.creditsText {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 8px;
   line-height: 1.5;
 }
 
-.textBtn {
-  margin-top: auto;
-  background: none;
-  border: none;
-  color: #00ffff;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 8px 0 0 0;
-  transition: opacity 0.2s;
+.creditsText span {
+  color: #fff;
+  font-weight: 500;
 }
 
-.textBtn:hover {
-  opacity: 0.8;
+.showAllBtn {
+  background: transparent;
+  border: none;
+  color: var(--primary-accent);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+  transition: opacity 0.2s ease;
+}
+
+.showAllBtn:hover {
+  opacity: 0.7;
+}
+
+/* Not Found State */
+.notFound {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.goBackBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.goBackBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Legacy support - keep old class names working */
+.songContent {
+  composes: mainContent;
+}
+
+.songDetails {
+  composes: songInfo;
+}
+
+.placeholder {
+  width: 40px;
+}
+
+.infoGrid {
+  composes: infoCards;
+}
+
+.artistCircle {
+  composes: artistAvatar;
+}
+
+.cardText {
+  composes: creditsText;
+}
+
+.textBtn {
+  composes: showAllBtn;
 }

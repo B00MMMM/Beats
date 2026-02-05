@@ -1,0 +1,97 @@
+.bpmDisplay {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.bpmValue {
+  font-size: 42px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--primary-accent);
+  text-shadow: 0 0 20px rgba(0, 255, 217, 0.6), 0 0 40px rgba(0, 255, 217, 0.3);
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.bpmLabel {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--primary-accent);
+  text-shadow: 0 0 10px rgba(0, 255, 217, 0.5);
+  letter-spacing: 2px;
+  margin-top: -4px;
+}
+
+.energyLabel {
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+.barsContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.gradientOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.8) 80%, rgba(0, 0, 0, 1) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.canvas {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .bpmDisplay {
+    top: 70px;
+    right: 16px;
+  }
+  
+  .bpmValue {
+    font-size: 32px;
+  }
+  
+  .bpmLabel {
+    font-size: 12px;
+  }
+  
+  .barsContainer {
+    height: 30vh;
+  }
+}
+
+@media (max-height: 700px) {
+  .barsContainer {
+    height: 25vh;
+  }
+}
