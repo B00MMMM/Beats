@@ -62,14 +62,15 @@ const AudioReactiveBars = ({ barCount = 64, showBpm = true }) => {
     // Calculate energy and bass for beat detection
     let total = 0;
     let bass = 0;
-    if (hasAudioData) {
+    if (hasAudioData && data) {
       for (let i = 0; i < data.length; i++) {
         total += data[i];
         if (i < 10) bass += data[i];
       }
     }
     
-    const avgEnergy = total / (data.length * 255);
+    const dataLength = (hasAudioData && data) ? data.length : 128;
+    const avgEnergy = dataLength > 0 ? total / (dataLength * 255) : 0;
     const avgBass = bass / (10 * 255);
     
     setEnergy(Math.round(avgEnergy * 100));
