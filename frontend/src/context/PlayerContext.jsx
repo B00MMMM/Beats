@@ -338,9 +338,13 @@ export const PlayerProvider = ({ children }) => {
         }
       };
 
-      // Attempt to init immediately (might be blocked by browser)
-      // Better to trigger on play
+      // Add event listener for future play events
       audioRef.current.addEventListener('play', initAudio);
+      
+      // Also try to init if audio is already playing (e.g., after page refresh)
+      if (!audioRef.current.paused) {
+        initAudio();
+      }
 
       return () => {
         if (audioRef.current) {
