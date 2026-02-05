@@ -24,36 +24,20 @@ const AudioReactiveBars = ({ barCount = 64, showBpm = true }) => {
   
   // Initialize audio analyzer
   const initAudio = useCallback(() => {
-    if (!audioRef?.current) return;
+    if (!audioRef?.current) return false;
     
     // Use existing player analyser if available
     if (playerAnalyser) {
       analyserRef.current = playerAnalyser;
-      dataArrayRef.current = new Uint8Array(playerAnalyser.frequencyBinCount);
-      return;
+      if (!dataArrayRef.current || dataArrayRef.current.length !== playerAnalyser.frequencyBinCount) {
+        dataArrayRef.current = new Uint8Array(playerAnalyser.frequencyBinCount);
+      }
+      return true;
     }
     
-    // Otherwise create our own
-    if (audioContextRef.current) return;
-    
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      audioContextRef.current = new AudioContext();
-      
-      const analyser = audioContextRef.current.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      
-      const source = audioContextRef.current.createMediaElementSource(audioRef.current);
-      source.connect(analyser);
-      analyser.connect(audioContextRef.current.destination);
-      
-      analyserRef.current = analyser;
-      sourceRef.current = source;
-      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
-    } catch (e) {
-      console.error('Audio init error:', e);
-    }
+    // Don't create our own if source is already connected elsewhere
+    // Just wait for playerAnalyser to be available
+    return false;
   }, [audioRef, playerAnalyser]);
   
   // Draw frequency bars
@@ -206,12 +190,12 @@ const AudioReactiveBars = ({ barCount = 64, showBpm = true }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Initialize audio on play
+  // Initialize audio on play or when playerAnalyser becomes available
   useEffect(() => {
     if (isPlaying) {
       initAudio();
     }
-  }, [isPlaying, initAudio]);
+  }, [isPlaying, initAudio, playerAnalyser]);
   
   // Start/stop animation
   useEffect(() => {
