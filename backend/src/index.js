@@ -54,21 +54,8 @@ io.on('connection', (socket) => {
         io.emit('onlineUsers', Array.from(onlineUsers.keys()));
     }
     
-    // Handle sending messages via socket
-    socket.on('sendMessage', async (data) => {
-        const { recipientId, content, senderId, senderInfo } = data;
-        
-        const recipientSocketId = onlineUsers.get(recipientId);
-        if (recipientSocketId) {
-            io.to(recipientSocketId).emit('newMessage', {
-                senderId,
-                receiverId: recipientId,
-                content,
-                senderInfo,
-                createdAt: new Date().toISOString()
-            });
-        }
-    });
+    // Note: Real-time message delivery is handled by the REST API (chat.controller.js)
+    // The sendMessage socket event is no longer used to prevent duplicate messages
     
     // Handle typing indicator
     socket.on('typing', ({ recipientId, isTyping }) => {
