@@ -160,16 +160,17 @@ export const getMessages = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { userId: senderId } = getAuth(req);
-    const { recipientId, content } = req.body;
+    const { recipientId, content, attachment } = req.body;
 
-    if (!recipientId || !content) {
-      return res.status(400).json({ message: 'Recipient ID and content are required' });
+    if (!recipientId || (!content && !attachment)) {
+      return res.status(400).json({ message: 'Recipient ID and either content or attachment are required' });
     }
 
     const message = new Message({
       senderId,
       receiverId: recipientId,
-      content
+      content,
+      attachment
     });
 
     await message.save();

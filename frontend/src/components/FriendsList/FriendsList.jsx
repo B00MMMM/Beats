@@ -2,7 +2,11 @@ import { Search, MessageCircle, MoreVertical } from 'lucide-react'
 import { useState } from 'react'
 import styles from './FriendsList.module.css'
 
-function FriendsList({ friends, onFriendClick, activeTab = 'all', loading = false }) {
+/* Added inline style or ensure module css has this class. 
+   Ideally, user asked for "indicator". I will add the CSS to the module file next. 
+*/
+
+function FriendsList({ friends, onFriendClick, activeTab = 'all', loading = false, unreadCounts = {} }) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredFriends = friends.filter(friend => {
@@ -62,6 +66,9 @@ function FriendsList({ friends, onFriendClick, activeTab = 'all', loading = fals
                   <span className={styles.friendStatus}>
                     {friend.status === 'online' ? 'Online' : 'Offline'}
                   </span>
+                  {unreadCounts[friend.id] > 0 && (
+                    <span className={styles.unreadBadge}>{unreadCounts[friend.id]}</span>
+                  )}
                 </div>
               </div>
               <div className={styles.friendActions}>

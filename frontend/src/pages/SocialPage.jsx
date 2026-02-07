@@ -25,6 +25,7 @@ function SocialPage() {
   const [searchLoading, setSearchLoading] = useState(false)
   const [currentUserUniqueId, setCurrentUserUniqueId] = useState(null)
   const [showUniqueId, setShowUniqueId] = useState(false)
+  const [unreadCounts, setUnreadCounts] = useState({})
 
   // Initialize socket connection
   useEffect(() => {
@@ -39,15 +40,29 @@ function SocialPage() {
 
       // Listen for new messages
       socketInstance.on('newMessage', (message) => {
-        setMessages(prev => [...prev, {
-          ...message,
-          isOwn: false,
-          sender: message.senderInfo?.fullName || 'Unknown',
-          timestamp: new Date(message.createdAt).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-          })
-        }])
+        setMessages(prev => {
+          // Prevent duplicates
+          if (prev.some(m => m.id === message._id)) return prev
+
+          return [...prev, {
+            ...message,
+            id: message._id,
+            isOwn: false,
+            sender: message.senderInfo?.fullName || 'Unknown',
+            timestamp: new Date(message.createdAt).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          }]
+        })
+
+        // Update unread count if not in chat with this user
+        if (selectedFriend?.id !== message.senderId) {
+          setUnreadCounts(prev => ({
+            ...prev,
+            [message.senderId]: (prev[message.senderId] || 0) + 1
+          }))
+        }
       })
 
       return () => {
@@ -142,6 +157,18 @@ function SocialPage() {
 
     return () => clearTimeout(timeoutId)
   }, [searchQuery, getToken])
+
+
+  // Clear unread count when opening chat
+  useEffect(() => {
+    if (selectedFriend) {
+      setUnreadCounts(prev => {
+        const newCounts = { ...prev }
+        delete newCounts[selectedFriend.id]
+        return newCounts
+      })
+    }
+  }, [selectedFriend])
 
   // Fetch messages when a friend is selected
   useEffect(() => {
@@ -414,6 +441,7 @@ function SocialPage() {
                 activeTab={activeTab}
                 onFriendClick={handleFriendClick}
                 loading={loading}
+                unreadCounts={unreadCounts}
               />
             )}
           </>
