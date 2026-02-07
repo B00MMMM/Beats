@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getMessages, sendMessage, getOnlineUsers } from '../controller/chat.controller.js';
+import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, getFriendRequests } from '../controller/chat.controller.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -15,5 +15,13 @@ router.post('/messages', protectRoute, sendMessage);
 
 // Get online users
 router.get('/online', protectRoute, getOnlineUsers);
+
+// Search users
+router.get('/users/search', protectRoute, searchUsers);
+
+// Friend requests
+router.post('/friends/request', protectRoute, sendFriendRequest);
+router.post('/friends/accept', protectRoute, acceptFriendRequest);
+router.get('/friends/requests', protectRoute, getFriendRequests);
 
 export default router;

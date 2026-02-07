@@ -2,12 +2,13 @@ import { Playlist } from "../models/playlist.model.js";
 import { PlaylistSong } from "../models/playlistSong.model.js";
 import { Song } from "../models/song.model.js";
 import cloudinary from "../lib/cloudinary.js";
+import { getAuth } from "@clerk/express";
 
 // Create a new playlist
 export const createPlaylist = async (req, res) => {
     try {
         const { title, description } = req.body;
-        const userId = req.auth.userId;
+        const { userId } = getAuth(req);
 
         const playlist = await Playlist.create({
             title,
@@ -23,9 +24,10 @@ export const createPlaylist = async (req, res) => {
 };
 
 // Get all playlists for the current user
+// Get all playlists for the current user
 export const getMyPlaylists = async (req, res) => {
     try {
-        const userId = req.auth.userId;
+        const { userId } = getAuth(req);
         const playlists = await Playlist.find({ userId }).sort({ createdAt: -1 });
         res.json(playlists);
     } catch (error) {
@@ -139,7 +141,7 @@ export const removeSongFromPlaylist = async (req, res) => {
 export const checkSongInPlaylists = async (req, res) => {
     try {
         const { deezerId } = req.params;
-        const userId = req.auth.userId;
+        const { userId } = getAuth(req);
 
         // 1. Find the internal Song ID (if it exists)
         const song = await Song.findOne({ deezerId: String(deezerId) });
