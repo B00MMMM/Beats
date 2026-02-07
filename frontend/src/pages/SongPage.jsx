@@ -23,7 +23,7 @@ import AudioReactiveBars from '../components/AudioReactiveBars/AudioReactiveBars
 function SongPage() {
   const { deezerId } = useParams();
   const navigate = useNavigate();
-  
+
   const {
     currentTrack,
     isPlaying,
@@ -43,7 +43,7 @@ function SongPage() {
     likedSongs,
     toggleLike
   } = usePlayer();
-  
+
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [repeatMode, setRepeatMode] = useState(0); // 0: off, 1: all, 2: one
@@ -118,7 +118,7 @@ function SongPage() {
   return (
     <div className={styles.songPageWrapper}>
       {/* Audio Reactive Bars (synced with music) */}
-      {isPlaying && <AudioReactiveBars barCount={50} showBpm={true} />}
+      {isPlaying && <AudioReactiveBars barCount={35} showBpm={true} />}
 
       <Color src={albumCover} format="hex" crossOrigin="anonymous">
         {({ data: color }) => (
@@ -149,13 +149,13 @@ function SongPage() {
                   {/* Album Art */}
                   <div className={styles.albumArtSection}>
                     <div className={styles.albumArtContainer}>
-                      <img 
-                        src={albumCover} 
-                        alt={song.title} 
-                        className={styles.albumArt} 
+                      <img
+                        src={albumCover}
+                        alt={song.title}
+                        className={styles.albumArt}
                       />
                       {/* Glow effect */}
-                      <div 
+                      <div
                         className={styles.albumGlow}
                         style={{ backgroundColor: color }}
                       />
@@ -182,11 +182,11 @@ function SongPage() {
                       >
                         <Heart className={isLiked ? styles.heartFilled : ''} size={22} />
                       </button>
-                      
+
                       <button className={styles.actionBtn} title="Add to Playlist">
                         <ListMusic size={22} />
                       </button>
-                      
+
                       <button className={styles.actionBtn} title="More Options">
                         <MoreHorizontal size={22} />
                       </button>
@@ -194,18 +194,18 @@ function SongPage() {
 
                     {/* Progress Bar */}
                     <div className={styles.progressSection}>
-                      <div 
-                        className={styles.progressBar} 
+                      <div
+                        className={styles.progressBar}
                         onClick={handleProgressBarClick}
                       >
-                        <div 
+                        <div
                           className={styles.progressFill}
-                          style={{ 
+                          style={{
                             width: `${progress}%`,
                             background: `linear-gradient(90deg, #00FFD9, ${color || '#00FFD9'})`
                           }}
                         />
-                        <div 
+                        <div
                           className={styles.progressThumb}
                           style={{ left: `${progress}%` }}
                         />
@@ -228,7 +228,7 @@ function SongPage() {
                           <Shuffle size={20} />
                         </button>
 
-                        <button 
+                        <button
                           className={styles.controlBtn}
                           onClick={playPrevious}
                           title="Previous"
@@ -248,7 +248,7 @@ function SongPage() {
                           )}
                         </button>
 
-                        <button 
+                        <button
                           className={styles.controlBtn}
                           onClick={playNext}
                           title="Next"
@@ -270,7 +270,7 @@ function SongPage() {
 
                       {/* Volume Control */}
                       <div className={styles.volumeSection}>
-                        <button 
+                        <button
                           className={styles.volumeBtn}
                           onClick={toggleMute}
                           title={isMuted ? 'Unmute' : 'Mute'}
@@ -304,9 +304,9 @@ function SongPage() {
                     <h3>About the Artist</h3>
                     <div className={styles.artistCardInfo}>
                       {artistPicture && (
-                        <img 
-                          src={artistPicture} 
-                          alt={artistName} 
+                        <img
+                          src={artistPicture}
+                          alt={artistName}
                           className={styles.artistAvatar}
                         />
                       )}
