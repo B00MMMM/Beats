@@ -1,22 +1,145 @@
 import { Message } from '../models/message.model.js';
 import { User } from '../models/user.model.js';
+import { getAuth } from "@clerk/express";
 
 // Get all users for chat (friends list)
 export const getUsers = async (req, res) => {
   try {
-    const currentUserId = req.auth.userId;
-    const users = await User.find({ clerkId: { $ne: currentUserId } });
-    res.json(users);
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId }).populate('friends');
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+    res.json(currentUser.friends);
   } catch (error) {
     console.error('Error getting users:', error);
     res.status(500).json({ message: 'Error fetching users' });
   }
 };
 
+// Search users by uniqueId or name
+export const searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    const users = await User.find({
+      $and: [
+        { _id: { $ne: currentUser._id } },
+        {
+          $or: [
+            { uniqueId: { $regex: query, $options: 'i' } },
+            { fullName: { $regex: query, $options: 'i' } }
+          ]
+        }
+      ]
+    }).select('fullName imageUrl uniqueId _id');
+
+    res.json(users);
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ message: 'Error searching users' });
+  }
+};
+
+// Send friend request
+export const sendFriendRequest = async (req, res) => {
+  try {
+    const { recipientId } = req.body; // Internal DB _id
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    if (currentUser._id.toString() === recipientId) {
+      return res.status(400).json({ message: "You cannot add yourself." });
+    }
+
+    const recipient = await User.findById(recipientId);
+
+    if (!recipient) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (recipient.friendRequests.includes(currentUser._id)) {
+      return res.status(400).json({ message: "Request already sent." });
+    }
+
+    if (recipient.friends.includes(currentUser._id)) {
+      return res.status(400).json({ message: "Already friends." });
+    }
+
+    recipient.friendRequests.push(currentUser._id);
+    await recipient.save();
+
+    res.status(200).json({ message: "Friend request sent." });
+
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ message: 'Error sending friend request' });
+  }
+};
+
+// Accept friend request
+export const acceptFriendRequest = async (req, res) => {
+  try {
+    const { requesterId } = req.body; // Internal DB _id
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    const requester = await User.findById(requesterId);
+
+    if (!requester) {
+      return res.status(404).json({ message: "Requester not found." });
+    }
+
+    // Add to each other's friends list
+    if (!currentUser.friends.includes(requester._id)) {
+      currentUser.friends.push(requester._id);
+      currentUser.friendRequests = currentUser.friendRequests.filter(id => id.toString() !== requesterId);
+      await currentUser.save();
+    }
+
+    if (!requester.friends.includes(currentUser._id)) {
+      requester.friends.push(currentUser._id);
+      await requester.save();
+    }
+
+    res.status(200).json({ message: "Friend request accepted." });
+
+  } catch (error) {
+    console.error('Error accepting friend request:', error);
+    res.status(500).json({ message: 'Error accepting friend request' });
+  }
+};
+
+// Get friend requests
+export const getFriendRequests = async (req, res) => {
+  try {
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId }).populate('friendRequests', 'fullName imageUrl uniqueId _id');
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+    res.json(currentUser.friendRequests);
+  } catch (error) {
+    console.error('Error fetching friend requests:', error);
+    res.status(500).json({ message: 'Error fetching friend requests' });
+  }
+};
+
 // Get messages between two users
 export const getMessages = async (req, res) => {
   try {
-    const currentUserId = req.auth.userId;
+    const { userId: currentUserId } = getAuth(req);
     const { recipientId } = req.params;
 
     const messages = await Message.find({
@@ -36,7 +159,7 @@ export const getMessages = async (req, res) => {
 // Send a message
 export const sendMessage = async (req, res) => {
   try {
-    const senderId = req.auth.userId;
+    const { userId: senderId } = getAuth(req);
     const { recipientId, content } = req.body;
 
     if (!recipientId || !content) {

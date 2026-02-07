@@ -1,6 +1,7 @@
 import { User } from "../models/user.model.js";
 import { ListeningHistory } from "../models/listeningHistory.model.js";
 import { Song } from "../models/song.model.js";
+import { getAuth } from "@clerk/express";
 
 export const toggleLike = async (req, res) => {
     try {
@@ -41,7 +42,7 @@ export const toggleLike = async (req, res) => {
 
 export const getFavorites = async (req, res) => {
     try {
-        const userId = req.auth.userId;
+        const { userId } = getAuth(req);
         const favorites = await ListeningHistory.find({ userId, isLiked: true }).sort({ createdAt: -1 });
         res.json(favorites);
     } catch (error) {
@@ -53,7 +54,7 @@ export const getFavorites = async (req, res) => {
 // Get all users (for friends feature, etc.)
 export const getAllUsers = async (req, res, next) => {
     try {
-        const currentUserId = req.auth.userId;
+        const { userId: currentUserId } = getAuth(req);
         const users = await User.find({ clerkId: { $ne: currentUserId } });
         res.json(users);
     } catch (error) {
@@ -101,7 +102,7 @@ export const addListeningHistory = async (req, res) => {
 
 export const getListeningHistory = async (req, res) => {
     try {
-        const userId = req.auth.userId;
+        const { userId } = getAuth(req);
         // Fetch where count > 0 (actually played) or just all? 
         // User asked for "Recent plays". So implied "played".
         const history = await ListeningHistory.find({ userId, count: { $gt: 0 } })

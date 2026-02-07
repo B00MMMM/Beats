@@ -15,8 +15,21 @@ const userSchema = new mongoose.Schema(
             required: true,
             unique: true,
         },
+        uniqueId: {
+            type: String,
+            unique: true,
+            sparse: true,
+        },
+        friends: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }],
+        friendRequests: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        }],
     },
-    {timestamps: true,} // Automatically manage createdAt and updatedAt fields
+    { timestamps: true, } // Automatically manage createdAt and updatedAt fields
 );
 
 export const User = mongoose.model("User", userSchema);
