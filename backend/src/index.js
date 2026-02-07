@@ -54,6 +54,14 @@ io.on('connection', (socket) => {
         io.emit('onlineUsers', Array.from(onlineUsers.keys()));
     }
     
+    // Send current online users to the newly connected socket
+    socket.emit('onlineUsers', Array.from(onlineUsers.keys()));
+    
+    // Handle request for online users (fallback)
+    socket.on('getOnlineUsers', () => {
+        socket.emit('onlineUsers', Array.from(onlineUsers.keys()));
+    });
+    
     // Note: Real-time message delivery is handled by the REST API (chat.controller.js)
     // The sendMessage socket event is no longer used to prevent duplicate messages
     

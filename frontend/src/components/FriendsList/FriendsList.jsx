@@ -1,4 +1,4 @@
-import { Search, MessageCircle, MoreVertical } from 'lucide-react'
+import { Search, MessageCircle, UserMinus } from 'lucide-react'
 import { useState } from 'react'
 import styles from './FriendsList.module.css'
 
@@ -6,7 +6,7 @@ import styles from './FriendsList.module.css'
    Ideally, user asked for "indicator". I will add the CSS to the module file next. 
 */
 
-function FriendsList({ friends, onFriendClick, activeTab = 'all', loading = false, unreadCounts = {} }) {
+function FriendsList({ friends, onFriendClick, onUnfriend, activeTab = 'all', loading = false, unreadCounts = {} }) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredFriends = friends.filter(friend => {
@@ -75,8 +75,12 @@ function FriendsList({ friends, onFriendClick, activeTab = 'all', loading = fals
                 <button className={styles.actionButton} onClick={() => onFriendClick?.(friend)}>
                   <MessageCircle size={18} />
                 </button>
-                <button className={styles.actionButton}>
-                  <MoreVertical size={18} />
+                <button 
+                  className={`${styles.actionButton} ${styles.unfriendButton}`} 
+                  onClick={() => onUnfriend?.(friend)}
+                  title="Unfriend"
+                >
+                  <UserMinus size={18} />
                 </button>
               </div>
             </div>
