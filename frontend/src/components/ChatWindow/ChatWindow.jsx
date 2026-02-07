@@ -1,4 +1,4 @@
-import { Smile, Share2, Send, Music, ArrowLeft, Play, Pause } from 'lucide-react'
+import { Smile, Share2, Send, Music, ArrowLeft, Play, Pause, X } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import styles from './ChatWindow.module.css'
 import MusicPicker from '../MusicPicker/MusicPicker'
@@ -7,34 +7,38 @@ import { usePlayer } from '../../context/PlayerContext'
 function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
   const [message, setMessage] = useState('')
   const [showMusicPicker, setShowMusicPicker] = useState(false)
+  const [pinnedAttachment, setPinnedAttachment] = useState(null)
   const messagesEndRef = useRef(null)
-  const { playTrack, currentTrack, isPlaying, togglePlay } = usePlayer()
+  const { playTrack } = usePlayer()
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = (attachment = null) => {
-    if (message.trim() || attachment) {
-      onSendMessage?.(message, attachment)
+  const handleSend = () => {
+    if (message.trim() || pinnedAttachment) {
+      onSendMessage?.(message, pinnedAttachment)
       setMessage('')
+      setPinnedAttachment(null)
       setShowMusicPicker(false)
     }
   }
 
   const handleMusicSelect = (item) => {
-    handleSend(item)
+    setPinnedAttachment(item)
+    setShowMusicPicker(false)
   }
 
   const handlePlayMusic = (attachment) => {
-    // Construct a track object compat with PlayerContext
+    // Construct a track object compatible with PlayerContext
+    // The player streams audio using deezerId from /api/songs/stream/:deezerId
     const track = {
       _id: attachment.id,
+      deezerId: attachment.id, // The id stored in attachment is the deezerId
       title: attachment.title,
       artist: attachment.artist,
-      imageUrl: attachment.image,
-      audioUrl: attachment.audioUrl // Assuming this is available or handled by Player
+      imageUrl: attachment.image
     }
     playTrack(track)
   }
@@ -89,19 +93,15 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
 
                 {msg.attachment ? (
                   <div className={styles.musicAttachment}>
-                    <div className={styles.musicInfo}>
-                      <img src={msg.attachment.image} alt={msg.attachment.title} className={styles.albumArt} />
-                      <div className={styles.songDetails}>
-                        <div className={styles.songTitle}>{msg.attachment.title}</div>
-                        <div className={styles.songArtist}>{msg.attachment.artist}</div>
-                      </div>
-                    </div>
                     <button
                       className={styles.playBtn}
                       onClick={() => handlePlayMusic(msg.attachment)}
                     >
                       <Play size={16} fill="currentColor" />
                     </button>
+                    <div className={styles.musicInfo}>
+                      <span className={styles.songTitle}>{msg.attachment.title || msg.attachment.name}</span>
+                    </div>
                   </div>
                 ) : null}
 
@@ -117,27 +117,43 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className={styles.inputArea}>
-        <button className={styles.iconButton}>
-          <Smile size={20} />
-        </button>
-        <input
-          type="text"
-          placeholder="Type Message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-          className={styles.input}
-        />
-        <button
-          className={styles.iconButton}
-          onClick={() => setShowMusicPicker(true)}
-        >
-          <Music size={20} />
-        </button>
-        <button className={styles.sendButton} onClick={() => handleSend()}>
-          <Send size={20} />
-        </button>
+      <div className={styles.inputContainer}>
+        {pinnedAttachment && (
+          <div className={styles.pinnedAttachment}>
+            <div className={styles.pinnedInfo}>
+              <Music size={14} />
+              <span>{pinnedAttachment.title || pinnedAttachment.name}</span>
+            </div>
+            <button
+              className={styles.removePinnedBtn}
+              onClick={() => setPinnedAttachment(null)}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        <div className={styles.inputArea}>
+          <button className={styles.iconButton}>
+            <Smile size={20} />
+          </button>
+          <input
+            type="text"
+            placeholder="Type Message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            className={styles.input}
+          />
+          <button
+            className={styles.iconButton}
+            onClick={() => setShowMusicPicker(true)}
+          >
+            <Music size={20} />
+          </button>
+          <button className={styles.sendButton} onClick={handleSend}>
+            <Send size={20} />
+          </button>
+        </div>
       </div>
 
       {showMusicPicker && (

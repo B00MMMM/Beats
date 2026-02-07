@@ -85,7 +85,7 @@ const MusicPicker = ({ onSelect, onClose }) => {
                         filteredItems.map(item => (
                             <div key={item._id} className={styles.item}>
                                 <img
-                                    src={item.imageUrl || item.albumImage || "/default-music.png"}
+                                    src={item.imageUrl || item.cover || item.albumImage || "/default-music.png"}
                                     alt={item.title || item.name}
                                     className={styles.itemImage}
                                 />

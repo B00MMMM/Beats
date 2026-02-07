@@ -3,9 +3,16 @@
   color: var(--bg-dark);
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 10px;
   margin-left: 8px;
+  min-width: 16px;
+  max-width: fit-content;
+  /* Ensure circular/pill shape isn't too thin */
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .friendsList {

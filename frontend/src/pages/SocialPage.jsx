@@ -1,15 +1,14 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronDown, UserPlus, Search, UserCheck, X, Eye, EyeOff } from 'lucide-react'
-import { useAuth, useUser } from '@clerk/clerk-react'
+import { useAuth } from '@clerk/clerk-react'
 import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
-import { initSocket, getSocket, disconnectSocket } from '../lib/socket'
+import { initSocket, disconnectSocket } from '../lib/socket'
 import axios from '../api/axios'
 import styles from './SocialPage.module.css'
 
 function SocialPage() {
   const { getToken, userId } = useAuth()
-  const { user } = useUser()
   const [activeTab, setActiveTab] = useState('all')
   const [selectedFriend, setSelectedFriend] = useState(null)
   const [messages, setMessages] = useState([])
@@ -27,6 +26,13 @@ function SocialPage() {
   const [showUniqueId, setShowUniqueId] = useState(false)
   const [unreadCounts, setUnreadCounts] = useState({})
 
+  const selectedFriendRef = useRef(selectedFriend) // Ref to track selected friend in closures
+
+  // Update ref when selected friend changes
+  useEffect(() => {
+    selectedFriendRef.current = selectedFriend
+  }, [selectedFriend])
+
   // Initialize socket connection
   useEffect(() => {
     if (userId) {
@@ -41,12 +47,14 @@ function SocialPage() {
       // Listen for new messages
       socketInstance.on('newMessage', (message) => {
         setMessages(prev => {
-          // Prevent duplicates
-          if (prev.some(m => m.id === message._id)) return prev
+          // Prevent duplicates by checking both _id and a generated temporary id
+          const isDuplicate = prev.some(m => m.id === message._id || (message._id && m.id === message._id));
+          if (isDuplicate) return prev
 
           return [...prev, {
-            ...message,
             id: message._id,
+            content: message.content,
+            attachment: message.attachment,
             isOwn: false,
             sender: message.senderInfo?.fullName || 'Unknown',
             timestamp: new Date(message.createdAt).toLocaleTimeString('en-US', {
@@ -190,6 +198,7 @@ function SocialPage() {
           id: msg._id,
           sender: msg.senderId === userId ? 'You' : selectedFriend.name,
           content: msg.content,
+          attachment: msg.attachment,
           isOwn: msg.senderId === userId,
           timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
             hour: '2-digit',
@@ -210,47 +219,52 @@ function SocialPage() {
     setSelectedFriend(friend)
   }
 
-  const handleSendMessage = async (text) => {
-    if (!selectedFriend || !text.trim()) return
+  const handleSendMessage = async (text, attachment = null) => {
+    if (!selectedFriend || (!text.trim() && !attachment)) return
 
     try {
       const token = await getToken()
       if (!token) return
 
       // Save message to database
-      const response = await axios.post('/chat/messages', {
+      const payload = {
         recipientId: selectedFriend.id,
         content: text
-      }, {
+      }
+      if (attachment) {
+        // Format attachment to match the expected schema
+        // For songs from favorites, use deezerId; for other items use _id or id
+        payload.attachment = {
+          type: attachment.type || 'song',
+          id: attachment.deezerId || attachment._id || attachment.id,
+          title: attachment.title || attachment.name,
+          artist: attachment.artist || '',
+          image: attachment.imageUrl || attachment.cover || attachment.albumImage || attachment.image,
+          audioUrl: attachment.audioUrl || ''
+        }
+      }
+
+      const response = await axios.post('/chat/messages', payload, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
-      // Add message to local state
+      // Add message to local state (use the formatted attachment from response)
       const newMessage = {
         id: response.data._id,
         sender: 'You',
         content: text,
+        attachment: response.data.attachment,
         isOwn: true,
         timestamp: new Date().toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit'
         })
       }
+
       setMessages(prev => [...prev, newMessage])
 
-      // Emit via socket for real-time delivery
-      const socketInstance = getSocket()
-      if (socketInstance) {
-        socketInstance.emit('sendMessage', {
-          recipientId: selectedFriend.id,
-          content: text,
-          senderId: userId,
-          senderInfo: {
-            fullName: user?.fullName || 'You',
-            imageUrl: user?.imageUrl
-          }
-        })
-      }
+      // Real-time delivery is handled by the REST API via socket emit in chat.controller.js
+      // No need to emit via socket here as it would cause duplicate messages
     } catch (error) {
       console.error('Error sending message:', error)
     }
