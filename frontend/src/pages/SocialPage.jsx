@@ -3,6 +3,7 @@ import { ChevronDown, UserPlus, Search, UserCheck, X, Eye, EyeOff } from 'lucide
 import { useAuth } from '@clerk/clerk-react'
 import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
+import ConfirmPopup from '../components/ConfirmPopup/ConfirmPopup'
 import { initSocket, disconnectSocket } from '../lib/socket'
 import axios from '../api/axios'
 import styles from './SocialPage.module.css'
@@ -25,6 +26,10 @@ function SocialPage() {
   const [currentUserUniqueId, setCurrentUserUniqueId] = useState(null)
   const [showUniqueId, setShowUniqueId] = useState(false)
   const [unreadCounts, setUnreadCounts] = useState({})
+  
+  // Popup state
+  const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })
+  const [unfriendTarget, setUnfriendTarget] = useState(null)
 
   const selectedFriendRef = useRef(selectedFriend) // Ref to track selected friend in closures
 
@@ -43,6 +48,9 @@ function SocialPage() {
       socketInstance.on('onlineUsers', (users) => {
         setOnlineUsers(users)
       })
+
+      // Request current online users after listener is set up
+      socketInstance.emit('getOnlineUsers')
 
       // Listen for new messages
       socketInstance.on('newMessage', (message) => {
@@ -65,7 +73,8 @@ function SocialPage() {
         })
 
         // Update unread count if not in chat with this user
-        if (selectedFriend?.id !== message.senderId) {
+        // Use ref to get current selectedFriend value (avoid stale closure)
+        if (selectedFriendRef.current?.id !== message.senderId) {
           setUnreadCounts(prev => ({
             ...prev,
             [message.senderId]: (prev[message.senderId] || 0) + 1
@@ -283,12 +292,24 @@ function SocialPage() {
         headers: { Authorization: `Bearer ${token}` }
       })
 
-      alert('Friend request sent!')
+      setPopup({
+        isOpen: true,
+        title: 'Request Sent',
+        message: `Friend request sent to ${user.name}!`,
+        type: 'success',
+        onConfirm: null
+      })
       setSearchQuery('')
       setShowAddFriend(false)
     } catch (error) {
       console.error('Error sending request:', error)
-      alert(error.response?.data?.message || 'Error sending request')
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Error sending request',
+        type: 'danger',
+        onConfirm: null
+      })
     }
   }
 
@@ -304,10 +325,69 @@ function SocialPage() {
       // Update state loosely (optimistic or refresh)
       setFriendRequests(prev => prev.filter(r => r.id !== requester.id))
       setFriends(prev => [...prev, { ...requester, status: 'offline' }]) // Add new friend locally
+      
+      // Refresh online users to check if the new friend is online
+      socket?.emit('getOnlineUsers')
     } catch (error) {
       console.error('Error accepting request:', error)
-      alert('Error accepting request')
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: 'Error accepting request',
+        type: 'danger',
+        onConfirm: null
+      })
     }
+  }
+
+  // Unfriend handlers
+  const handleUnfriendClick = (friend) => {
+    setUnfriendTarget(friend)
+    setPopup({
+      isOpen: true,
+      title: 'Remove Friend',
+      message: `Are you sure you want to remove ${friend.name} from your friends list?`,
+      type: 'danger',
+      onConfirm: () => confirmUnfriend(friend)
+    })
+  }
+
+  const confirmUnfriend = async (friend) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.post('/chat/friends/remove', { friendId: friend.id }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      // Remove from local state
+      setFriends(prev => prev.filter(f => f.id !== friend.id))
+      
+      // If currently chatting with this friend, close the chat
+      if (selectedFriend?.id === friend.id) {
+        setSelectedFriend(null)
+        setMessages([])
+      }
+
+      setPopup({
+        isOpen: true,
+        title: 'Friend Removed',
+        message: `${friend.name} has been removed from your friends list.`,
+        type: 'success',
+        onConfirm: null
+      })
+    } catch (error) {
+      console.error('Error removing friend:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: 'Failed to remove friend. Please try again.',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+    setUnfriendTarget(null)
   }
 
 
@@ -454,6 +534,7 @@ function SocialPage() {
                 friends={friendsWithStatus}
                 activeTab={activeTab}
                 onFriendClick={handleFriendClick}
+                onUnfriend={handleUnfriendClick}
                 loading={loading}
                 unreadCounts={unreadCounts}
               />
@@ -461,6 +542,17 @@ function SocialPage() {
           </>
         )}
       </div>
+
+      <ConfirmPopup
+        isOpen={popup.isOpen}
+        onClose={() => setPopup(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={popup.onConfirm}
+        title={popup.title}
+        message={popup.message}
+        type={popup.type}
+        confirmText={popup.onConfirm ? 'Confirm' : 'OK'}
+        cancelText={popup.onConfirm ? 'Cancel' : ''}
+      />
     </div>
   )
 }

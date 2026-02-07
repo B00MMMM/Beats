@@ -16,6 +16,8 @@ export const initSocket = (userId) => {
 
   socket.on('connect', () => {
     console.log('Socket connected:', socket.id);
+    // Request current online users after connection
+    socket.emit('getOnlineUsers');
   });
 
   socket.on('disconnect', () => {

@@ -206,3 +206,41 @@ export const getOnlineUsers = async (req, res) => {
     res.status(500).json({ message: 'Error fetching online users' });
   }
 };
+
+// Remove friend (unfriend)
+export const removeFriend = async (req, res) => {
+  try {
+    const { friendId } = req.body; // clerkId of friend to remove
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    const friend = await User.findOne({ clerkId: friendId });
+    if (!friend) {
+      return res.status(404).json({ message: "Friend not found." });
+    }
+
+    // Remove from each other's friends list
+    currentUser.friends = currentUser.friends.filter(id => id.toString() !== friend._id.toString());
+    await currentUser.save();
+
+    friend.friends = friend.friends.filter(id => id.toString() !== currentUser._id.toString());
+    await friend.save();
+
+    // Delete all messages between them
+    await Message.deleteMany({
+      $or: [
+        { senderId: currentUserId, receiverId: friendId },
+        { senderId: friendId, receiverId: currentUserId }
+      ]
+    });
+
+    res.status(200).json({ message: "Friend removed successfully." });
+
+  } catch (error) {
+    console.error('Error removing friend:', error);
+    res.status(500).json({ message: 'Error removing friend' });
+  }
+};

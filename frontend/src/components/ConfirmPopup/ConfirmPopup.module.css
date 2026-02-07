@@ -1,0 +1,128 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.popup {
+  background-color: var(--surface-dark);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 400px;
+  position: relative;
+  animation: slideIn 0.2s ease;
+  border: 1px solid var(--border-color);
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 150ms ease;
+}
+
+.closeButton:hover {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+.content {
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.message {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancelButton {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  transition: all 150ms ease;
+}
+
+.cancelButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.confirmButton {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: var(--primary-accent);
+  color: var(--bg-dark);
+  transition: all 150ms ease;
+}
+
+.confirmButton:hover {
+  opacity: 0.9;
+}
+
+.confirmButton.danger {
+  background-color: #ef4444;
+  color: white;
+}
+
+.confirmButton.danger:hover {
+  background-color: #dc2626;
+}
+
+.confirmButton.success {
+  background-color: #22c55e;
+  color: white;
+}
+
+.confirmButton.success:hover {
+  background-color: #16a34a;
+}
