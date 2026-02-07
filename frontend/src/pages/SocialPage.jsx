@@ -74,8 +74,8 @@ function SocialPage() {
           dbId: u._id,
           name: u.fullName,
           avatar: u.imageUrl,
-          status: onlineUsers.includes(u.clerkId) ? 'online' : 'offline',
           uniqueId: u.uniqueId
+          // status is calculated dynamically now
         }))
 
         const requestsData = requestsResponse.data.map(u => ({
@@ -97,7 +97,13 @@ function SocialPage() {
     }
 
     fetchData()
-  }, [getToken, onlineUsers])
+  }, [getToken]) // Removed onlineUsers from dependency array
+
+  // Calculate friends with dynamic online status
+  const friendsWithStatus = friends.map(friend => ({
+    ...friend,
+    status: onlineUsers.includes(friend.id) ? 'online' : 'offline'
+  }))
 
   // Dynamic Search for Users
   useEffect(() => {
@@ -273,6 +279,7 @@ function SocialPage() {
             onClick={() => {
               setActiveTab('friends');
               setShowAddFriend(false);
+              setSelectedFriend(null);
             }}
           >
             Friends
@@ -282,6 +289,7 @@ function SocialPage() {
             onClick={() => {
               setActiveTab('requests');
               setShowAddFriend(false);
+              setSelectedFriend(null);
             }}
           >
             Requests {friendRequests.length > 0 && <span className={styles.notificationBadge}>{friendRequests.length}</span>}
@@ -402,7 +410,7 @@ function SocialPage() {
               </div>
             ) : (
               <FriendsList
-                friends={friends}
+                friends={friendsWithStatus}
                 activeTab={activeTab}
                 onFriendClick={handleFriendClick}
                 loading={loading}
