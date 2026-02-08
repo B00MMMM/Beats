@@ -164,7 +164,8 @@ function SocialPage() {
           name: u.fullName,
           avatar: u.imageUrl,
           uniqueId: u.uniqueId,
-          requestSent: u.requestSent
+          requestSent: u.requestSent,
+          requestReceived: u.requestReceived
         })))
       } catch (error) {
         console.error('Error searching users:', error)
@@ -329,6 +330,7 @@ function SocialPage() {
 
       // Update state loosely (optimistic or refresh)
       setFriendRequests(prev => prev.filter(r => r.id !== requester.id))
+      setSearchResults(prev => prev.filter(r => r.id !== requester.id))
       setFriends(prev => [...prev, { ...requester, status: 'offline' }]) // Add new friend locally
       
       // Refresh online users to check if the new friend is online
@@ -339,6 +341,32 @@ function SocialPage() {
         isOpen: true,
         title: 'Error',
         message: 'Error accepting request',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
+  const handleDeclineRequest = async (requester) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.post('/chat/friends/decline', { requesterId: requester.dbId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      // Remove from friend requests and search results
+      setFriendRequests(prev => prev.filter(r => r.id !== requester.id))
+      setSearchResults(prev => prev.map(r => 
+        r.id === requester.id ? { ...r, requestReceived: false } : r
+      ))
+    } catch (error) {
+      console.error('Error declining request:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: 'Error declining request',
         type: 'danger',
         onConfirm: null
       })
@@ -491,7 +519,22 @@ function SocialPage() {
                       <div className={styles.userUniqueId}>{user.uniqueId}</div>
                     </div>
                   </div>
-                  {user.requestSent ? (
+                  {user.requestReceived ? (
+                    <div className={styles.actionButtons}>
+                      <button
+                        className={styles.acceptBtn}
+                        onClick={() => handleAcceptRequest(user)}
+                      >
+                        <UserCheck size={16} /> Accept
+                      </button>
+                      <button
+                        className={styles.declineBtn}
+                        onClick={() => handleDeclineRequest(user)}
+                      >
+                        <X size={16} /> Decline
+                      </button>
+                    </div>
+                  ) : user.requestSent ? (
                     <button className={`${styles.addBtn} ${styles.requested}`} disabled>
                       <UserCheck size={16} /> Requested
                     </button>
@@ -531,12 +574,20 @@ function SocialPage() {
                         <div className={styles.userUniqueId}>{req.uniqueId}</div>
                       </div>
                     </div>
-                    <button
-                      className={styles.acceptBtn}
-                      onClick={() => handleAcceptRequest(req)}
-                    >
-                      <UserCheck size={16} /> Accept
-                    </button>
+                    <div className={styles.actionButtons}>
+                      <button
+                        className={styles.acceptBtn}
+                        onClick={() => handleAcceptRequest(req)}
+                      >
+                        <UserCheck size={16} /> Accept
+                      </button>
+                      <button
+                        className={styles.declineBtn}
+                        onClick={() => handleDeclineRequest(req)}
+                      >
+                        <X size={16} /> Decline
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

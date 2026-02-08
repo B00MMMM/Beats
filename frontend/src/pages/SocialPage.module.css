@@ -290,6 +290,27 @@
   font-weight: 600;
 }
 
+.declineBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background-color: #ff4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.declineBtn:hover {
+  background-color: #cc3333;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 8px;
+}
+
 .notificationBadge {
   background-color: var(--primary-accent);
   color: var(--bg-dark);
