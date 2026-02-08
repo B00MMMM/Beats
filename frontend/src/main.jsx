@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { PlayerProvider } from './context/PlayerContext'
+import { SocketContextProvider } from './context/SocketContext'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { BrowserRouter as Router } from 'react-router-dom'
 
@@ -16,9 +17,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Router>
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-        <PlayerProvider>
-          <App />
-        </PlayerProvider>
+        <SocketContextProvider>
+          <PlayerProvider>
+            <App />
+          </PlayerProvider>
+        </SocketContextProvider>
       </ClerkProvider>
     </Router>
   </React.StrictMode>,

@@ -1,43 +1,221 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 0;
-  background-color: transparent;
-  height: fit-content;
+  height: 100%;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 16px 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 16px;
 }
 
 .title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.toggleContainer {
+  cursor: pointer;
+}
+
+.toggle {
+  width: 32px;
+  height: 18px;
+  background-color: var(--text-muted);
+  border-radius: 10px;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.toggle.active {
+  background-color: var(--primary-accent);
+}
+
+.thumb {
+  width: 14px;
+  height: 14px;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+}
+
+.toggle.active .thumb {
+  transform: translateX(14px);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 4px;
 }
 
 .emptyState {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 22px 18px;
-  background-color: var(--surface-dark);
-  border-radius: 8px;
-  text-align: center;
-  min-height: 160px;
+  align-items: center;
   justify-content: center;
+  text-align: center;
+  margin-top: 40px;
+  padding: 0 20px;
 }
 
 .emptyTitle {
-  font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
 .emptyText {
   font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Activity Card */
+.activityCard {
+  background-color: var(--surface-dark);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activityCard:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.userInfo {
+  flex: 1;
+  overflow: hidden;
+}
+
+.userName {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.songInfo {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.listeningTo {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.songTitle {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Expanded State */
+.expandedContent {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 12px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.coverArt {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.coverArt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playButton {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: white;
+}
+
+.coverArt:hover .playButton {
+  opacity: 1;
+}
+
+.expandedDetails {
+  display: flex;
+  align-items: center;
+}
+
+.expandedArtist {
+  font-size: 13px;
   color: var(--text-secondary);
-  line-height: 1.6;
-  max-width: 260px;
-  margin: 0 auto;
 }

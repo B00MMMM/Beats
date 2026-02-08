@@ -114,3 +114,119 @@ export const getListeningHistory = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+export const updateActivity = async (req, res) => {
+    try {
+        const { userId } = getAuth(req);
+        const { activity, isPlaying } = req.body; // { songId, title, artist, cover }, isPlaying boolean
+
+        const user = await User.findOne({ clerkId: userId });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // If paused (isPlaying === false) or no activity, clear the activity
+        if (isPlaying === false || !activity) {
+            user.currentActivity = undefined;
+        } else {
+            user.currentActivity = {
+                ...activity,
+                updatedAt: new Date()
+            };
+        }
+        await user.save();
+
+        // Broadcast to friends if sharing is enabled
+        if (user.isActivityShared) {
+            const io = req.app.get('io');
+            const onlineUsers = req.app.get('onlineUsers');
+
+            // Find friends who are online
+            const friends = await User.find({ _id: { $in: user.friends } });
+
+            friends.forEach(friend => {
+                const socketId = onlineUsers.get(friend.clerkId);
+                if (socketId) {
+                    // Send full user info so they can be re-added when resuming
+                    io.to(socketId).emit('friend-activity-updated', {
+                        userId: user.clerkId,
+                        name: user.fullName,
+                        avatar: user.imageUrl,
+                        activity: user.currentActivity || null
+                    });
+                }
+            });
+        }
+
+        res.status(200).json({ message: "Activity updated" });
+    } catch (error) {
+        console.error("Error updating activity:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const toggleActivitySharing = async (req, res) => {
+    try {
+        const { userId } = getAuth(req);
+        const user = await User.findOne({ clerkId: userId });
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.isActivityShared = !user.isActivityShared;
+
+        // If turning off, clear activity
+        if (!user.isActivityShared) {
+            user.currentActivity = undefined;
+        }
+
+        await user.save();
+
+        // Broadcast update (clear or just status change)
+        const io = req.app.get('io');
+        const onlineUsers = req.app.get('onlineUsers');
+
+        const friends = await User.find({ _id: { $in: user.friends } });
+
+        friends.forEach(friend => {
+            const socketId = onlineUsers.get(friend.clerkId);
+            if (socketId) {
+                // If turned off, send null activity; include full user info for re-adding
+                const activity = user.isActivityShared ? user.currentActivity : null;
+                io.to(socketId).emit('friend-activity-updated', {
+                    userId: user.clerkId,
+                    name: user.fullName,
+                    avatar: user.imageUrl,
+                    activity
+                });
+            }
+        });
+
+        res.json({ isActivityShared: user.isActivityShared });
+    } catch (error) {
+        console.error("Error toggling activity sharing:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const getFriendsActivity = async (req, res) => {
+    try {
+        const { userId } = getAuth(req);
+        const user = await User.findOne({ clerkId: userId }).populate('friends');
+
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Get friends who have sharing enabled and recent activity (e.g. last 24h?)
+        // For now just return if they have activity
+        const friendsActivity = user.friends
+            .filter(friend => friend.isActivityShared && friend.currentActivity && friend.currentActivity.title)
+            .map(friend => ({
+                userId: friend.clerkId,
+                name: friend.fullName,
+                avatar: friend.imageUrl,
+                activity: friend.currentActivity
+            }));
+
+        res.json(friendsActivity);
+    } catch (error) {
+        console.error("Error fetching friends activity:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
