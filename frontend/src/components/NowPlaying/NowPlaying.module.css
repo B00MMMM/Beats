@@ -139,3 +139,45 @@
   color: #fff;
   font-weight: 600;
 }
+
+/* Welcome State */
+.welcomeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 20px;
+}
+
+.welcomeLogo {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #00FFD9 0%, #00B8A9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0, 255, 217, 0.3);
+}
+
+.welcomeText {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.brandName {
+  font-weight: 700;
+  color: #00FFD9;
+}
+
+.welcomeSubtext {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}

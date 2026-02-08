@@ -6,7 +6,17 @@ function NowPlaying() {
   const { currentTrack } = usePlayer();
 
   if (!currentTrack) {
-    return null;
+    return (
+      <div className={styles.nowPlaying}>
+        <div className={styles.welcomeContainer}>
+          <div className={styles.welcomeLogo}>B</div>
+          <p className={styles.welcomeText}>
+            Welcome to <span className={styles.brandName}>Beats</span>
+          </p>
+          <p className={styles.welcomeSubtext}>Play a song to see it here</p>
+        </div>
+      </div>
+    );
   }
 
   return (
