@@ -66,17 +66,18 @@ function FriendsList({ friends, onFriendClick, onUnfriend, activeTab = 'all', lo
                   <span className={styles.friendStatus}>
                     {friend.status === 'online' ? 'Online' : 'Offline'}
                   </span>
-                  {unreadCounts[friend.id] > 0 && (
-                    <span className={styles.unreadBadge}>{unreadCounts[friend.id]}</span>
-                  )}
+
                 </div>
               </div>
               <div className={styles.friendActions}>
+                {unreadCounts[friend.id] > 0 && (
+                  <span className={styles.unreadBadge}>{unreadCounts[friend.id]}</span>
+                )}
                 <button className={styles.actionButton} onClick={() => onFriendClick?.(friend)}>
                   <MessageCircle size={18} />
                 </button>
-                <button 
-                  className={`${styles.actionButton} ${styles.unfriendButton}`} 
+                <button
+                  className={`${styles.actionButton} ${styles.unfriendButton}`}
                   onClick={() => onUnfriend?.(friend)}
                   title="Unfriend"
                 >
