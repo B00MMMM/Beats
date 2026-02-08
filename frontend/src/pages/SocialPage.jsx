@@ -163,7 +163,8 @@ function SocialPage() {
           dbId: u._id,
           name: u.fullName,
           avatar: u.imageUrl,
-          uniqueId: u.uniqueId
+          uniqueId: u.uniqueId,
+          requestSent: u.requestSent
         })))
       } catch (error) {
         console.error('Error searching users:', error)
@@ -490,12 +491,18 @@ function SocialPage() {
                       <div className={styles.userUniqueId}>{user.uniqueId}</div>
                     </div>
                   </div>
-                  <button
-                    className={styles.addBtn}
-                    onClick={() => handleSendRequest(user)}
-                  >
-                    <UserPlus size={16} /> Add
-                  </button>
+                  {user.requestSent ? (
+                    <button className={`${styles.addBtn} ${styles.requested}`} disabled>
+                      <UserCheck size={16} /> Requested
+                    </button>
+                  ) : (
+                    <button
+                      className={styles.addBtn}
+                      onClick={() => handleSendRequest(user)}
+                    >
+                      <UserPlus size={16} /> Add
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
