@@ -33,12 +33,21 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
   const handlePlayMusic = (attachment) => {
     // Construct a track object compatible with PlayerContext
     // The player streams audio using deezerId from /api/songs/stream/:deezerId
+
+    // Extract image from various possible fields
+    const image = attachment.cover || attachment.image || attachment.imageUrl || attachment.album?.cover_medium || "/default-music.png";
+
     const track = {
-      _id: attachment.id,
-      deezerId: attachment.id, // The id stored in attachment is the deezerId
+      _id: attachment.id || attachment._id,
+      deezerId: attachment.id || attachment.deezerId, // The id stored in attachment is the deezerId
       title: attachment.title,
       artist: attachment.artist,
-      imageUrl: attachment.image
+      // Backend expects 'cover' for history
+      cover: image,
+      imageUrl: image,
+      album: {
+        cover_medium: image
+      }
     }
     playTrack(track)
   }
