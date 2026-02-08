@@ -85,10 +85,33 @@ function SocialPage() {
       }
     }
 
+    const handleNotification = (notification) => {
+      if (notification.type === 'friend-request') {
+        // Add new friend request dynamically
+        setFriendRequests(prev => {
+          // Avoid duplicates
+          if (prev.some(r => r.id === notification.from.id)) return prev
+          return [...prev, {
+            id: notification.from.id,
+            dbId: notification.from.dbId,
+            name: notification.from.name,
+            avatar: notification.from.avatar,
+            uniqueId: notification.from.uniqueId || ''
+          }]
+        })
+        // Also update search results if the sender is there
+        setSearchResults(prev => prev.map(r =>
+          r.id === notification.from.id ? { ...r, requestReceived: true } : r
+        ))
+      }
+    }
+
     socket.on('newMessage', handleNewMessage)
+    socket.on('notification', handleNotification)
 
     return () => {
       socket.off('newMessage', handleNewMessage)
+      socket.off('notification', handleNotification)
     }
   }, [socket])
 
