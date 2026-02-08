@@ -103,6 +103,36 @@ function SocialPage() {
         setSearchResults(prev => prev.map(r =>
           r.id === notification.from.id ? { ...r, requestReceived: true } : r
         ))
+      } else if (notification.type === 'friend-accepted') {
+        // Add new friend to friends list
+        setFriends(prev => {
+          if (prev.some(f => f.id === notification.from.id)) return prev
+          return [...prev, {
+            id: notification.from.id,
+            dbId: notification.from.dbId,
+            name: notification.from.name,
+            avatar: notification.from.avatar,
+            uniqueId: notification.from.uniqueId || '',
+            status: 'offline' // Will be updated by getOnlineUsers
+          }]
+        })
+        // Remove from search results since they're now friends
+        setSearchResults(prev => prev.filter(r => r.id !== notification.from.id))
+        // Refresh online users to get accurate status
+        socket?.emit('getOnlineUsers')
+      } else if (notification.type === 'friend-declined') {
+        // Update search results to show Add button again instead of Requested
+        setSearchResults(prev => prev.map(r =>
+          r.id === notification.from.id ? { ...r, requestSent: false } : r
+        ))
+      } else if (notification.type === 'friend-removed') {
+        // Remove from friends list
+        setFriends(prev => prev.filter(f => f.id !== notification.from.id))
+        // If currently chatting with this person, go back to list
+        if (selectedFriendRef.current?.id === notification.from.id) {
+          setSelectedFriend(null)
+          setMessages([])
+        }
       }
     }
 

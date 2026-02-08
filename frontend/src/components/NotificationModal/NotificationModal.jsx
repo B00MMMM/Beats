@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, UserPlus, UserCheck, Users } from 'lucide-react'
+import { X, UserPlus, UserCheck, UserX, UserMinus, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { useSocket } from '../../context/SocketContext'
@@ -14,7 +14,7 @@ function NotificationModal({ isOpen, onClose }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch friend requests as initial notifications
+  // Fetch notifications from database
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!isOpen) return
@@ -24,25 +24,34 @@ function NotificationModal({ isOpen, onClose }) {
         const token = await getToken()
         if (!token) return
 
-        const response = await axios.get('/chat/friends/requests', {
+        const response = await axios.get('/notifications', {
           headers: { Authorization: `Bearer ${token}` }
         })
 
-        // Convert friend requests to notification format
-        const requestNotifications = response.data.map(user => ({
-          id: user._id,
-          type: 'friend-request',
+        // Format notifications
+        const formattedNotifications = response.data.map(n => ({
+          _id: n._id,
+          type: n.type,
           from: {
-            id: user.clerkId,
-            dbId: user._id,
-            name: user.fullName,
-            avatar: user.imageUrl
+            id: n.from.clerkId,
+            dbId: n.from._id,
+            name: n.from.fullName,
+            avatar: n.from.imageUrl,
+            uniqueId: n.from.uniqueId
           },
-          message: `${user.fullName} sent you a friend request`,
-          createdAt: new Date()
+          message: n.message,
+          read: n.read,
+          createdAt: n.createdAt
         }))
 
-        setNotifications(requestNotifications)
+        setNotifications(formattedNotifications)
+
+        // Mark all as read when modal opens
+        if (formattedNotifications.some(n => !n.read)) {
+          await axios.post('/notifications/mark-read', {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        }
       } catch (error) {
         console.error('Error fetching notifications:', error)
       } finally {
@@ -59,10 +68,10 @@ function NotificationModal({ isOpen, onClose }) {
 
     const handleNotification = (notification) => {
       setNotifications(prev => {
-        // Avoid duplicates
+        // Avoid duplicates by _id or by type+user combination
         const exists = prev.some(n => 
-          n.type === notification.type && 
-          n.from?.id === notification.from?.id
+          n._id === notification._id ||
+          (n.type === notification.type && n.from?.id === notification.from?.id)
         )
         if (exists) return prev
         return [notification, ...prev]
@@ -94,6 +103,10 @@ function NotificationModal({ isOpen, onClose }) {
         return <UserPlus size={18} />
       case 'friend-accepted':
         return <UserCheck size={18} />
+      case 'friend-declined':
+        return <UserX size={18} />
+      case 'friend-removed':
+        return <UserMinus size={18} />
       default:
         return <Users size={18} />
     }
@@ -105,6 +118,10 @@ function NotificationModal({ isOpen, onClose }) {
         return styles.iconRequest
       case 'friend-accepted':
         return styles.iconAccepted
+      case 'friend-declined':
+        return styles.iconDeclined
+      case 'friend-removed':
+        return styles.iconRemoved
       default:
         return ''
     }
@@ -148,7 +165,7 @@ function NotificationModal({ isOpen, onClose }) {
             <div className={styles.list}>
               {notifications.map((notification, index) => (
                 <div
-                  key={notification.id || index}
+                  key={notification._id || index}
                   className={styles.notificationCard}
                   onClick={() => handleNotificationClick(notification)}
                 >

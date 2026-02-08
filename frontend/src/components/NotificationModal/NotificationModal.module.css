@@ -176,6 +176,16 @@
   color: #22c55e;
 }
 
+.iconDeclined {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.iconRemoved {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
 .footer {
   padding: 12px 20px;
   border-top: 1px solid var(--border-color);

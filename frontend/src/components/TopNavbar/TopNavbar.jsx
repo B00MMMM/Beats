@@ -15,17 +15,17 @@ function TopNavbar() {
   const { getToken } = useAuth();
   const { socket } = useSocket();
 
-  // Fetch initial notification count (friend requests)
+  // Fetch initial notification count (unread)
   useEffect(() => {
     const fetchNotificationCount = async () => {
       try {
         const token = await getToken();
         if (!token) return;
 
-        const response = await axios.get('/chat/friends/requests', {
+        const response = await axios.get('/notifications/unread-count', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setNotificationCount(response.data.length);
+        setNotificationCount(response.data.count);
       } catch (error) {
         console.error('Error fetching notification count:', error);
       }
