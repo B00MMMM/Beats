@@ -28,6 +28,11 @@ export const SocketContextProvider = ({ children }) => {
                 setOnlineUsers(users);
             });
 
+            // Request current online users after connection
+            socketInstance.on("connect", () => {
+                socketInstance.emit("getOnlineUsers");
+            });
+
             return () => socketInstance.close();
         } else {
             if (socket) {
