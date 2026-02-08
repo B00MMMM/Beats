@@ -235,6 +235,16 @@
   opacity: 0.9;
 }
 
+.addBtn.requested {
+  background-color: var(--surface-dark);
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.addBtn.requested:hover {
+  opacity: 1;
+}
+
 .loading,
 .emptyState {
   text-align: center;

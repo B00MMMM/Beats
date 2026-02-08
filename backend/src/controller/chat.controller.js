@@ -27,9 +27,13 @@ export const searchUsers = async (req, res) => {
       return res.status(404).json({ message: "User not found in database" });
     }
 
+    // Get friend IDs to exclude
+    const friendIds = currentUser.friends.map(id => id.toString());
+
     const users = await User.find({
       $and: [
         { _id: { $ne: currentUser._id } },
+        { _id: { $nin: currentUser.friends } }, // Exclude already friends
         {
           $or: [
             { uniqueId: { $regex: query, $options: 'i' } },
@@ -37,9 +41,19 @@ export const searchUsers = async (req, res) => {
           ]
         }
       ]
-    }).select('fullName imageUrl uniqueId _id');
+    }).select('fullName imageUrl uniqueId _id clerkId friendRequests');
 
-    res.json(users);
+    // Check if current user has already sent a request to each user
+    const usersWithRequestStatus = users.map(user => ({
+      _id: user._id,
+      clerkId: user.clerkId,
+      fullName: user.fullName,
+      imageUrl: user.imageUrl,
+      uniqueId: user.uniqueId,
+      requestSent: user.friendRequests.some(id => id.toString() === currentUser._id.toString())
+    }));
+
+    res.json(usersWithRequestStatus);
   } catch (error) {
     console.error('Error searching users:', error);
     res.status(500).json({ message: 'Error searching users' });
