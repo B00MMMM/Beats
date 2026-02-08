@@ -4,20 +4,19 @@ import { useAuth } from '@clerk/clerk-react'
 import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
 import ConfirmPopup from '../components/ConfirmPopup/ConfirmPopup'
-import { initSocket, disconnectSocket } from '../lib/socket'
+import { useSocket } from '../context/SocketContext'
 import axios from '../api/axios'
 import styles from './SocialPage.module.css'
 
 function SocialPage() {
   const { getToken, userId } = useAuth()
+  const { socket, onlineUsers } = useSocket()
   const [activeTab, setActiveTab] = useState('all')
   const [selectedFriend, setSelectedFriend] = useState(null)
   const [messages, setMessages] = useState([])
   const [friends, setFriends] = useState([])
   const [friendRequests, setFriendRequests] = useState([])
-  const [onlineUsers, setOnlineUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [socket, setSocket] = useState(null)
   const [showAddFriend, setShowAddFriend] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -38,55 +37,45 @@ function SocialPage() {
     selectedFriendRef.current = selectedFriend
   }, [selectedFriend])
 
-  // Initialize socket connection
+  // Listen for new messages from socket
   useEffect(() => {
-    if (userId) {
-      const socketInstance = initSocket(userId)
-      setSocket(socketInstance)
+    if (!socket) return
 
-      // Listen for online users updates
-      socketInstance.on('onlineUsers', (users) => {
-        setOnlineUsers(users)
+    const handleNewMessage = (message) => {
+      setMessages(prev => {
+        // Prevent duplicates by checking both _id and a generated temporary id
+        const isDuplicate = prev.some(m => m.id === message._id || (message._id && m.id === message._id));
+        if (isDuplicate) return prev
+
+        return [...prev, {
+          id: message._id,
+          content: message.content,
+          attachment: message.attachment,
+          isOwn: false,
+          sender: message.senderInfo?.fullName || 'Unknown',
+          timestamp: new Date(message.createdAt).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }]
       })
 
-      // Request current online users after listener is set up
-      socketInstance.emit('getOnlineUsers')
-
-      // Listen for new messages
-      socketInstance.on('newMessage', (message) => {
-        setMessages(prev => {
-          // Prevent duplicates by checking both _id and a generated temporary id
-          const isDuplicate = prev.some(m => m.id === message._id || (message._id && m.id === message._id));
-          if (isDuplicate) return prev
-
-          return [...prev, {
-            id: message._id,
-            content: message.content,
-            attachment: message.attachment,
-            isOwn: false,
-            sender: message.senderInfo?.fullName || 'Unknown',
-            timestamp: new Date(message.createdAt).toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-          }]
-        })
-
-        // Update unread count if not in chat with this user
-        // Use ref to get current selectedFriend value (avoid stale closure)
-        if (selectedFriendRef.current?.id !== message.senderId) {
-          setUnreadCounts(prev => ({
-            ...prev,
-            [message.senderId]: (prev[message.senderId] || 0) + 1
-          }))
-        }
-      })
-
-      return () => {
-        disconnectSocket()
+      // Update unread count if not in chat with this user
+      // Use ref to get current selectedFriend value (avoid stale closure)
+      if (selectedFriendRef.current?.id !== message.senderId) {
+        setUnreadCounts(prev => ({
+          ...prev,
+          [message.senderId]: (prev[message.senderId] || 0) + 1
+        }))
       }
     }
-  }, [userId])
+
+    socket.on('newMessage', handleNewMessage)
+
+    return () => {
+      socket.off('newMessage', handleNewMessage)
+    }
+  }, [socket])
 
   // Fetch users (friends) and friend requests
   useEffect(() => {
