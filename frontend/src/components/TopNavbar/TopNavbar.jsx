@@ -1,17 +1,63 @@
 import { ChevronLeft, ChevronRight, Search, Sparkles, Bell, User, Camera } from 'lucide-react'
-import { UserButton, SignedIn, SignedOut } from '@clerk/clerk-react'
-import { useState } from 'react'
+import { UserButton, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useSocket } from '../../context/SocketContext'
+import NotificationModal from '../NotificationModal/NotificationModal'
+import axios from '../../api/axios'
 import styles from './TopNavbar.module.css'
 
 function TopNavbar() {
   const [query, setQuery] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
   const navigate = useNavigate();
+  const { getToken } = useAuth();
+  const { socket } = useSocket();
+
+  // Fetch initial notification count (friend requests)
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+
+        const response = await axios.get('/chat/friends/requests', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setNotificationCount(response.data.length);
+      } catch (error) {
+        console.error('Error fetching notification count:', error);
+      }
+    };
+
+    fetchNotificationCount();
+  }, [getToken]);
+
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = (notification) => {
+      setNotificationCount(prev => prev + 1);
+    };
+
+    socket.on('notification', handleNotification);
+
+    return () => {
+      socket.off('notification', handleNotification);
+    };
+  }, [socket]);
 
   const handleSearch = (e) => {
     if (e.key === 'Enter' && query.trim() !== '') {
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     }
+  };
+
+  const handleNotificationClick = () => {
+    setShowNotifications(true);
+    setNotificationCount(0); // Clear count when opened
   };
 
   return (
@@ -55,8 +101,13 @@ function TopNavbar() {
         <button className={styles.premiumButton}>
           <span>Explore Premium</span>
         </button>
-        <button className={styles.iconButton}>
+        <button className={styles.iconButton} onClick={handleNotificationClick}>
           <Bell size={20} />
+          {notificationCount > 0 && (
+            <span className={styles.notificationBadge}>
+              {notificationCount > 9 ? '9+' : notificationCount}
+            </span>
+          )}
         </button>
         <SignedIn>
           <UserButton afterSignOutUrl="/sign-in" />
@@ -65,6 +116,11 @@ function TopNavbar() {
           <a href="/sign-in" className={styles.signInButton}>Sign In</a>
         </SignedOut>
       </div>
+
+      <NotificationModal 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+      />
     </div>
   )
 }
