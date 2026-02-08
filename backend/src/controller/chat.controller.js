@@ -103,7 +103,8 @@ export const sendFriendRequest = async (req, res) => {
           id: currentUser.clerkId,
           dbId: currentUser._id,
           name: currentUser.fullName,
-          avatar: currentUser.imageUrl
+          avatar: currentUser.imageUrl,
+          uniqueId: currentUser.uniqueId
         },
         message: `${currentUser.fullName} sent you a friend request`,
         createdAt: new Date()
@@ -199,7 +200,7 @@ export const declineFriendRequest = async (req, res) => {
 export const getFriendRequests = async (req, res) => {
   try {
     const { userId: currentUserId } = getAuth(req);
-    const currentUser = await User.findOne({ clerkId: currentUserId }).populate('friendRequests', 'fullName imageUrl uniqueId _id');
+    const currentUser = await User.findOne({ clerkId: currentUserId }).populate('friendRequests', 'fullName imageUrl uniqueId _id clerkId');
     if (!currentUser) {
       return res.status(404).json({ message: "User not found in database" });
     }

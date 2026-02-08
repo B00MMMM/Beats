@@ -282,9 +282,7 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 6px;
-  background-color: var(--success);
-  /* Assuming success color exists, or hardcode green */
-  background-color: #00ff88;
+  background-color: #00FFD9;
   color: var(--bg-dark);
   font-size: 12px;
   font-weight: 600;
@@ -296,14 +294,18 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 6px;
-  background-color: #ff4444;
+  background-color: #ea5555;
   color: white;
   font-size: 12px;
   font-weight: 600;
 }
 
 .declineBtn:hover {
-  background-color: #cc3333;
+  background-color: #b73f3f;
+}
+
+.acceptBtn:hover {
+  background-color: #00c9a3;
 }
 
 .actionButtons {
