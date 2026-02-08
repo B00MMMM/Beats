@@ -1,6 +1,7 @@
 import { Message } from '../models/message.model.js';
 import { User } from '../models/user.model.js';
 import { getAuth } from "@clerk/express";
+import { createNotification } from './notification.controller.js';
 
 // Get all users for chat (friends list)
 export const getUsers = async (req, res) => {
@@ -92,24 +93,14 @@ export const sendFriendRequest = async (req, res) => {
     recipient.friendRequests.push(currentUser._id);
     await recipient.save();
 
-    // Emit notification to recipient
-    const io = req.app.get('io');
-    const onlineUsers = req.app.get('onlineUsers');
-    const recipientSocketId = onlineUsers.get(recipient.clerkId);
-    if (recipientSocketId) {
-      io.to(recipientSocketId).emit('notification', {
-        type: 'friend-request',
-        from: {
-          id: currentUser.clerkId,
-          dbId: currentUser._id,
-          name: currentUser.fullName,
-          avatar: currentUser.imageUrl,
-          uniqueId: currentUser.uniqueId
-        },
-        message: `${currentUser.fullName} sent you a friend request`,
-        createdAt: new Date()
-      });
-    }
+    // Create and emit notification to recipient
+    await createNotification(
+      req,
+      recipient._id,
+      'friend-request',
+      currentUser,
+      `${currentUser.fullName} sent you a friend request`
+    );
 
     res.status(200).json({ message: "Friend request sent." });
 
@@ -147,23 +138,14 @@ export const acceptFriendRequest = async (req, res) => {
       await requester.save();
     }
 
-    // Emit notification to requester that their request was accepted
-    const io = req.app.get('io');
-    const onlineUsers = req.app.get('onlineUsers');
-    const requesterSocketId = onlineUsers.get(requester.clerkId);
-    if (requesterSocketId) {
-      io.to(requesterSocketId).emit('notification', {
-        type: 'friend-accepted',
-        from: {
-          id: currentUser.clerkId,
-          dbId: currentUser._id,
-          name: currentUser.fullName,
-          avatar: currentUser.imageUrl
-        },
-        message: `${currentUser.fullName} accepted your friend request`,
-        createdAt: new Date()
-      });
-    }
+    // Create and emit notification to requester that their request was accepted
+    await createNotification(
+      req,
+      requester._id,
+      'friend-accepted',
+      currentUser,
+      `${currentUser.fullName} accepted your friend request`
+    );
 
     res.status(200).json({ message: "Friend request accepted." });
 
@@ -183,11 +165,24 @@ export const declineFriendRequest = async (req, res) => {
       return res.status(404).json({ message: "User not found in database" });
     }
 
+    const requester = await User.findById(requesterId);
+
     // Remove requester from friendRequests
     currentUser.friendRequests = currentUser.friendRequests.filter(
       id => id.toString() !== requesterId
     );
     await currentUser.save();
+
+    // Notify requester that their request was declined
+    if (requester) {
+      await createNotification(
+        req,
+        requester._id,
+        'friend-declined',
+        currentUser,
+        `${currentUser.fullName} declined your friend request`
+      );
+    }
 
     res.status(200).json({ message: "Friend request declined." });
   } catch (error) {
@@ -303,6 +298,15 @@ export const removeFriend = async (req, res) => {
 
     friend.friends = friend.friends.filter(id => id.toString() !== currentUser._id.toString());
     await friend.save();
+
+    // Notify the removed friend
+    await createNotification(
+      req,
+      friend._id,
+      'friend-removed',
+      currentUser,
+      `${currentUser.fullName} removed you as a friend`
+    );
 
     // Delete all messages between them
     await Message.deleteMany({

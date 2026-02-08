@@ -13,6 +13,7 @@ import authRoutes from "./routes/auth.route.js";
 import songRoutes from "./routes/song.route.js";
 import playlistRoutes from "./routes/playlist.route.js";
 import chatRoutes from "./routes/chat.route.js";
+import notificationRoutes from "./routes/notification.route.js";
 
 // ... (deps)
 
@@ -107,6 +108,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/songs", songRoutes);
 app.use("/api/playlists", playlistRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 //error handler
 app.use((err, req, res, next) => {
