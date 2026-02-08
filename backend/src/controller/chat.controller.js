@@ -77,6 +77,24 @@ export const sendFriendRequest = async (req, res) => {
     recipient.friendRequests.push(currentUser._id);
     await recipient.save();
 
+    // Emit notification to recipient
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const recipientSocketId = onlineUsers.get(recipient.clerkId);
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit('notification', {
+        type: 'friend-request',
+        from: {
+          id: currentUser.clerkId,
+          dbId: currentUser._id,
+          name: currentUser.fullName,
+          avatar: currentUser.imageUrl
+        },
+        message: `${currentUser.fullName} sent you a friend request`,
+        createdAt: new Date()
+      });
+    }
+
     res.status(200).json({ message: "Friend request sent." });
 
   } catch (error) {
@@ -111,6 +129,24 @@ export const acceptFriendRequest = async (req, res) => {
     if (!requester.friends.includes(currentUser._id)) {
       requester.friends.push(currentUser._id);
       await requester.save();
+    }
+
+    // Emit notification to requester that their request was accepted
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const requesterSocketId = onlineUsers.get(requester.clerkId);
+    if (requesterSocketId) {
+      io.to(requesterSocketId).emit('notification', {
+        type: 'friend-accepted',
+        from: {
+          id: currentUser.clerkId,
+          dbId: currentUser._id,
+          name: currentUser.fullName,
+          avatar: currentUser.imageUrl
+        },
+        message: `${currentUser.fullName} accepted your friend request`,
+        createdAt: new Date()
+      });
     }
 
     res.status(200).json({ message: "Friend request accepted." });

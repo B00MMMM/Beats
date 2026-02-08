@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronDown, UserPlus, Search, UserCheck, X, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
+import { useLocation } from 'react-router-dom'
 import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
 import ConfirmPopup from '../components/ConfirmPopup/ConfirmPopup'
@@ -11,7 +12,12 @@ import styles from './SocialPage.module.css'
 function SocialPage() {
   const { getToken, userId } = useAuth()
   const { socket, onlineUsers } = useSocket()
-  const [activeTab, setActiveTab] = useState('all')
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState(() => {
+    // Check for tab param in URL or location state
+    const params = new URLSearchParams(location.search)
+    return params.get('tab') || location.state?.tab || 'all'
+  })
   const [selectedFriend, setSelectedFriend] = useState(null)
   const [messages, setMessages] = useState([])
   const [friends, setFriends] = useState([])
@@ -36,6 +42,15 @@ function SocialPage() {
   useEffect(() => {
     selectedFriendRef.current = selectedFriend
   }, [selectedFriend])
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tabParam = params.get('tab')
+    if (tabParam) {
+      setActiveTab(tabParam)
+    }
+  }, [location.search])
 
   // Listen for new messages from socket
   useEffect(() => {
