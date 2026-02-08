@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, getFriendRequests, removeFriend } from '../controller/chat.controller.js';
+import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend } from '../controller/chat.controller.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -22,6 +22,7 @@ router.get('/users/search', protectRoute, searchUsers);
 // Friend requests
 router.post('/friends/request', protectRoute, sendFriendRequest);
 router.post('/friends/accept', protectRoute, acceptFriendRequest);
+router.post('/friends/decline', protectRoute, declineFriendRequest);
 router.get('/friends/requests', protectRoute, getFriendRequests);
 router.post('/friends/remove', protectRoute, removeFriend);
 

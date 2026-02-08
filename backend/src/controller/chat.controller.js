@@ -43,14 +43,15 @@ export const searchUsers = async (req, res) => {
       ]
     }).select('fullName imageUrl uniqueId _id clerkId friendRequests');
 
-    // Check if current user has already sent a request to each user
+    // Check request status for each user
     const usersWithRequestStatus = users.map(user => ({
       _id: user._id,
       clerkId: user.clerkId,
       fullName: user.fullName,
       imageUrl: user.imageUrl,
       uniqueId: user.uniqueId,
-      requestSent: user.friendRequests.some(id => id.toString() === currentUser._id.toString())
+      requestSent: user.friendRequests.some(id => id.toString() === currentUser._id.toString()),
+      requestReceived: currentUser.friendRequests.some(id => id.toString() === user._id.toString())
     }));
 
     res.json(usersWithRequestStatus);
@@ -168,6 +169,29 @@ export const acceptFriendRequest = async (req, res) => {
   } catch (error) {
     console.error('Error accepting friend request:', error);
     res.status(500).json({ message: 'Error accepting friend request' });
+  }
+};
+
+// Decline friend request
+export const declineFriendRequest = async (req, res) => {
+  try {
+    const { requesterId } = req.body;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    // Remove requester from friendRequests
+    currentUser.friendRequests = currentUser.friendRequests.filter(
+      id => id.toString() !== requesterId
+    );
+    await currentUser.save();
+
+    res.status(200).json({ message: "Friend request declined." });
+  } catch (error) {
+    console.error('Error declining friend request:', error);
+    res.status(500).json({ message: 'Error declining friend request' });
   }
 };
 
