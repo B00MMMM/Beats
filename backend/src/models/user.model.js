@@ -20,6 +20,17 @@ const userSchema = new mongoose.Schema(
             unique: true,
             sparse: true,
         },
+        isActivityShared: {
+            type: Boolean,
+            default: true,
+        },
+        currentActivity: {
+            songId: String,
+            title: String,
+            artist: String,
+            cover: String,
+            updatedAt: Date,
+        },
         friends: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',

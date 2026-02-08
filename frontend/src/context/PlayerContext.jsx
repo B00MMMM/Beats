@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import axios from '../api/axios';
+import { useSocket } from './SocketContext'; // Import
 
 const PlayerContext = createContext();
 
@@ -17,6 +18,7 @@ export const PlayerProvider = ({ children }) => {
   const audioRef = useRef(null);
 
   const { getToken, userId } = useAuth();
+  const { socket } = useSocket(); // Use socket
 
   // Queue & Playlist State
   const [queue, setQueue] = useState([]);
@@ -35,11 +37,12 @@ export const PlayerProvider = ({ children }) => {
         }
       }
 
-      // Record History
+      // Record History only when track changes
       const recordHistory = async () => {
         try {
           const token = await getToken();
           if (token) {
+            // Record History
             await axios.post('/users/history',
               { songData: currentTrack },
               { headers: { Authorization: `Bearer ${token}` } }
@@ -56,6 +59,34 @@ export const PlayerProvider = ({ children }) => {
 
     }
   }, [currentTrack?.deezerId]);
+
+  // Update activity when play/pause state changes
+  useEffect(() => {
+    const updateActivity = async () => {
+      if (!userId || !currentTrack) return;
+      
+      try {
+        const token = await getToken();
+        if (token) {
+          const activity = isPlaying ? {
+            songId: currentTrack.deezerId || currentTrack.id,
+            title: currentTrack.title,
+            artist: typeof currentTrack.artist === 'string' ? currentTrack.artist : currentTrack.artist?.name,
+            cover: currentTrack.cover || currentTrack.album?.cover_medium,
+          } : null;
+
+          await axios.post('/users/activity',
+            { activity, isPlaying },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+      } catch (error) {
+        console.error("Error updating activity:", error);
+      }
+    };
+
+    updateActivity();
+  }, [isPlaying, currentTrack?.deezerId, userId]);
 
   // Enrich track data if sparse (e.g. from Liked Songs)
   useEffect(() => {
@@ -340,7 +371,7 @@ export const PlayerProvider = ({ children }) => {
 
       // Add event listener for future play events
       audioRef.current.addEventListener('play', initAudio);
-      
+
       // Also try to init if audio is already playing (e.g., after page refresh)
       if (!audioRef.current.paused) {
         initAudio();
