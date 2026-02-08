@@ -29,6 +29,23 @@
   flex-shrink: 0;
 }
 
+.albumArtPlaceholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #00FFD9 0%, #00B8A9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.albumArtPlaceholder span {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000;
+}
+
 .trackDetails {
   display: flex;
   flex-direction: column;

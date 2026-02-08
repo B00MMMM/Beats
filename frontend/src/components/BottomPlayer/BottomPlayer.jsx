@@ -101,11 +101,17 @@ function BottomPlayer() {
     <div className={styles.bottomPlayer}>
       <div className={styles.leftSection}>
         <div className={styles.trackInfo}>
-          <img
-            src={currentTrack?.cover || currentTrack?.album?.cover_medium || 'https://via.placeholder.com/56x56'}
-            alt={currentTrack?.title}
-            className={styles.albumArt}
-          />
+          {currentTrack?.cover || currentTrack?.album?.cover_medium ? (
+            <img
+              src={currentTrack?.cover || currentTrack?.album?.cover_medium}
+              alt={currentTrack?.title}
+              className={styles.albumArt}
+            />
+          ) : (
+            <div className={styles.albumArtPlaceholder}>
+              <span>B</span>
+            </div>
+          )}
           <div className={styles.trackDetails}>
             <span className={styles.trackTitle}>{currentTrack?.title || 'No track selected'}</span>
             <span className={styles.trackArtist}>{currentTrack?.artist?.name || currentTrack?.artist || ''}</span>

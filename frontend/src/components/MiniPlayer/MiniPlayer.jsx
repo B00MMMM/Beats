@@ -17,11 +17,17 @@ function MiniPlayer() {
     // ... (rest of the component)
     <div className={styles.miniPlayer}>
       <div className={styles.trackInfo}>
-        <img
-          src={currentTrack?.cover || currentTrack?.album?.cover_small || 'https://via.placeholder.com/48x48'}
-          alt={currentTrack?.title}
-          className={styles.albumArt}
-        />
+        {currentTrack?.cover || currentTrack?.album?.cover_small ? (
+          <img
+            src={currentTrack?.cover || currentTrack?.album?.cover_small}
+            alt={currentTrack?.title}
+            className={styles.albumArt}
+          />
+        ) : (
+          <div className={styles.albumArtPlaceholder}>
+            <span>B</span>
+          </div>
+        )}
         <div className={styles.trackDetails}>
           <span className={styles.trackTitle}>{currentTrack?.title || 'No track selected'}</span>
           <span className={styles.trackArtist}>{currentTrack?.artist?.name || ''}</span>
