@@ -38,6 +38,9 @@
   background-color: var(--surface-dark);
   box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
   position: relative;
+}
+
+.coverContainer.editable {
   cursor: pointer;
 }
 
@@ -168,9 +171,12 @@
   font-weight: 900;
   color: white;
   line-height: 1;
-  cursor: pointer;
   letter-spacing: -2px;
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.playlistName.editable {
+  cursor: pointer;
 }
 
 .description {
@@ -178,6 +184,9 @@
   font-size: 15px;
   margin-top: 8px;
   margin-bottom: 8px;
+}
+
+.description.editable {
   cursor: pointer;
 }
 

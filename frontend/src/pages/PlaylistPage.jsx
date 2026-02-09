@@ -156,13 +156,15 @@ function PlaylistPage() {
   if (isLoading) return <div className={styles.loading}>Loading...</div>
   if (!playlist) return <div className={styles.error}>Playlist not found</div>
 
+  const isOwner = userId === playlist.userId;
+
   return (
     <div className={styles.playlistPage}>
       <div className={styles.mainContent}>
         <div className={styles.playlistHeader}>
           <div
-            className={styles.coverContainer}
-            onClick={() => fileInputRef.current?.click()}
+            className={`${styles.coverContainer} ${isOwner ? styles.editable : ''}`}
+            onClick={() => isOwner && fileInputRef.current?.click()}
           >
             {playlist.imageUrl ? (
               <img src={playlist.imageUrl} alt={playlist.title} className={styles.cover} />
@@ -171,10 +173,12 @@ function PlaylistPage() {
                 <Camera size={48} />
               </div>
             )}
-            <div className={styles.coverOverlay}>
-              <Edit2 size={24} />
-              <span>Choose photo</span>
-            </div>
+            {isOwner && (
+              <div className={styles.coverOverlay}>
+                <Edit2 size={24} />
+                <span>Choose photo</span>
+              </div>
+            )}
             <input
               type="file"
               ref={fileInputRef}
@@ -201,7 +205,7 @@ function PlaylistPage() {
                 </label>
               )}
             </div>
-            {isEditing ? (
+            {isEditing && isOwner ? (
               <div className={styles.editForm}>
                 <input
                   value={editTitle}
@@ -222,11 +226,17 @@ function PlaylistPage() {
               </div>
             ) : (
               <>
-                <h1 className={styles.playlistName} onClick={() => setIsEditing(true)}>
+                <h1
+                  className={`${styles.playlistName} ${isOwner ? styles.editable : ''}`}
+                  onClick={() => isOwner && setIsEditing(true)}
+                >
                   {playlist.title}
                 </h1>
-                <p className={styles.description} onClick={() => setIsEditing(true)}>
-                  {playlist.description || "No description"}
+                <p
+                  className={`${styles.description} ${isOwner ? styles.editable : ''}`}
+                  onClick={() => isOwner && setIsEditing(true)}
+                >
+                  {playlist.description || (isOwner ? "Add a description" : "No description")}
                 </p>
               </>
             )}
@@ -276,58 +286,60 @@ function PlaylistPage() {
                   onPlay={() => playPlaylist(playlist.songs, index)}
                   isLiked={likedSongs.has(String(song.deezerId || song._id))}
                   onLike={() => toggleLike(song)}
-                  onDelete={() => handleRemoveSong(song._id)}
+                  onDelete={isOwner ? () => handleRemoveSong(song._id) : undefined}
                 />
               </div>
             ))}
           </div>
         </div>
 
-        <div className={styles.searchSection}>
-          <div className={styles.searchHeader}>
-            <h2>Let's find something for your playlist</h2>
-            <div className={styles.searchBar}>
-              <Search size={20} />
-              <input
-                type="text"
-                placeholder="Search for songs"
-                value={searchQuery}
-                onChange={handleSearch}
-              />
-              {searchQuery && (
-                <button onClick={() => { setSearchQuery(''); setSearchResults([]) }}>
-                  <X size={20} />
-                </button>
+        {isOwner && (
+          <div className={styles.searchSection}>
+            <div className={styles.searchHeader}>
+              <h2>Let's find something for your playlist</h2>
+              <div className={styles.searchBar}>
+                <Search size={20} />
+                <input
+                  type="text"
+                  placeholder="Search for songs"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(''); setSearchResults([]) }}>
+                    <X size={20} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.searchResults}>
+              {isSearching ? (
+                <div className={centeredLoaderStyles.centeredLoaderContainer}>
+                  <Loader />
+                </div>
+              ) : (
+                searchResults.map(song => (
+                  <div key={song.deezerId} className={styles.searchResultItem}>
+                    <div className={styles.resultImageContainer} onClick={() => playTrack(song)}>
+                      <img src={song.cover} alt={song.title} />
+                      <div className={styles.resultPlayOverlay}>
+                        <Play size={20} fill="white" />
+                      </div>
+                    </div>
+                    <div className={styles.resultInfo}>
+                      <span className={styles.resultTitle}>{song.title}</span>
+                      <span className={styles.resultArtist}>{song.artist.name}</span>
+                    </div>
+                    <button className={styles.addButton} onClick={() => handleAddSong(song)}>
+                      Add
+                    </button>
+                  </div>
+                ))
               )}
             </div>
           </div>
-
-          <div className={styles.searchResults}>
-            {isSearching ? (
-              <div className={centeredLoaderStyles.centeredLoaderContainer}>
-                <Loader />
-              </div>
-            ) : (
-              searchResults.map(song => (
-                <div key={song.deezerId} className={styles.searchResultItem}>
-                  <div className={styles.resultImageContainer} onClick={() => playTrack(song)}>
-                    <img src={song.cover} alt={song.title} />
-                    <div className={styles.resultPlayOverlay}>
-                      <Play size={20} fill="white" />
-                    </div>
-                  </div>
-                  <div className={styles.resultInfo}>
-                    <span className={styles.resultTitle}>{song.title}</span>
-                    <span className={styles.resultArtist}>{song.artist.name}</span>
-                  </div>
-                  <button className={styles.addButton} onClick={() => handleAddSong(song)}>
-                    Add
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
