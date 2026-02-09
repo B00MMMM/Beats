@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Pause, Play, Heart, MoreVertical, Edit2, Camera, Search, Plus, X, Trash2 } from 'lucide-react'
+import { Pause, Play, Heart, MoreVertical, Edit2, Camera, Search, Plus, X, Trash2, Globe, Lock } from 'lucide-react'
 import SongRow from '../components/SongRow/SongRow'
 import styles from './PlaylistPage.module.css'
 import { useAuth } from '@clerk/clerk-react'
@@ -12,7 +12,7 @@ import centeredLoaderStyles from '../components/Loader/CenteredLoader.module.css
 function PlaylistPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { getToken } = useAuth()
+  const { getToken, userId } = useAuth()
   const { playTrack, playPlaylist, currentTrack, isPlaying, togglePlayPause, likedSongs, toggleLike, fetchPlaylists } = usePlayer()
 
   const [playlist, setPlaylist] = useState(null)
@@ -61,6 +61,20 @@ function PlaylistPage() {
       fetchPlaylists(); // Refresh Sidebar
     } catch (error) {
       console.error("Error updating playlist:", error)
+    }
+  }
+
+  const handleToggleAvailability = async () => {
+    const newAvailability = playlist.availability === 'public' ? 'private' : 'public'
+    try {
+      const token = await getToken()
+      await axios.put(`/playlists/${id}`,
+        { availability: newAvailability },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      setPlaylist(prev => ({ ...prev, availability: newAvailability }))
+    } catch (error) {
+      console.error("Error updating availability:", error)
     }
   }
 
@@ -171,7 +185,22 @@ function PlaylistPage() {
           </div>
 
           <div className={styles.playlistInfo}>
-            <span className={styles.type}>Public Playlist</span>
+            <div className={styles.typeRow}>
+              <span className={styles.type}>
+                {playlist.availability === 'public' ? <Globe size={14} /> : <Lock size={14} />}
+                {playlist.availability === 'public' ? 'Public Playlist' : 'Private Playlist'}
+              </span>
+              {userId === playlist.userId && (
+                <label className={styles.toggleSwitch}>
+                  <input
+                    type="checkbox"
+                    checked={playlist.availability === 'public'}
+                    onChange={handleToggleAvailability}
+                  />
+                  <span className={styles.toggleSlider}></span>
+                </label>
+              )}
+            </div>
             {isEditing ? (
               <div className={styles.editForm}>
                 <input

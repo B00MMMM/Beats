@@ -1,10 +1,154 @@
 .searchPage {
-    padding: 20px;
+  padding: 24px 32px;
+  min-height: 100%;
+  background: linear-gradient(to bottom, #1a1a2e 0%, #121212 40%);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+.pageTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 32px;
+}
+
+.noResults {
+  color: #a0a0a0;
+  font-size: 16px;
+  text-align: center;
+  padding: 48px 0;
+}
+
+/* Top Result Section */
+.topResultSection {
+  margin-bottom: 40px;
+}
+
+.sectionTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 16px;
+}
+
+.topResultCard {
+  display: flex;
+  align-items: center;
   gap: 24px;
+  padding: 24px;
+  background: linear-gradient(135deg, #2a2a3a 0%, #1e1e2e 100%);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  max-width: 600px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
+.topResultCard:hover {
+  background: linear-gradient(135deg, #353545 0%, #252535 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.topResultImage {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  flex-shrink: 0;
+}
+
+.topResultInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.topResultTitle {
+  font-size: 32px;
+  font-weight: 800;
+  color: white;
+  line-height: 1.1;
+}
+
+.topResultArtist {
+  font-size: 15px;
+  color: #b0b0b0;
+}
+
+.topResultTag {
+  display: inline-block;
+  background: #404050;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  width: fit-content;
+  margin-top: 8px;
+}
+
+.topResultPlayButton {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #00FFD9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s, opacity 0.2s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+}
+
+.topResultCard:hover .topResultPlayButton {
+  opacity: 1;
+}
+
+.topResultPlayButton:hover {
+  transform: scale(1.08);
+  background-color: #00e6c3;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .searchPage {
+    padding: 16px;
+  }
+
+  .pageTitle {
+    font-size: 22px;
+    margin-bottom: 24px;
+  }
+
+  .topResultCard {
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  .topResultImage {
+    width: 100px;
+    height: 100px;
+  }
+
+  .topResultTitle {
+    font-size: 24px;
+  }
+
+  .topResultPlayButton {
+    opacity: 1;
+    right: 16px;
+    bottom: 16px;
+    width: 48px;
+    height: 48px;
+  }
+}

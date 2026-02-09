@@ -7,13 +7,14 @@ import { getAuth } from "@clerk/express";
 // Create a new playlist
 export const createPlaylist = async (req, res) => {
     try {
-        const { title, description } = req.body;
+        const { title, description, availability } = req.body;
         const { userId } = getAuth(req);
 
         const playlist = await Playlist.create({
             title,
             description,
             userId,
+            availability: availability || 'private',
         });
 
         res.status(201).json(playlist);
@@ -166,11 +167,11 @@ export const checkSongInPlaylists = async (req, res) => {
     }
 };
 
-// Update playlist details (title, description, image)
+// Update playlist details (title, description, image, availability)
 export const updatePlaylist = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description } = req.body;
+        const { title, description, availability } = req.body;
         const imageFile = req.files?.image;
 
         const playlist = await Playlist.findById(id);
@@ -192,6 +193,9 @@ export const updatePlaylist = async (req, res) => {
         playlist.title = title || playlist.title;
         playlist.description = description !== undefined ? description : playlist.description;
         playlist.imageUrl = imageUrl;
+        if (availability && ['private', 'public'].includes(availability)) {
+            playlist.availability = availability;
+        }
 
         await playlist.save();
 
@@ -199,6 +203,39 @@ export const updatePlaylist = async (req, res) => {
 
     } catch (error) {
         console.error("Error updating playlist:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// Search public playlists by title
+export const searchPublicPlaylists = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q || q.trim().length < 2) {
+            return res.json([]);
+        }
+
+        const playlists = await Playlist.find({
+            availability: 'public',
+            title: { $regex: q, $options: 'i' }
+        })
+            .limit(20)
+            .sort({ createdAt: -1 });
+
+        // Get song counts for each playlist
+        const playlistsWithCounts = await Promise.all(
+            playlists.map(async (playlist) => {
+                const songCount = await PlaylistSong.countDocuments({ playlistId: playlist._id });
+                return {
+                    ...playlist.toObject(),
+                    songCount
+                };
+            })
+        );
+
+        res.json(playlistsWithCounts);
+    } catch (error) {
+        console.error("Error searching playlists:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
