@@ -97,6 +97,69 @@
   color: white;
   text-transform: uppercase;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.typeRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #404040;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggleSlider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggleSwitch input:checked+.toggleSlider {
+  background-color: #00FFD9;
+}
+
+.toggleSwitch input:checked+.toggleSlider:before {
+  transform: translateX(20px);
+}
+
+.toggleSwitch:hover .toggleSlider {
+  background-color: #505050;
+}
+
+.toggleSwitch input:checked:hover+.toggleSlider {
+  background-color: #00e6c3;
 }
 
 .playlistName {
