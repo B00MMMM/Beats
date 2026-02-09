@@ -72,7 +72,9 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
           <div>
             <h3 className={styles.friendName}>{friend?.name || 'Friend'}</h3>
             <span className={styles.status}>
-              {friend?.status === 'online' ? 'Online' : 'Offline'}
+              {friend?.status === 'group'
+                ? `${friend.memberCount} members`
+                : friend?.status === 'online' ? 'Online' : 'Offline'}
             </span>
           </div>
         </div>

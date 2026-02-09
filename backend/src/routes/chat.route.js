@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend } from '../controller/chat.controller.js';
+import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend, createGroup, getMyGroups, getGroupById, getGroupMessages, sendGroupMessage } from '../controller/chat.controller.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -26,4 +26,13 @@ router.post('/friends/decline', protectRoute, declineFriendRequest);
 router.get('/friends/requests', protectRoute, getFriendRequests);
 router.post('/friends/remove', protectRoute, removeFriend);
 
+// Groups
+router.post('/groups', protectRoute, createGroup);
+router.get('/groups', protectRoute, getMyGroups);
+router.get('/groups/:id', protectRoute, getGroupById);
+router.get('/groups/:groupId/messages', protectRoute, getGroupMessages);
+router.post('/groups/messages', protectRoute, sendGroupMessage);
+
 export default router;
+
+

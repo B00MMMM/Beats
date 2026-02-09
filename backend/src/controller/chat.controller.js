@@ -1,7 +1,10 @@
 import { Message } from '../models/message.model.js';
 import { User } from '../models/user.model.js';
+import { Group } from '../models/group.model.js';
+import { GroupMessage } from '../models/groupMessage.model.js';
 import { getAuth } from "@clerk/express";
 import { createNotification } from './notification.controller.js';
+import cloudinary from '../lib/cloudinary.js';
 
 // Get all users for chat (friends list)
 export const getUsers = async (req, res) => {
@@ -321,5 +324,186 @@ export const removeFriend = async (req, res) => {
   } catch (error) {
     console.error('Error removing friend:', error);
     res.status(500).json({ message: 'Error removing friend' });
+  }
+};
+
+// ================== GROUP FUNCTIONS ==================
+
+// Create a new group
+export const createGroup = async (req, res) => {
+  try {
+    const { name, memberIds } = req.body; // memberIds are internal DB _ids
+    const imageFile = req.files?.image;
+    const { userId: currentUserId } = getAuth(req);
+
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Group name is required" });
+    }
+
+    let imageUrl = "";
+    if (imageFile) {
+      const uploadResponse = await cloudinary.uploader.upload(imageFile.tempFilePath);
+      imageUrl = uploadResponse.secure_url;
+    }
+
+    // Include creator as a member
+    const members = [currentUser._id];
+    if (memberIds && memberIds.length > 0) {
+      // Validate that all member IDs are valid users and friends
+      for (const memberId of memberIds) {
+        const member = await User.findById(memberId);
+        if (member && !members.includes(member._id)) {
+          members.push(member._id);
+        }
+      }
+    }
+
+    const group = await Group.create({
+      name: name.trim(),
+      imageUrl,
+      creatorId: currentUserId,
+      members,
+    });
+
+    // Populate members for response
+    const populatedGroup = await Group.findById(group._id).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    res.status(201).json(populatedGroup);
+  } catch (error) {
+    console.error('Error creating group:', error);
+    res.status(500).json({ message: 'Error creating group' });
+  }
+};
+
+// Get all groups for current user
+export const getMyGroups = async (req, res) => {
+  try {
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    const groups = await Group.find({ members: currentUser._id })
+      .populate('members', 'fullName imageUrl clerkId uniqueId')
+      .sort({ updatedAt: -1 });
+
+    res.json(groups);
+  } catch (error) {
+    console.error('Error fetching groups:', error);
+    res.status(500).json({ message: 'Error fetching groups' });
+  }
+};
+
+// Get a single group by ID
+export const getGroupById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    const group = await Group.findById(id).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if user is a member
+    if (!group.members.some(m => m._id.toString() === currentUser._id.toString())) {
+      return res.status(403).json({ message: "You are not a member of this group" });
+    }
+
+    res.json(group);
+  } catch (error) {
+    console.error('Error fetching group:', error);
+    res.status(500).json({ message: 'Error fetching group' });
+  }
+};
+
+// Get messages for a group
+export const getGroupMessages = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    // Check if user is a member of the group
+    const group = await Group.findById(groupId);
+    if (!group || !group.members.some(m => m.toString() === currentUser._id.toString())) {
+      return res.status(403).json({ message: "You are not a member of this group" });
+    }
+
+    const messages = await GroupMessage.find({ groupId }).sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching group messages:', error);
+    res.status(500).json({ message: 'Error fetching group messages' });
+  }
+};
+
+// Send a message to a group
+export const sendGroupMessage = async (req, res) => {
+  try {
+    const { groupId, content, attachment } = req.body;
+    const { userId: senderId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: senderId });
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found in database" });
+    }
+
+    // Check if user is a member of the group
+    const group = await Group.findById(groupId);
+    if (!group || !group.members.some(m => m.toString() === currentUser._id.toString())) {
+      return res.status(403).json({ message: "You are not a member of this group" });
+    }
+
+    if (!content && !attachment) {
+      return res.status(400).json({ message: 'Content or attachment is required' });
+    }
+
+    const message = new GroupMessage({
+      groupId,
+      senderId,
+      senderName: currentUser.fullName,
+      senderAvatar: currentUser.imageUrl,
+      content,
+      attachment
+    });
+
+    await message.save();
+
+    // Emit socket event for real-time messaging to all group members
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+
+    // Send to all online members of the group except sender
+    for (const member of group.members) {
+      const memberUser = await User.findById(member);
+      if (memberUser && memberUser.clerkId !== senderId) {
+        const memberSocketId = onlineUsers.get(memberUser.clerkId);
+        if (memberSocketId) {
+          io.to(memberSocketId).emit('newGroupMessage', {
+            ...message.toObject(),
+            groupId: group._id
+          });
+        }
+      }
+    }
+
+    res.status(201).json(message);
+  } catch (error) {
+    console.error('Error sending group message:', error);
+    res.status(500).json({ message: 'Error sending group message' });
   }
 };

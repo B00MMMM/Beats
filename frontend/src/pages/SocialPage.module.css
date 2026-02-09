@@ -101,6 +101,34 @@
   box-shadow: 0 4px 12px rgba(0, 255, 217, 0.3);
 }
 
+.actionButtonsContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 6px 10px;
+  background-color: #000000;
+  border-radius: 24px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--surface-light);
+  color: var(--text-primary);
+  transition: all 150ms ease;
+}
+
+.iconButton:hover {
+  background-color: var(--primary-accent);
+  color: var(--bg-dark);
+  transform: scale(1.1);
+}
+
 .chatContainer {
   flex: 1;
   display: flex;
@@ -207,6 +235,17 @@
   object-fit: cover;
 }
 
+.avatarPlaceholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4aa, #00a080);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
 .userName {
   font-size: 14px;
   font-weight: 500;
@@ -274,6 +313,16 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
+}
+
+.requestItem.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.requestItem.clickable:hover {
+  background-color: var(--surface-hover);
+  transform: translateX(4px);
 }
 
 .acceptBtn {

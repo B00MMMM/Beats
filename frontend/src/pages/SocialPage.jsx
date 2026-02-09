@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ChevronDown, UserPlus, Search, UserCheck, X, Eye, EyeOff } from 'lucide-react'
+import { ChevronDown, UserPlus, Search, UserCheck, X, Eye, EyeOff, Users } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
 import { useLocation } from 'react-router-dom'
 import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
 import ConfirmPopup from '../components/ConfirmPopup/ConfirmPopup'
+import CreateGroupModal from '../components/CreateGroupModal/CreateGroupModal'
 import { useSocket } from '../context/SocketContext'
 import axios from '../api/axios'
 import styles from './SocialPage.module.css'
@@ -31,7 +32,11 @@ function SocialPage() {
   const [currentUserUniqueId, setCurrentUserUniqueId] = useState(null)
   const [showUniqueId, setShowUniqueId] = useState(false)
   const [unreadCounts, setUnreadCounts] = useState({})
-  
+  const [showCreateGroup, setShowCreateGroup] = useState(false)
+  const [groups, setGroups] = useState([])
+  const [selectedGroup, setSelectedGroup] = useState(null)
+  const [groupMessages, setGroupMessages] = useState([])
+
   // Popup state
   const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })
   const [unfriendTarget, setUnfriendTarget] = useState(null)
@@ -152,10 +157,11 @@ function SocialPage() {
         const token = await getToken()
         if (!token) return
 
-        const [usersResponse, requestsResponse, meResponse] = await Promise.all([
+        const [usersResponse, requestsResponse, meResponse, groupsResponse] = await Promise.all([
           axios.get('/chat/users', { headers: { Authorization: `Bearer ${token}` } }),
           axios.get('/chat/friends/requests', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('/chat/groups', { headers: { Authorization: `Bearer ${token}` } })
         ])
 
         const usersData = usersResponse.data.map(u => ({
@@ -178,6 +184,7 @@ function SocialPage() {
         setFriends(usersData)
         setFriendRequests(requestsData)
         setCurrentUserUniqueId(meResponse.data.uniqueId)
+        setGroups(groupsResponse.data)
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
@@ -340,6 +347,85 @@ function SocialPage() {
 
   const handleBackToList = () => {
     setSelectedFriend(null)
+    setSelectedGroup(null)
+    setGroupMessages([])
+  }
+
+  // Group chat handlers
+  const handleGroupClick = async (group) => {
+    setSelectedGroup(group)
+    setSelectedFriend(null)
+
+    // Fetch group messages
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const response = await axios.get(`/chat/groups/${group._id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      const messagesData = response.data.map(msg => ({
+        id: msg._id,
+        sender: msg.senderId === userId ? 'You' : msg.senderName,
+        avatar: msg.senderAvatar,
+        content: msg.content,
+        attachment: msg.attachment,
+        isOwn: msg.senderId === userId,
+        timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      }))
+
+      setGroupMessages(messagesData)
+    } catch (error) {
+      console.error('Error fetching group messages:', error)
+    }
+  }
+
+  const handleSendGroupMessage = async (text, attachment = null) => {
+    if (!selectedGroup || (!text.trim() && !attachment)) return
+
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const payload = {
+        groupId: selectedGroup._id,
+        content: text
+      }
+      if (attachment) {
+        payload.attachment = {
+          type: attachment.type || 'song',
+          id: attachment.deezerId || attachment._id || attachment.id,
+          title: attachment.title || attachment.name,
+          artist: attachment.artist || '',
+          image: attachment.imageUrl || attachment.cover || attachment.albumImage || attachment.image,
+          audioUrl: attachment.audioUrl || ''
+        }
+      }
+
+      const response = await axios.post('/chat/groups/messages', payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      const newMessage = {
+        id: response.data._id,
+        sender: 'You',
+        content: text,
+        attachment: response.data.attachment,
+        isOwn: true,
+        timestamp: new Date().toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      }
+
+      setGroupMessages(prev => [...prev, newMessage])
+    } catch (error) {
+      console.error('Error sending group message:', error)
+    }
   }
 
   const handleSendRequest = async (user) => {
@@ -385,7 +471,7 @@ function SocialPage() {
       setFriendRequests(prev => prev.filter(r => r.id !== requester.id))
       setSearchResults(prev => prev.filter(r => r.id !== requester.id))
       setFriends(prev => [...prev, { ...requester, status: 'offline' }]) // Add new friend locally
-      
+
       // Refresh online users to check if the new friend is online
       socket?.emit('getOnlineUsers')
     } catch (error) {
@@ -411,7 +497,7 @@ function SocialPage() {
 
       // Remove from friend requests and search results
       setFriendRequests(prev => prev.filter(r => r.id !== requester.id))
-      setSearchResults(prev => prev.map(r => 
+      setSearchResults(prev => prev.map(r =>
         r.id === requester.id ? { ...r, requestReceived: false } : r
       ))
     } catch (error) {
@@ -449,7 +535,7 @@ function SocialPage() {
 
       // Remove from local state
       setFriends(prev => prev.filter(f => f.id !== friend.id))
-      
+
       // If currently chatting with this friend, close the chat
       if (selectedFriend?.id === friend.id) {
         setSelectedFriend(null)
@@ -476,6 +562,50 @@ function SocialPage() {
     setUnfriendTarget(null)
   }
 
+  // Create group handler
+  const handleCreateGroup = async ({ name, memberIds, imageFile }) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const formData = new FormData()
+      formData.append('name', name)
+      if (memberIds && memberIds.length > 0) {
+        memberIds.forEach(id => formData.append('memberIds', id))
+      }
+      if (imageFile) {
+        formData.append('image', imageFile)
+      }
+
+      const response = await axios.post('/chat/groups', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      // Add the new group to the list
+      setGroups(prev => [response.data, ...prev])
+
+      setPopup({
+        isOpen: true,
+        title: 'Group Created',
+        message: `Group "${name}" has been created successfully!`,
+        type: 'success',
+        onConfirm: null
+      })
+    } catch (error) {
+      console.error('Error creating group:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to create group. Please try again.',
+        type: 'danger',
+        onConfirm: null
+      })
+      throw error // Re-throw to handle in modal
+    }
+  }
 
   return (
     <div className={styles.socialPage}>
@@ -512,16 +642,35 @@ function SocialPage() {
             Online
           </button>
           <button
-            className={styles.addFriendButton}
+            className={`${styles.tab} ${activeTab === 'groups' ? styles.active : ''}`}
             onClick={() => {
-              setShowAddFriend(true);
-              setActiveTab('');
-              setSelectedFriend(null);
+              setActiveTab('groups')
+              setSelectedFriend(null)
+              setShowAddFriend(false)
             }}
           >
-            <UserPlus size={18} />
-            <span>Add Friend</span>
+            Groups {groups.length > 0 && <span className={styles.notificationBadge}>{groups.length}</span>}
           </button>
+          <div className={styles.actionButtonsContainer}>
+            <button
+              className={styles.addFriendButton}
+              onClick={() => {
+                setShowAddFriend(true);
+                setActiveTab('');
+                setSelectedFriend(null);
+              }}
+            >
+              <UserPlus size={18} />
+              <span>Add Friend</span>
+            </button>
+            <button
+              className={styles.iconButton}
+              onClick={() => setShowCreateGroup(true)}
+              title="Create Group"
+            >
+              <Users size={18} />
+            </button>
+          </div>
 
         </div>
 
@@ -612,6 +761,20 @@ function SocialPage() {
               onBack={handleBackToList}
             />
           </div>
+        ) : selectedGroup ? (
+          <div className={styles.chatContainer}>
+            <ChatWindow
+              friend={{
+                name: selectedGroup.name,
+                avatar: selectedGroup.imageUrl,
+                status: 'group',
+                memberCount: selectedGroup.members?.length || 0
+              }}
+              messages={groupMessages}
+              onSendMessage={handleSendGroupMessage}
+              onBack={handleBackToList}
+            />
+          </div>
         ) : (
           <>
             {activeTab === 'requests' ? (
@@ -644,6 +807,32 @@ function SocialPage() {
                   </div>
                 ))}
               </div>
+            ) : activeTab === 'groups' ? (
+              <div className={styles.requestsList}>
+                <h3>My Groups - {groups.length}</h3>
+                {groups.length === 0 && <div className={styles.emptyState}>No groups yet. Create one!</div>}
+                {groups.map(group => (
+                  <div
+                    key={group._id}
+                    className={`${styles.requestItem} ${styles.clickable}`}
+                    onClick={() => handleGroupClick(group)}
+                  >
+                    <div className={styles.userInfo}>
+                      {group.imageUrl ? (
+                        <img src={group.imageUrl} alt={group.name} className={styles.avatar} />
+                      ) : (
+                        <div className={styles.avatarPlaceholder}>
+                          <Users size={20} />
+                        </div>
+                      )}
+                      <div>
+                        <div className={styles.userName}>{group.name}</div>
+                        <div className={styles.userUniqueId}>{group.members?.length || 0} members</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <FriendsList
                 friends={friendsWithStatus}
@@ -667,6 +856,13 @@ function SocialPage() {
         type={popup.type}
         confirmText={popup.onConfirm ? 'Confirm' : 'OK'}
         cancelText={popup.onConfirm ? 'Cancel' : ''}
+      />
+
+      <CreateGroupModal
+        isOpen={showCreateGroup}
+        onClose={() => setShowCreateGroup(false)}
+        friends={friendsWithStatus}
+        onCreateGroup={handleCreateGroup}
       />
     </div>
   )
