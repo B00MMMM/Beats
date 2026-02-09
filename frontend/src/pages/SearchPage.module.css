@@ -1,7 +1,8 @@
 .searchPage {
   padding: 24px 32px;
   min-height: 100%;
-  background: linear-gradient(to bottom, #1a1a2e 0%, #121212 40%);
+  border-radius: 12px;
+  background: linear-gradient(to bottom, #1b1a1a 0%, #121212 40%);
 }
 
 .pageTitle {
@@ -35,7 +36,7 @@
   align-items: center;
   gap: 24px;
   padding: 24px;
-  background: linear-gradient(135deg, #2a2a3a 0%, #1e1e2e 100%);
+  background: linear-gradient(135deg, #1c1c1e 0%, #1a1a1f 100%);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -45,7 +46,7 @@
 }
 
 .topResultCard:hover {
-  background: linear-gradient(135deg, #353545 0%, #252535 100%);
+  background: linear-gradient(135deg, #000000 0%, #3f565b 100%);
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
@@ -80,7 +81,8 @@
 
 .topResultTag {
   display: inline-block;
-  background: #404050;
+  background: #0aad94;
+
   color: white;
   font-size: 12px;
   font-weight: 600;
@@ -97,7 +99,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: #00FFD9;
+  background-color: #00e6c3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +116,7 @@
 
 .topResultPlayButton:hover {
   transform: scale(1.08);
-  background-color: #00e6c3;
+  background-color: #05aa91;
 }
 
 /* Responsive */
