@@ -1,5 +1,6 @@
 import { X, UserPlus, Settings, LogOut, Crown, UserMinus, Shield, ShieldOff, Edit2, Upload } from 'lucide-react';
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './GroupSettingsModal.module.css';
 
 function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAddMember, onRemoveMember, onPromoteAdmin, onDemoteAdmin, onUpdateName, onUpdateImage, onLeaveGroup }) {
@@ -74,7 +75,7 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
         );
     };
 
-    return (
+    return createPortal(
         <div className={styles.modalOverlay} onClick={onClose}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
@@ -276,7 +277,8 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
 
