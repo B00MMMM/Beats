@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend, createGroup, getMyGroups, getGroupById, getGroupMessages, sendGroupMessage } from '../controller/chat.controller.js';
+import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend, createGroup, getMyGroups, getGroupById, getGroupMessages, sendGroupMessage, addGroupMember, removeGroupMember, promoteToAdmin, demoteAdmin, updateGroupName, updateGroupImage, leaveGroup } from '../controller/chat.controller.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -32,6 +32,15 @@ router.get('/groups', protectRoute, getMyGroups);
 router.get('/groups/:id', protectRoute, getGroupById);
 router.get('/groups/:groupId/messages', protectRoute, getGroupMessages);
 router.post('/groups/messages', protectRoute, sendGroupMessage);
+
+// Group Management
+router.post('/groups/:groupId/members', protectRoute, addGroupMember);
+router.delete('/groups/:groupId/members/:memberId', protectRoute, removeGroupMember);
+router.post('/groups/:groupId/admins/:memberId', protectRoute, promoteToAdmin);
+router.delete('/groups/:groupId/admins/:memberId', protectRoute, demoteAdmin);
+router.put('/groups/:groupId/name', protectRoute, updateGroupName);
+router.put('/groups/:groupId/image', protectRoute, updateGroupImage);
+router.post('/groups/:groupId/leave', protectRoute, leaveGroup);
 
 export default router;
 

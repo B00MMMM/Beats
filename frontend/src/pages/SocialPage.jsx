@@ -6,6 +6,7 @@ import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
 import ConfirmPopup from '../components/ConfirmPopup/ConfirmPopup'
 import CreateGroupModal from '../components/CreateGroupModal/CreateGroupModal'
+import GroupSettingsModal from '../components/GroupSettingsModal/GroupSettingsModal'
 import { useSocket } from '../context/SocketContext'
 import axios from '../api/axios'
 import styles from './SocialPage.module.css'
@@ -36,17 +37,25 @@ function SocialPage() {
   const [groups, setGroups] = useState([])
   const [selectedGroup, setSelectedGroup] = useState(null)
   const [groupMessages, setGroupMessages] = useState([])
+  const [showGroupSettings, setShowGroupSettings] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
 
   // Popup state
   const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })
   const [unfriendTarget, setUnfriendTarget] = useState(null)
 
   const selectedFriendRef = useRef(selectedFriend) // Ref to track selected friend in closures
+  const selectedGroupRef = useRef(selectedGroup) // Ref to track selected group in closures
 
   // Update ref when selected friend changes
   useEffect(() => {
     selectedFriendRef.current = selectedFriend
   }, [selectedFriend])
+
+  // Update ref when selected group changes
+  useEffect(() => {
+    selectedGroupRef.current = selectedGroup
+  }, [selectedGroup])
 
   // Update active tab when URL changes
   useEffect(() => {
@@ -150,6 +159,81 @@ function SocialPage() {
     }
   }, [socket])
 
+  // Listen for group events from socket
+  useEffect(() => {
+    if (!socket) return
+
+    const handleNewGroupMessage = (data) => {
+      // Only update if we're viewing this group
+      if (selectedGroupRef.current?._id === data.groupId) {
+        const newMessage = {
+          id: data._id,
+          sender: data.senderId === userId ? 'You' : data.senderName,
+          avatar: data.senderAvatar,
+          content: data.content,
+          attachment: data.attachment,
+          isOwn: data.senderId === userId,
+          isSystemMessage: data.isSystemMessage,
+          timestamp: new Date(data.createdAt).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }
+        setGroupMessages(prev => [...prev, newMessage])
+      }
+    }
+
+    const handleGroupUpdate = (data) => {
+      // Update group in groups list
+      setGroups(prev => prev.map(g => g._id === data.groupId ? data.group : g))
+
+      // Update selected group if it's the one being updated
+      if (selectedGroupRef.current?._id === data.groupId) {
+        setSelectedGroup(data.group)
+
+        // Add system message if provided
+        if (data.systemMessage) {
+          const formattedMessage = formatSystemMessage(data.systemMessage)
+          setGroupMessages(prev => [...prev, formattedMessage])
+        }
+      }
+    }
+
+    const handleGroupMemberRemoved = (data) => {
+      if (data.group === null) {
+        // Current user was removed from the group
+        setGroups(prev => prev.filter(g => g._id !== data.groupId))
+        if (selectedGroupRef.current?._id === data.groupId) {
+          setSelectedGroup(null)
+          setGroupMessages([])
+          setShowGroupSettings(false)
+        }
+      } else {
+        handleGroupUpdate(data)
+      }
+    }
+
+    socket.on('newGroupMessage', handleNewGroupMessage)
+    socket.on('groupMemberAdded', handleGroupUpdate)
+    socket.on('groupMemberRemoved', handleGroupMemberRemoved)
+    socket.on('groupMemberLeft', handleGroupUpdate)
+    socket.on('groupAdminPromoted', handleGroupUpdate)
+    socket.on('groupAdminDemoted', handleGroupUpdate)
+    socket.on('groupNameUpdated', handleGroupUpdate)
+    socket.on('groupImageUpdated', handleGroupUpdate)
+
+    return () => {
+      socket.off('newGroupMessage', handleNewGroupMessage)
+      socket.off('groupMemberAdded', handleGroupUpdate)
+      socket.off('groupMemberRemoved', handleGroupMemberRemoved)
+      socket.off('groupMemberLeft', handleGroupUpdate)
+      socket.off('groupAdminPromoted', handleGroupUpdate)
+      socket.off('groupAdminDemoted', handleGroupUpdate)
+      socket.off('groupNameUpdated', handleGroupUpdate)
+      socket.off('groupImageUpdated', handleGroupUpdate)
+    }
+  }, [socket, userId])
+
   // Fetch users (friends) and friend requests
   useEffect(() => {
     const fetchData = async () => {
@@ -184,6 +268,12 @@ function SocialPage() {
         setFriends(usersData)
         setFriendRequests(requestsData)
         setCurrentUserUniqueId(meResponse.data.uniqueId)
+        setCurrentUser({
+          id: meResponse.data.clerkId,
+          dbId: meResponse.data._id,
+          name: meResponse.data.fullName,
+          avatar: meResponse.data.imageUrl
+        })
         setGroups(groupsResponse.data)
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -365,18 +455,26 @@ function SocialPage() {
         headers: { Authorization: `Bearer ${token}` }
       })
 
-      const messagesData = response.data.map(msg => ({
-        id: msg._id,
-        sender: msg.senderId === userId ? 'You' : msg.senderName,
-        avatar: msg.senderAvatar,
-        content: msg.content,
-        attachment: msg.attachment,
-        isOwn: msg.senderId === userId,
-        timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }))
+      const messagesData = response.data.map(msg => {
+        // Handle system messages
+        if (msg.isSystemMessage) {
+          return formatSystemMessage(msg)
+        }
+
+        // Handle regular messages
+        return {
+          id: msg._id,
+          sender: msg.senderId === userId ? 'You' : msg.senderName,
+          avatar: msg.senderAvatar,
+          content: msg.content,
+          attachment: msg.attachment,
+          isOwn: msg.senderId === userId,
+          timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }
+      })
 
       setGroupMessages(messagesData)
     } catch (error) {
@@ -607,6 +705,213 @@ function SocialPage() {
     }
   }
 
+  // Helper function to format system messages
+  const formatSystemMessage = (systemMessage) => {
+    let content = ''
+    const data = systemMessage.systemMessageData
+
+    switch (systemMessage.systemMessageType) {
+      case 'member_added':
+        content = `${data.adminName} added ${data.memberName}`
+        break
+      case 'member_removed':
+        content = `${data.adminName} removed ${data.memberName}`
+        break
+      case 'member_left':
+        content = `${data.memberName} left the group`
+        break
+      case 'admin_promoted':
+        content = `${data.memberName} is now an admin`
+        break
+      case 'admin_demoted':
+        content = `${data.memberName} is no longer an admin`
+        break
+      case 'group_name_changed':
+        content = `${data.adminName} changed the group name to "${data.newName}"`
+        break
+      case 'group_image_changed':
+        content = `${data.adminName} changed the group photo`
+        break
+      default:
+        content = 'Group updated'
+    }
+
+    return {
+      id: systemMessage._id,
+      content,
+      isSystemMessage: true,
+      timestamp: new Date(systemMessage.createdAt).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    }
+  }
+
+  // Group management handlers
+  const handleOpenGroupSettings = () => {
+    setShowGroupSettings(true)
+  }
+
+  const handleAddMember = async (memberId) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.post(`/chat/groups/${selectedGroup._id}/members`, { memberId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (error) {
+      console.error('Error adding member:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to add member',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
+  const handleRemoveMember = async (memberId) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.delete(`/chat/groups/${selectedGroup._id}/members/${memberId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (error) {
+      console.error('Error removing member:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to remove member',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
+  const handlePromoteAdmin = async (memberId) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.post(`/chat/groups/${selectedGroup._id}/admins/${memberId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (error) {
+      console.error('Error promoting admin:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to promote admin',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
+  const handleDemoteAdmin = async (memberId) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.delete(`/chat/groups/${selectedGroup._id}/admins/${memberId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (error) {
+      console.error('Error demoting admin:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to demote admin',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
+  const handleUpdateGroupName = async (newName) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.put(`/chat/groups/${selectedGroup._id}/name`, { name: newName }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    } catch (error) {
+      console.error('Error updating group name:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to update group name',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
+  const handleUpdateGroupImage = async (imageFile) => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      const formData = new FormData()
+      formData.append('image', imageFile)
+
+      await axios.put(`/chat/groups/${selectedGroup._id}/image`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+    } catch (error) {
+      console.error('Error updating group image:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to update group image',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
+  const handleLeaveGroup = async () => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.post(`/chat/groups/${selectedGroup._id}/leave`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      // Remove group from local state
+      setGroups(prev => prev.filter(g => g._id !== selectedGroup._id))
+      setSelectedGroup(null)
+      setGroupMessages([])
+      setShowGroupSettings(false)
+
+      setPopup({
+        isOpen: true,
+        title: 'Left Group',
+        message: 'You have left the group successfully',
+        type: 'success',
+        onConfirm: null
+      })
+    } catch (error) {
+      console.error('Error leaving group:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to leave group',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
   return (
     <div className={styles.socialPage}>
       <div className={styles.mainContent}>
@@ -773,6 +1078,8 @@ function SocialPage() {
               messages={groupMessages}
               onSendMessage={handleSendGroupMessage}
               onBack={handleBackToList}
+              isGroup={true}
+              onOpenSettings={handleOpenGroupSettings}
             />
           </div>
         ) : (
@@ -864,6 +1171,23 @@ function SocialPage() {
         friends={friendsWithStatus}
         onCreateGroup={handleCreateGroup}
       />
+
+      {selectedGroup && currentUser && (
+        <GroupSettingsModal
+          isOpen={showGroupSettings}
+          onClose={() => setShowGroupSettings(false)}
+          group={selectedGroup}
+          currentUser={currentUser}
+          friends={friendsWithStatus}
+          onAddMember={handleAddMember}
+          onRemoveMember={handleRemoveMember}
+          onPromoteAdmin={handlePromoteAdmin}
+          onDemoteAdmin={handleDemoteAdmin}
+          onUpdateName={handleUpdateGroupName}
+          onUpdateImage={handleUpdateGroupImage}
+          onLeaveGroup={handleLeaveGroup}
+        />
+      )}
     </div>
   )
 }

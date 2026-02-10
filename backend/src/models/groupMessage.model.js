@@ -6,9 +6,19 @@ const groupMessageSchema = new mongoose.Schema({
         ref: 'Group',
         required: true
     },
-    senderId: { type: String, required: true }, // Clerk user ID
-    senderName: { type: String, required: true },
+    senderId: { type: String, required: false }, // Clerk user ID (optional for system messages)
+    senderName: { type: String, required: false }, // Optional for system messages
     senderAvatar: { type: String },
+    isSystemMessage: { type: Boolean, default: false },
+    systemMessageType: {
+        type: String,
+        enum: ['member_added', 'member_removed', 'member_left', 'admin_promoted', 'admin_demoted', 'group_name_changed', 'group_image_changed'],
+        required: false
+    },
+    systemMessageData: {
+        type: mongoose.Schema.Types.Mixed,
+        required: false
+    },
     content: { type: String },
     attachment: {
         type: { type: String, enum: ['song', 'playlist', 'album'] },
