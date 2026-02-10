@@ -87,13 +87,14 @@ function PlaylistPage() {
       formData.append('image', file)
 
       const token = await getToken()
-      const response = await axios.put(`/playlists/${id}`, formData, {
+      const response = await axios.put(`/playlists/${id}/image`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       })
       setPlaylist(prev => ({ ...prev, imageUrl: response.data.imageUrl }))
+      fetchPlaylists(); // Refresh Sidebar
     } catch (error) {
       console.error("Error uploading image:", error)
     }
