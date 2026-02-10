@@ -239,3 +239,36 @@ export const searchPublicPlaylists = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 }
+
+// Update playlist image only (dedicated endpoint)
+export const updatePlaylistImage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const imageFile = req.files?.image;
+
+        if (!imageFile) {
+            return res.status(400).json({ message: "Image file is required" });
+        }
+
+        const playlist = await Playlist.findById(id);
+        if (!playlist) {
+            return res.status(404).json({ message: "Playlist not found" });
+        }
+
+        if (playlist.userId !== req.auth.userId) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        // Upload to Cloudinary
+        const uploadResponse = await cloudinary.uploader.upload(imageFile.tempFilePath);
+        playlist.imageUrl = uploadResponse.secure_url;
+        await playlist.save();
+
+        res.json(playlist);
+
+    } catch (error) {
+        console.error("Error updating playlist image:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+

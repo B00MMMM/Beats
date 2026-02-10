@@ -1,5 +1,6 @@
 import { Smile, Share2, Send, Music, ArrowLeft, Play, Pause, X, Settings } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './ChatWindow.module.css'
 import MusicPicker from '../MusicPicker/MusicPicker'
 import { usePlayer } from '../../context/PlayerContext'
@@ -10,6 +11,7 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack, onOpenSettin
   const [pinnedAttachment, setPinnedAttachment] = useState(null)
   const messagesEndRef = useRef(null)
   const { playTrack } = usePlayer()
+  const navigate = useNavigate()
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -31,18 +33,20 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack, onOpenSettin
   }
 
   const handlePlayMusic = (attachment) => {
-    // Construct a track object compatible with PlayerContext
-    // The player streams audio using deezerId from /api/songs/stream/:deezerId
+    // If it's a playlist, navigate to the playlist page instead of playing
+    if (attachment.type === 'playlist') {
+      navigate(`/playlist/${attachment.id}`)
+      return
+    }
 
-    // Extract image from various possible fields
+    // For songs, construct a track object compatible with PlayerContext
     const image = attachment.cover || attachment.image || attachment.imageUrl || attachment.album?.cover_medium || "/default-music.png";
 
     const track = {
       _id: attachment.id || attachment._id,
-      deezerId: attachment.id || attachment.deezerId, // The id stored in attachment is the deezerId
+      deezerId: attachment.id || attachment.deezerId,
       title: attachment.title,
       artist: attachment.artist,
-      // Backend expects 'cover' for history
       cover: image,
       imageUrl: image,
       album: {

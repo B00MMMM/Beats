@@ -47,6 +47,16 @@ function SongPage() {
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [repeatMode, setRepeatMode] = useState(0); // 0: off, 1: all, 2: one
+  const [showReactiveBars, setShowReactiveBars] = useState(false);
+
+  // Delay reactive bars by 2 seconds when page loads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowReactiveBars(true);
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const fetchSong = async () => {
@@ -118,7 +128,7 @@ function SongPage() {
   return (
     <div className={styles.songPageWrapper}>
       {/* Audio Reactive Bars (synced with music) */}
-      {isPlaying && <AudioReactiveBars barCount={35} showBpm={true} />}
+      {isPlaying && showReactiveBars && <AudioReactiveBars barCount={35} showBpm={true} />}
 
       <Color src={albumCover} format="hex" crossOrigin="anonymous">
         {({ data: color }) => (
