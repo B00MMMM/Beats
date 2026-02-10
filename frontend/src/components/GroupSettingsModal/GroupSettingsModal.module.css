@@ -14,14 +14,14 @@
 
 .modalContent {
     background: #000000;
-    border: 1px solid #00FFD9;
+    border: 1px solid #384644;
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 255, 217, 0.3);
+    box-shadow: 0 8px 32px rgba(60, 91, 86, 0.3);
 }
 
 .modalHeader {
@@ -56,7 +56,7 @@
 
 .tabs {
     display: flex;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #292929;
 }
 
 .tab {
@@ -73,7 +73,7 @@
 
 .tab:hover {
     color: #fff;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgb(32, 32, 32);
 }
 
 .tab.active {
@@ -124,7 +124,7 @@
 }
 
 .addMemberSection {
-    background: #252525;
+    background: #1a1919;
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
@@ -196,7 +196,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px;
-    background: #252525;
+    background: #1a1919;
     border-radius: 8px;
     transition: background 0.2s;
 }
@@ -296,7 +296,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px;
-    background: #252525;
+    background: #1a1919;
     border-radius: 8px;
     color: #fff;
 }
@@ -400,7 +400,7 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: #333;
+    background: #1a1919;
     color: #fff;
     border: none;
     border-radius: 8px;

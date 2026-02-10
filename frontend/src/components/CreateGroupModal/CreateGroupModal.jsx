@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Camera, Check, Users } from 'lucide-react'
 import styles from './CreateGroupModal.module.css'
 
@@ -71,7 +72,7 @@ function CreateGroupModal({ isOpen, onClose, friends, onCreateGroup }) {
         onClose()
     }
 
-    return (
+    return createPortal(
         <div className={styles.overlay} onClick={handleClose}>
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.header}>
@@ -174,7 +175,8 @@ function CreateGroupModal({ isOpen, onClose, friends, onCreateGroup }) {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
 
