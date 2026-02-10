@@ -105,7 +105,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 16px;
-    background: #00FFD9;
+    background: #00ffd9;
     color: #000;
     border: none;
     border-radius: 8px;
@@ -120,7 +120,7 @@
 }
 
 .addMemberBtn:hover {
-    background: #00CCB3;
+    background: #36968b;
 }
 
 .addMemberSection {

@@ -7,7 +7,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .tabs {
@@ -16,6 +16,77 @@
   gap: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
+}
+
+/* ID Circle Button */
+.idCircle {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--surface-dark);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.idCircle > span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-accent);
+  letter-spacing: 0.5px;
+}
+
+.idCircle:hover {
+  background-color: var(--primary-accent);
+  border-color: var(--primary-accent);
+}
+
+.idCircle:hover > span {
+  color: var(--bg-dark);
+}
+
+.idTooltip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  background-color: #000;
+  border: 1px solid #496d6d;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(90, 137, 130, 0.2);
+}
+
+.idCircle:hover .idTooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.idTooltipLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.idTooltipValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-accent);
+  font-family: monospace;
 }
 
 .tab {
@@ -39,47 +110,6 @@
 .tab.active {
   color: var(--primary-accent);
   background-color: rgba(0, 255, 217, 0.1);
-}
-
-.uniqueIdContainer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background-color: var(--surface-dark);
-  border-radius: 8px;
-  width: fit-content;
-  border: 1px solid var(--border-color);
-}
-
-.uniqueIdLabel {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.uniqueIdValue {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--primary-accent);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: monospace;
-}
-
-.toggleIdBtn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  transition: color 0.2s;
-}
-
-.toggleIdBtn:hover {
-  color: var(--text-primary);
 }
 
 .addFriendButton {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ChevronDown, UserPlus, Search, UserCheck, X, Eye, EyeOff, Users } from 'lucide-react'
+import { ChevronDown, UserPlus, Search, UserCheck, X, Users } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
 import { useLocation } from 'react-router-dom'
 import FriendsList from '../components/FriendsList/FriendsList'
@@ -31,7 +31,6 @@ function SocialPage() {
 
   const [searchLoading, setSearchLoading] = useState(false)
   const [currentUserUniqueId, setCurrentUserUniqueId] = useState(null)
-  const [showUniqueId, setShowUniqueId] = useState(false)
   const [unreadCounts, setUnreadCounts] = useState({})
   const [showCreateGroup, setShowCreateGroup] = useState(false)
   const [groups, setGroups] = useState([])
@@ -916,6 +915,14 @@ function SocialPage() {
     <div className={styles.socialPage}>
       <div className={styles.mainContent}>
         <div className={styles.tabs}>
+          {/* ID Circle Button */}
+          <div className={styles.idCircle}>
+            <span>ID</span>
+            <div className={styles.idTooltip}>
+              <span className={styles.idTooltipLabel}>My ID:</span>
+              <span className={styles.idTooltipValue}>{currentUserUniqueId}</span>
+            </div>
+          </div>
           <button
             className={`${styles.tab} ${activeTab === 'friends' ? styles.active : ''}`}
             onClick={() => {
@@ -977,21 +984,6 @@ function SocialPage() {
             </button>
           </div>
 
-        </div>
-
-        {/* Unique ID Display */}
-        <div className={styles.uniqueIdContainer}>
-          <span className={styles.uniqueIdLabel}>My ID: </span>
-          <div className={styles.uniqueIdValue}>
-            {showUniqueId ? currentUserUniqueId : '••••••'}
-            <button
-              onClick={() => setShowUniqueId(!showUniqueId)}
-              className={styles.toggleIdBtn}
-              title={showUniqueId ? "Hide ID" : "Show ID"}
-            >
-              {showUniqueId ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
         </div>
 
         {showAddFriend ? (
