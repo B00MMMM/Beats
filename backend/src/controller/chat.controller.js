@@ -368,6 +368,7 @@ export const createGroup = async (req, res) => {
       imageUrl,
       creatorId: currentUserId,
       members,
+      admins: [currentUser._id], // Initialize creator as first admin
     });
 
     // Populate members for response
@@ -507,3 +508,475 @@ export const sendGroupMessage = async (req, res) => {
     res.status(500).json({ message: 'Error sending group message' });
   }
 };
+
+// ================== GROUP MANAGEMENT FUNCTIONS ==================
+
+// Helper function to create system messages
+const createSystemMessage = async (groupId, type, data) => {
+  const systemMessage = new GroupMessage({
+    groupId,
+    isSystemMessage: true,
+    systemMessageType: type,
+    systemMessageData: data,
+    content: '' // Empty content for system messages
+  });
+  await systemMessage.save();
+  return systemMessage;
+};
+
+// Helper function to check if user is admin
+const isUserAdmin = (group, userId) => {
+  return group.admins.some(adminId => adminId.toString() === userId.toString());
+};
+
+// Add member to group (admin only)
+export const addGroupMember = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { memberId } = req.body; // MongoDB ObjectId of user to add
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const group = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if current user is admin
+    if (!isUserAdmin(group, currentUser._id)) {
+      return res.status(403).json({ message: "Only admins can add members" });
+    }
+
+    // Check if member already exists
+    if (group.members.some(m => m._id.toString() === memberId)) {
+      return res.status(400).json({ message: "User is already a member" });
+    }
+
+    const newMember = await User.findById(memberId);
+    if (!newMember) {
+      return res.status(404).json({ message: "User to add not found" });
+    }
+
+    // Add member
+    group.members.push(newMember._id);
+    await group.save();
+
+    // Create system message
+    const systemMessage = await createSystemMessage(groupId, 'member_added', {
+      adminName: currentUser.fullName,
+      memberName: newMember.fullName
+    });
+
+    // Emit socket event to all group members
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const populatedGroup = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    for (const member of populatedGroup.members) {
+      const memberSocketId = onlineUsers.get(member.clerkId);
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('groupMemberAdded', {
+          groupId,
+          group: populatedGroup,
+          systemMessage
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Member added successfully", group: populatedGroup, systemMessage });
+  } catch (error) {
+    console.error('Error adding group member:', error);
+    res.status(500).json({ message: 'Error adding group member' });
+  }
+};
+
+// Remove member from group (admin only)
+export const removeGroupMember = async (req, res) => {
+  try {
+    const { groupId, memberId } = req.params;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if current user is admin
+    if (!isUserAdmin(group, currentUser._id)) {
+      return res.status(403).json({ message: "Only admins can remove members" });
+    }
+
+    const memberToRemove = await User.findById(memberId);
+    if (!memberToRemove) {
+      return res.status(404).json({ message: "Member not found" });
+    }
+
+    // Prevent removing the creator
+    if (memberToRemove.clerkId === group.creatorId) {
+      return res.status(403).json({ message: "Cannot remove the group creator" });
+    }
+
+    // Remove from members and admins
+    group.members = group.members.filter(m => m.toString() !== memberId);
+    group.admins = group.admins.filter(a => a.toString() !== memberId);
+    await group.save();
+
+    // Create system message
+    const systemMessage = await createSystemMessage(groupId, 'member_removed', {
+      adminName: currentUser.fullName,
+      memberName: memberToRemove.fullName
+    });
+
+    // Emit socket event
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const populatedGroup = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    // Notify all remaining members
+    for (const member of populatedGroup.members) {
+      const memberSocketId = onlineUsers.get(member.clerkId);
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('groupMemberRemoved', {
+          groupId,
+          group: populatedGroup,
+          systemMessage
+        });
+      }
+    }
+
+    // Notify the removed member
+    const removedMemberSocketId = onlineUsers.get(memberToRemove.clerkId);
+    if (removedMemberSocketId) {
+      io.to(removedMemberSocketId).emit('groupMemberRemoved', {
+        groupId,
+        group: null, // They're no longer a member
+        systemMessage
+      });
+    }
+
+    res.status(200).json({ message: "Member removed successfully", group: populatedGroup, systemMessage });
+  } catch (error) {
+    console.error('Error removing group member:', error);
+    res.status(500).json({ message: 'Error removing group member' });
+  }
+};
+
+// Promote member to admin (admin only)
+export const promoteToAdmin = async (req, res) => {
+  try {
+    const { groupId, memberId } = req.params;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if current user is admin
+    if (!isUserAdmin(group, currentUser._id)) {
+      return res.status(403).json({ message: "Only admins can promote members" });
+    }
+
+    const memberToPromote = await User.findById(memberId);
+    if (!memberToPromote) {
+      return res.status(404).json({ message: "Member not found" });
+    }
+
+    // Check if already admin
+    if (isUserAdmin(group, memberId)) {
+      return res.status(400).json({ message: "User is already an admin" });
+    }
+
+    // Add to admins
+    group.admins.push(memberId);
+    await group.save();
+
+    // Create system message
+    const systemMessage = await createSystemMessage(groupId, 'admin_promoted', {
+      memberName: memberToPromote.fullName
+    });
+
+    // Emit socket event
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const populatedGroup = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    for (const member of populatedGroup.members) {
+      const memberSocketId = onlineUsers.get(member.clerkId);
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('groupAdminPromoted', {
+          groupId,
+          group: populatedGroup,
+          systemMessage
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Member promoted to admin", group: populatedGroup, systemMessage });
+  } catch (error) {
+    console.error('Error promoting to admin:', error);
+    res.status(500).json({ message: 'Error promoting to admin' });
+  }
+};
+
+// Demote admin (admin only)
+export const demoteAdmin = async (req, res) => {
+  try {
+    const { groupId, memberId } = req.params;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if current user is admin
+    if (!isUserAdmin(group, currentUser._id)) {
+      return res.status(403).json({ message: "Only admins can demote admins" });
+    }
+
+    const memberToDemote = await User.findById(memberId);
+    if (!memberToDemote) {
+      return res.status(404).json({ message: "Member not found" });
+    }
+
+    // Prevent demoting the creator
+    if (memberToDemote.clerkId === group.creatorId) {
+      return res.status(403).json({ message: "Cannot demote the group creator" });
+    }
+
+    // Check if user is admin
+    if (!isUserAdmin(group, memberId)) {
+      return res.status(400).json({ message: "User is not an admin" });
+    }
+
+    // Remove from admins
+    group.admins = group.admins.filter(a => a.toString() !== memberId);
+    await group.save();
+
+    // Create system message
+    const systemMessage = await createSystemMessage(groupId, 'admin_demoted', {
+      memberName: memberToDemote.fullName
+    });
+
+    // Emit socket event
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const populatedGroup = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    for (const member of populatedGroup.members) {
+      const memberSocketId = onlineUsers.get(member.clerkId);
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('groupAdminDemoted', {
+          groupId,
+          group: populatedGroup,
+          systemMessage
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Admin demoted", group: populatedGroup, systemMessage });
+  } catch (error) {
+    console.error('Error demoting admin:', error);
+    res.status(500).json({ message: 'Error demoting admin' });
+  }
+};
+
+// Update group name (admin only)
+export const updateGroupName = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { name } = req.body;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Group name is required" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if current user is admin
+    if (!isUserAdmin(group, currentUser._id)) {
+      return res.status(403).json({ message: "Only admins can change group name" });
+    }
+
+    const oldName = group.name;
+    group.name = name.trim();
+    await group.save();
+
+    // Create system message
+    const systemMessage = await createSystemMessage(groupId, 'group_name_changed', {
+      adminName: currentUser.fullName,
+      oldName,
+      newName: name.trim()
+    });
+
+    // Emit socket event
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const populatedGroup = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    for (const member of populatedGroup.members) {
+      const memberSocketId = onlineUsers.get(member.clerkId);
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('groupNameUpdated', {
+          groupId,
+          group: populatedGroup,
+          systemMessage
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Group name updated", group: populatedGroup, systemMessage });
+  } catch (error) {
+    console.error('Error updating group name:', error);
+    res.status(500).json({ message: 'Error updating group name' });
+  }
+};
+
+// Update group image (admin only)
+export const updateGroupImage = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const imageFile = req.files?.image;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!imageFile) {
+      return res.status(400).json({ message: "Image file is required" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if current user is admin
+    if (!isUserAdmin(group, currentUser._id)) {
+      return res.status(403).json({ message: "Only admins can change group image" });
+    }
+
+    // Upload to Cloudinary
+    const uploadResponse = await cloudinary.uploader.upload(imageFile.tempFilePath);
+    group.imageUrl = uploadResponse.secure_url;
+    await group.save();
+
+    // Create system message
+    const systemMessage = await createSystemMessage(groupId, 'group_image_changed', {
+      adminName: currentUser.fullName
+    });
+
+    // Emit socket event
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const populatedGroup = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    for (const member of populatedGroup.members) {
+      const memberSocketId = onlineUsers.get(member.clerkId);
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('groupImageUpdated', {
+          groupId,
+          group: populatedGroup,
+          systemMessage
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Group image updated", group: populatedGroup, systemMessage });
+  } catch (error) {
+    console.error('Error updating group image:', error);
+    res.status(500).json({ message: 'Error updating group image' });
+  }
+};
+
+// Leave group (any member)
+export const leaveGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    // Check if user is a member
+    if (!group.members.some(m => m.toString() === currentUser._id.toString())) {
+      return res.status(400).json({ message: "You are not a member of this group" });
+    }
+
+    // Remove from members and admins
+    group.members = group.members.filter(m => m.toString() !== currentUser._id.toString());
+    group.admins = group.admins.filter(a => a.toString() !== currentUser._id.toString());
+
+    // If creator is leaving and is the last admin, promote another member
+    if (currentUser.clerkId === group.creatorId && group.admins.length === 0 && group.members.length > 0) {
+      group.admins.push(group.members[0]);
+    }
+
+    await group.save();
+
+    // Create system message
+    const systemMessage = await createSystemMessage(groupId, 'member_left', {
+      memberName: currentUser.fullName
+    });
+
+    // Emit socket event to remaining members
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const populatedGroup = await Group.findById(groupId).populate('members', 'fullName imageUrl clerkId uniqueId');
+
+    for (const member of populatedGroup.members) {
+      const memberSocketId = onlineUsers.get(member.clerkId);
+      if (memberSocketId) {
+        io.to(memberSocketId).emit('groupMemberLeft', {
+          groupId,
+          group: populatedGroup,
+          systemMessage
+        });
+      }
+    }
+
+    res.status(200).json({ message: "Left group successfully" });
+  } catch (error) {
+    console.error('Error leaving group:', error);
+    res.status(500).json({ message: 'Error leaving group' });
+  }
+};
+

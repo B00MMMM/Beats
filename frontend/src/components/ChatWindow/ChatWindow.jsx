@@ -1,10 +1,10 @@
-import { Smile, Share2, Send, Music, ArrowLeft, Play, Pause, X } from 'lucide-react'
+import { Smile, Share2, Send, Music, ArrowLeft, Play, Pause, X, Settings } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import styles from './ChatWindow.module.css'
 import MusicPicker from '../MusicPicker/MusicPicker'
 import { usePlayer } from '../../context/PlayerContext'
 
-function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
+function ChatWindow({ friend, messages = [], onSendMessage, onBack, onOpenSettings, isGroup = false }) {
   const [message, setMessage] = useState('')
   const [showMusicPicker, setShowMusicPicker] = useState(false)
   const [pinnedAttachment, setPinnedAttachment] = useState(null)
@@ -78,6 +78,11 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
             </span>
           </div>
         </div>
+        {isGroup && onOpenSettings && (
+          <button className={styles.settingsButton} onClick={onOpenSettings}>
+            <Settings size={20} />
+          </button>
+        )}
       </div>
 
       <div className={styles.messages}>
@@ -86,44 +91,56 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack }) {
             <p>No messages yet. Start a conversation!</p>
           </div>
         ) : (
-          messages.map((msg, index) => (
-            <div key={msg.id || index} className={`${styles.message} ${msg.isOwn ? styles.own : ''}`}>
-              {!msg.isOwn && (
-                <div className={styles.messageAvatar}>
-                  {msg.avatar ? (
-                    <img src={msg.avatar} alt={msg.sender} />
-                  ) : (
-                    <div className={styles.avatarPlaceholder}>
-                      {msg.sender?.charAt(0).toUpperCase()}
+          messages.map((msg, index) => {
+            // Render system messages differently
+            if (msg.isSystemMessage) {
+              return (
+                <div key={msg.id || index} className={styles.systemMessage}>
+                  <span>{msg.content}</span>
+                </div>
+              );
+            }
+
+            // Regular message rendering
+            return (
+              <div key={msg.id || index} className={`${styles.message} ${msg.isOwn ? styles.own : ''}`}>
+                {!msg.isOwn && (
+                  <div className={styles.messageAvatar}>
+                    {msg.avatar ? (
+                      <img src={msg.avatar} alt={msg.sender} />
+                    ) : (
+                      <div className={styles.avatarPlaceholder}>
+                        {msg.sender?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className={styles.messageContent}>
+                  {!msg.isOwn && <span className={styles.senderName}>{msg.sender}</span>}
+
+                  {msg.attachment ? (
+                    <div className={styles.musicAttachment}>
+                      <button
+                        className={styles.playBtn}
+                        onClick={() => handlePlayMusic(msg.attachment)}
+                      >
+                        <Play size={16} fill="currentColor" />
+                      </button>
+                      <div className={styles.musicInfo}>
+                        <span className={styles.songTitle}>{msg.attachment.title || msg.attachment.name}</span>
+                      </div>
                     </div>
+                  ) : null}
+
+                  {msg.content && <p className={styles.messageText}>{msg.content}</p>}
+
+                  {msg.timestamp && (
+                    <span className={styles.timestamp}>{msg.timestamp}</span>
                   )}
                 </div>
-              )}
-              <div className={styles.messageContent}>
-                {!msg.isOwn && <span className={styles.senderName}>{msg.sender}</span>}
-
-                {msg.attachment ? (
-                  <div className={styles.musicAttachment}>
-                    <button
-                      className={styles.playBtn}
-                      onClick={() => handlePlayMusic(msg.attachment)}
-                    >
-                      <Play size={16} fill="currentColor" />
-                    </button>
-                    <div className={styles.musicInfo}>
-                      <span className={styles.songTitle}>{msg.attachment.title || msg.attachment.name}</span>
-                    </div>
-                  </div>
-                ) : null}
-
-                {msg.content && <p className={styles.messageText}>{msg.content}</p>}
-
-                {msg.timestamp && (
-                  <span className={styles.timestamp}>{msg.timestamp}</span>
-                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
