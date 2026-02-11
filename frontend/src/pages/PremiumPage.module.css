@@ -94,9 +94,105 @@
     margin-bottom: 48px;
 }
 
-.plansGrid {
+/* Default Plan Banner (Iron) */
+.defaultPlanBanner {
+    background: linear-gradient(135deg, rgba(0, 255, 217, 0.15) 0%, rgba(0, 153, 255, 0.1) 100%);
+    border: 2px solid rgba(0, 255, 217, 0.3);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 64px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.defaultPlanContent {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.defaultPlanHeader {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.defaultPlanIcon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 255, 217, 0.2);
+    border-radius: 50%;
+    color: var(--primary-accent);
+    flex-shrink: 0;
+}
+
+.defaultPlanName {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.defaultPlanTagline {
+    font-size: 16px;
+    color: var(--primary-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 4px 0 0 0;
+}
+
+.defaultPlanDescription {
+    font-size: 18px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.defaultPlanDetails {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 8px;
+}
+
+.defaultPlanColumn h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.defaultPlanColumn ul {
+    list-style: none;
+}
+
+.defaultPlanColumn li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: var(--text-primary);
+}
+
+/* Upgrade Section */
+.upgradeTitle {
+    font-size: 28px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-primary);
+    margin-bottom: 32px;
+}
+
+.upgradeGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 32px;
     max-width: 1200px;
     margin: 0 auto;
@@ -109,6 +205,8 @@
     position: relative;
     border: 2px solid var(--border-color);
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .planCard:hover {
@@ -175,6 +273,10 @@
 .planDescription {
     font-size: 16px;
     color: var(--text-secondary);
+}
+
+.planFeatures {
+    flex: 1;
 }
 
 .planFeatures h4 {
@@ -288,18 +390,39 @@
     color: var(--primary-accent);
 }
 
-.comparisonTable td:has(svg[data-lucide="x"]) svg {
-    color: #ff4444;
+/* Responsive */
+@media (max-width: 968px) {
+    .upgradeGrid {
+        grid-template-columns: 1fr;
+    }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .heroTitle {
         font-size: 36px;
     }
 
-    .plansGrid {
+    .defaultPlanBanner {
+        padding: 24px;
+        margin-bottom: 48px;
+    }
+
+    .defaultPlanHeader {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .defaultPlanName {
+        font-size: 28px;
+    }
+
+    .defaultPlanDetails {
         grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .upgradeTitle {
+        font-size: 24px;
     }
 
     .sectionTitle {
