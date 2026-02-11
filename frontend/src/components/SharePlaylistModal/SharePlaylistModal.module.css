@@ -1,0 +1,315 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    padding: 20px;
+}
+
+.modalContent {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 255, 217, 0.2);
+    position: relative;
+}
+
+.closeButton {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+
+.closeButton:hover {
+    background: var(--surface-dark);
+    color: var(--text-primary);
+}
+
+.modalHeader {
+    padding: 32px 32px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modalHeader h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.modalHeader p {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.modeSwitcher {
+    display: flex;
+    gap: 8px;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modeButton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modeButton:hover {
+    background: var(--surface-dark);
+    color: var(--text-primary);
+}
+
+.modeButton.active {
+    background: var(--primary-accent);
+    border-color: var(--primary-accent);
+    color: #000;
+}
+
+.error {
+    margin: 16px 32px;
+    padding: 12px;
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid #ff4444;
+    border-radius: 8px;
+    color: #ff6666;
+    font-size: 14px;
+}
+
+.listContainer {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 300px;
+    max-height: 400px;
+}
+
+.loadingState,
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-secondary);
+    gap: 16px;
+}
+
+.loadingState svg,
+.emptyState svg {
+    color: var(--text-muted);
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.listItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    margin: 4px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.listItem:hover {
+    background: var(--surface-dark);
+}
+
+.listItem.selected {
+    background: rgba(0, 255, 217, 0.1);
+    border: 1px solid rgba(0, 255, 217, 0.3);
+}
+
+.itemInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatarPlaceholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-accent);
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.itemText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.itemName {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.itemMeta {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.checkbox.checked {
+    background: var(--primary-accent);
+    border-color: var(--primary-accent);
+    color: #000;
+}
+
+.footer {
+    padding: 16px 32px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.selectionCount {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.shareButton {
+    padding: 12px 24px;
+    background: var(--primary-accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.shareButton:hover:not(:disabled) {
+    background: #00e6c3;
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 255, 217, 0.4);
+}
+
+.shareButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Success State */
+.successContent {
+    text-align: center;
+    padding: 60px 40px;
+}
+
+.successIcon {
+    color: var(--primary-accent);
+    margin-bottom: 24px;
+}
+
+.successContent h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.successContent p {
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modalContent {
+        max-width: 100%;
+    }
+
+    .modalHeader,
+    .footer {
+        padding: 24px;
+    }
+
+    .modeSwitcher {
+        padding: 12px 16px;
+    }
+
+    .listContainer {
+        padding: 4px;
+    }
+}

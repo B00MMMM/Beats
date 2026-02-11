@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Pause, Play, Heart, MoreVertical, Edit2, Camera, Search, Plus, X, Trash2, Globe, Lock } from 'lucide-react'
+import { Pause, Play, Heart, MoreVertical, Edit2, Camera, Search, Plus, X, Trash2, Globe, Lock, Share2 } from 'lucide-react'
 import SongRow from '../components/SongRow/SongRow'
+import SharePlaylistModal from '../components/SharePlaylistModal/SharePlaylistModal'
 import styles from './PlaylistPage.module.css'
 import { useAuth } from '@clerk/clerk-react'
 import axios from '../api/axios'
@@ -21,16 +22,35 @@ function PlaylistPage() {
   const [editTitle, setEditTitle] = useState('')
   const [editDesc, setEditDesc] = useState('')
 
+  // Dropdown and modal state
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
 
   const fileInputRef = useRef(null)
+  const dropdownRef = useRef(null)
 
   useEffect(() => {
     fetchPlaylist()
   }, [id])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const fetchPlaylist = async () => {
     try {
@@ -154,6 +174,24 @@ function PlaylistPage() {
     }
   }
 
+  const handleDeletePlaylist = async () => {
+    try {
+      setDeleting(true)
+      const token = await getToken()
+      await axios.delete(`/playlists/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      fetchPlaylists() // Refresh sidebar
+      navigate('/') // Navigate to home
+    } catch (error) {
+      console.error("Error deleting playlist:", error)
+      alert('Failed to delete playlist')
+    } finally {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   if (isLoading) return <div className={styles.loading}>Loading...</div>
   if (!playlist) return <div className={styles.error}>Playlist not found</div>
 
@@ -260,7 +298,40 @@ function PlaylistPage() {
               <Play size={28} fill="black" />
             )}
           </button>
-          <button className={styles.iconButton}><MoreVertical size={32} /></button>
+          {isOwner && (
+            <div className={styles.dropdownContainer} ref={dropdownRef}>
+              <button
+                className={styles.iconButton}
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <MoreVertical size={32} />
+              </button>
+              {showDropdown && (
+                <div className={styles.dropdown}>
+                  <button
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      setShowShareModal(true)
+                      setShowDropdown(false)
+                    }}
+                  >
+                    <Share2 size={18} />
+                    Share Playlist
+                  </button>
+                  <button
+                    className={`${styles.dropdownItem} ${styles.danger}`}
+                    onClick={() => {
+                      setShowDeleteConfirm(true)
+                      setShowDropdown(false)
+                    }}
+                  >
+                    <Trash2 size={18} />
+                    Delete Playlist
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className={styles.songsTable}>
@@ -342,6 +413,40 @@ function PlaylistPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className={styles.confirmOverlay} onClick={() => setShowDeleteConfirm(false)}>
+          <div className={styles.confirmDialog} onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Playlist?</h3>
+            <p>Are you sure you want to delete "{playlist.title}"? This action cannot be undone.</p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles.deleteButton}
+                onClick={handleDeletePlaylist}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <SharePlaylistModal
+          playlist={playlist}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
     </div>
   )
 }
