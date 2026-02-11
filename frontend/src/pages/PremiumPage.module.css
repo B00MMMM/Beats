@@ -351,18 +351,19 @@
 
 .tableWrapper {
     overflow-x: auto;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
+    border: none;
+    border-left: 3px solid var(--primary-accent);
+    background: var(--bg-dark);
 }
 
 .comparisonTable {
     width: 100%;
     border-collapse: collapse;
-    background: var(--surface-dark);
+    background: var(--bg-dark);
 }
 
 .comparisonTable thead {
-    background: rgba(0, 255, 217, 0.1);
+    background: var(--bg-dark);
 }
 
 .comparisonTable th {
@@ -373,11 +374,12 @@
     font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(0, 255, 217, 0.2);
 }
 
 .comparisonTable td {
     padding: 16px 20px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
 }
 
