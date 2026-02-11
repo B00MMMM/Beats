@@ -7,41 +7,37 @@ function PremiumPage() {
     const [selectedPlan, setSelectedPlan] = useState(null)
     const [showModal, setShowModal] = useState(false)
 
-    const plans = [
-        {
-            id: 'iron',
-            name: 'Iron',
-            icon: Sparkles,
-            tagline: 'Get Started',
-            description: 'Perfect for casual listeners',
-            features: [
-                'API service access',
-                '30-second song previews',
-                'Basic playlist features',
-                'Friend sharing',
-                'Standard quality audio'
-            ],
-            limitations: [
-                'No Google Drive integration',
-                'Limited preview time',
-                'No full song playback'
-            ]
-        },
+    const ironPlan = {
+        id: 'iron',
+        name: 'Iron',
+        icon: Sparkles,
+        tagline: 'Current Plan',
+        description: 'Your default starting experience on Beats',
+        features: [
+            'API service with 30-second previews',
+            'Standard quality audio',
+            'Basic music streaming'
+        ],
+        limitations: [
+            'No Google Drive integration',
+            'No full song playback',
+            'Limited to 30-second previews'
+        ]
+    }
+
+    const upgradePlans = [
         {
             id: 'gold',
             name: 'Gold',
             icon: Zap,
             tagline: 'Most Popular',
-            description: 'Enhanced experience for active users',
+            description: 'Enhanced experience with premium features',
             popular: true,
             features: [
-                'Everything in Iron',
                 'Google Drive integration',
                 'Full song playback',
-                'Time-limited premium access',
                 'High quality audio',
-                'Advanced playlist features',
-                'Group chat features'
+                'Time-limited premium access'
             ],
             limitations: [
                 'Time-restricted access period'
@@ -52,14 +48,13 @@ function PremiumPage() {
             name: 'Diamond',
             icon: Crown,
             tagline: 'Ultimate Experience',
-            description: 'The complete Beats experience',
+            description: 'The complete premium Beats experience',
             features: [
-                'Everything in Gold',
-                'Unlimited access period',
+                'Unlimited Google Drive access',
+                'Full song playback forever',
+                'Very high quality audio',
                 'No time restrictions',
                 'Priority support',
-                'Exclusive features',
-                'Very high quality audio',
                 'Early access to new features'
             ],
             limitations: []
@@ -106,9 +101,53 @@ function PremiumPage() {
 
             {/* Plans Section */}
             <div className={styles.plansSection}>
-                <h2 className={styles.sectionTitle}>Choose Your Plan</h2>
-                <div className={styles.plansGrid}>
-                    {plans.map((plan) => {
+                <h2 className={styles.sectionTitle}>Your Plan Options</h2>
+
+                {/* Iron - Current Default Plan */}
+                <div className={styles.defaultPlanBanner}>
+                    <div className={styles.defaultPlanContent}>
+                        <div className={styles.defaultPlanHeader}>
+                            <div className={styles.defaultPlanIcon}>
+                                <Sparkles size={40} />
+                            </div>
+                            <div>
+                                <h3 className={styles.defaultPlanName}>{ironPlan.name} Plan</h3>
+                                <p className={styles.defaultPlanTagline}>{ironPlan.tagline}</p>
+                            </div>
+                        </div>
+                        <p className={styles.defaultPlanDescription}>{ironPlan.description}</p>
+
+                        <div className={styles.defaultPlanDetails}>
+                            <div className={styles.defaultPlanColumn}>
+                                <h4>Included:</h4>
+                                <ul>
+                                    {ironPlan.features.map((feature, index) => (
+                                        <li key={index}>
+                                            <Check size={16} className={styles.checkIcon} />
+                                            <span>{feature}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className={styles.defaultPlanColumn}>
+                                <h4>Limitations:</h4>
+                                <ul className={styles.limitations}>
+                                    {ironPlan.limitations.map((limitation, index) => (
+                                        <li key={index}>
+                                            <X size={16} className={styles.xIcon} />
+                                            <span>{limitation}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Upgrade Options */}
+                <h3 className={styles.upgradeTitle}>Upgrade to Premium</h3>
+                <div className={styles.upgradeGrid}>
+                    {upgradePlans.map((plan) => {
                         const Icon = plan.icon
                         return (
                             <div
@@ -131,7 +170,7 @@ function PremiumPage() {
                                 </div>
 
                                 <div className={styles.planFeatures}>
-                                    <h4>What you'll get:</h4>
+                                    <h4>Premium Features:</h4>
                                     <ul>
                                         {plan.features.map((feature, index) => (
                                             <li key={index}>
@@ -143,7 +182,7 @@ function PremiumPage() {
 
                                     {plan.limitations.length > 0 && (
                                         <>
-                                            <h4 className={styles.limitationsTitle}>Limitations:</h4>
+                                            <h4 className={styles.limitationsTitle}>Note:</h4>
                                             <ul className={styles.limitations}>
                                                 {plan.limitations.map((limitation, index) => (
                                                     <li key={index}>
@@ -160,7 +199,7 @@ function PremiumPage() {
                                     className={styles.planButton}
                                     onClick={() => handlePlanSelect(plan.id)}
                                 >
-                                    Get {plan.name}
+                                    Request {plan.name}
                                 </button>
                             </div>
                         )
@@ -182,12 +221,6 @@ function PremiumPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>API Service Access</td>
-                                <td><Check size={20} /></td>
-                                <td><Check size={20} /></td>
-                                <td><Check size={20} /></td>
-                            </tr>
                             <tr>
                                 <td>Song Previews</td>
                                 <td>30 seconds</td>
@@ -211,12 +244,6 @@ function PremiumPage() {
                                 <td>Standard</td>
                                 <td>High</td>
                                 <td>Very High</td>
-                            </tr>
-                            <tr>
-                                <td>Group Chat</td>
-                                <td><Check size={20} /></td>
-                                <td><Check size={20} /></td>
-                                <td><Check size={20} /></td>
                             </tr>
                             <tr>
                                 <td>Priority Support</td>
