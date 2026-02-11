@@ -14,6 +14,7 @@ import songRoutes from "./routes/song.route.js";
 import playlistRoutes from "./routes/playlist.route.js";
 import chatRoutes from "./routes/chat.route.js";
 import notificationRoutes from "./routes/notification.route.js";
+import planRequestRoutes from "./routes/planRequest.routes.js";
 
 // ... (deps)
 
@@ -44,28 +45,28 @@ app.set('onlineUsers', onlineUsers);
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     console.log('New socket connection:', socket.id);
-    
+
     const userId = socket.handshake.query.userId;
-    
+
     if (userId && userId !== 'undefined') {
         onlineUsers.set(userId, socket.id);
         console.log('User connected:', userId);
-        
+
         // Broadcast online users to all clients
         io.emit('onlineUsers', Array.from(onlineUsers.keys()));
     }
-    
+
     // Send current online users to the newly connected socket
     socket.emit('onlineUsers', Array.from(onlineUsers.keys()));
-    
+
     // Handle request for online users (fallback)
     socket.on('getOnlineUsers', () => {
         socket.emit('onlineUsers', Array.from(onlineUsers.keys()));
     });
-    
+
     // Note: Real-time message delivery is handled by the REST API (chat.controller.js)
     // The sendMessage socket event is no longer used to prevent duplicate messages
-    
+
     // Handle typing indicator
     socket.on('typing', ({ recipientId, isTyping }) => {
         const recipientSocketId = onlineUsers.get(recipientId);
@@ -73,12 +74,12 @@ io.on('connection', (socket) => {
             io.to(recipientSocketId).emit('userTyping', { userId, isTyping });
         }
     });
-    
+
     socket.on('disconnect', () => {
         if (userId) {
             onlineUsers.delete(userId);
             console.log('User disconnected:', userId);
-            
+
             // Broadcast updated online users
             io.emit('onlineUsers', Array.from(onlineUsers.keys()));
         }
@@ -109,6 +110,7 @@ app.use("/api/songs", songRoutes);
 app.use("/api/playlists", playlistRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/plans", planRequestRoutes);
 
 //error handler
 app.use((err, req, res, next) => {

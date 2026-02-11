@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
         }],
+        plan: {
+            type: String,
+            enum: ['iron', 'gold', 'diamond'],
+            default: 'iron',
+        },
     },
     { timestamps: true, } // Automatically manage createdAt and updatedAt fields
 );

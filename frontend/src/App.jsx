@@ -10,6 +10,7 @@ import SignUpPage from './pages/SignUpPage'
 import SearchPage from './pages/SearchPage'
 import SongPage from './pages/SongPage'
 import FavoritesPage from './pages/FavoritesPage'
+import PremiumPage from './pages/PremiumPage'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="/music/:id" element={<MusicDetailsPage />} />
             <Route path="/friends" element={<SocialPage />} />
             <Route path="/song/:deezerId" element={<SongPage />} />
+            <Route path="/premium" element={<PremiumPage />} />
             {/* Add a fallback route for signed-in users */}
             <Route path="*" element={<HomePage />} />
           </Routes>

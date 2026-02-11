@@ -1,0 +1,317 @@
+.premiumPage {
+    min-height: 100vh;
+    background: var(--bg-dark);
+    padding-bottom: 120px;
+}
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, #0099ff 0%, #00FFD9 50%, #0066cc 100%);
+    padding: 80px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(0, 255, 217, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 153, 255, 0.3) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.heroContent {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.heroTitle {
+    font-size: 56px;
+    font-weight: 800;
+    color: #000;
+    margin-bottom: 16px;
+    text-shadow: 0 2px 20px rgba(0, 255, 217, 0.3);
+}
+
+.heroSubtitle {
+    font-size: 20px;
+    color: #000;
+    margin-bottom: 24px;
+    opacity: 0.9;
+}
+
+.heroBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 50px;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* About Section */
+.about {
+    max-width: 900px;
+    margin: 60px auto;
+    padding: 0 40px;
+    text-align: center;
+}
+
+.about h2 {
+    font-size: 32px;
+    color: var(--primary-accent);
+    margin-bottom: 16px;
+}
+
+.about p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Plans Section */
+.plansSection {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 40px;
+}
+
+.sectionTitle {
+    font-size: 40px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary);
+    margin-bottom: 48px;
+}
+
+.plansGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.planCard {
+    background: var(--surface-dark);
+    border-radius: 16px;
+    padding: 32px;
+    position: relative;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.planCard:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary-accent);
+    box-shadow: 0 12px 40px rgba(0, 255, 217, 0.3);
+}
+
+.planCard.popular {
+    border-color: var(--primary-accent);
+    background: linear-gradient(135deg, rgba(0, 255, 217, 0.1) 0%, var(--surface-dark) 100%);
+}
+
+.popularBadge {
+    position: absolute;
+    top: -12px;
+    right: 24px;
+    background: var(--primary-accent);
+    color: #000;
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.planHeader {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.planIcon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 255, 217, 0.1);
+    border-radius: 50%;
+    color: var(--primary-accent);
+}
+
+.planName {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.planTagline {
+    font-size: 14px;
+    color: var(--primary-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.planDescription {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+.planFeatures h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.planFeatures ul {
+    list-style: none;
+    margin-bottom: 24px;
+}
+
+.planFeatures li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: var(--text-primary);
+}
+
+.checkIcon {
+    color: var(--primary-accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.xIcon {
+    color: #ff4444;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.limitationsTitle {
+    margin-top: 24px;
+}
+
+.limitations {
+    opacity: 0.7;
+}
+
+.planButton {
+    width: 100%;
+    padding: 16px;
+    background: var(--primary-accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: auto;
+}
+
+.planButton:hover {
+    background: #00e6c3;
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 255, 217, 0.4);
+}
+
+/* Comparison Table */
+.comparisonSection {
+    max-width: 1200px;
+    margin: 80px auto 0;
+    padding: 0 40px 60px;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.comparisonTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface-dark);
+}
+
+.comparisonTable thead {
+    background: rgba(0, 255, 217, 0.1);
+}
+
+.comparisonTable th {
+    padding: 20px;
+    text-align: left;
+    font-weight: 700;
+    color: var(--primary-accent);
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.comparisonTable td {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.comparisonTable td:first-child {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.comparisonTable td svg {
+    color: var(--primary-accent);
+}
+
+.comparisonTable td:has(svg[data-lucide="x"]) svg {
+    color: #ff4444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .heroTitle {
+        font-size: 36px;
+    }
+
+    .plansGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .sectionTitle {
+        font-size: 28px;
+    }
+
+    .comparisonTable {
+        font-size: 14px;
+    }
+
+    .comparisonTable th,
+    .comparisonTable td {
+        padding: 12px;
+    }
+}
