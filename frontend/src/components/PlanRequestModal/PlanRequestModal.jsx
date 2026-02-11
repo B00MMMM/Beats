@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, AlertCircle, CheckCircle, Loader } from 'lucide-react'
 import styles from './PlanRequestModal.module.css'
 import axios from '../../api/axios'
@@ -55,7 +56,7 @@ function PlanRequestModal({ plan, onClose }) {
     }
 
     if (success) {
-        return (
+        return createPortal(
             <div className={styles.modalOverlay} onClick={onClose}>
                 <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                     <div className={styles.successContent}>
@@ -67,11 +68,12 @@ function PlanRequestModal({ plan, onClose }) {
                         </p>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         )
     }
 
-    return (
+    return createPortal(
         <div className={styles.modalOverlay} onClick={onClose}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
                 <button className={styles.closeButton} onClick={onClose}>
@@ -134,7 +136,8 @@ function PlanRequestModal({ plan, onClose }) {
                     </button>
                 </form>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
 
