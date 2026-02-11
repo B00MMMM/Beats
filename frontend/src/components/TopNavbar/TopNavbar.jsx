@@ -98,7 +98,7 @@ function TopNavbar() {
           <Sparkles size={18} />
           <span>AI Chat</span>
         </button>
-        <button className={styles.premiumButton}>
+        <button className={styles.premiumButton} onClick={() => navigate('/premium')}>
           <span>Explore Premium</span>
         </button>
         <button className={styles.iconButton} onClick={handleNotificationClick}>
@@ -117,9 +117,9 @@ function TopNavbar() {
         </SignedOut>
       </div>
 
-      <NotificationModal 
-        isOpen={showNotifications} 
-        onClose={() => setShowNotifications(false)} 
+      <NotificationModal
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
       />
     </div>
   )
