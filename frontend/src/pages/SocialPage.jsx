@@ -929,6 +929,8 @@ function SocialPage() {
               setActiveTab('friends');
               setShowAddFriend(false);
               setSelectedFriend(null);
+              setSelectedGroup(null);
+              setGroupMessages([]);
             }}
           >
             Friends
@@ -949,6 +951,8 @@ function SocialPage() {
               setActiveTab('online')
               setSelectedFriend(null)
               setShowAddFriend(false)
+              setSelectedGroup(null)
+              setGroupMessages([])
             }}
           >
             Online
