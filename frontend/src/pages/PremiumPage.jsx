@@ -83,7 +83,6 @@ function PremiumPage() {
                         Choose the perfect plan for your listening needs. Request an upgrade and unlock premium features.
                     </p>
                     <div className={styles.heroBadge}>
-                        <Sparkles size={16} />
                         <span>No payment required - Just approval</span>
                     </div>
                 </div>
