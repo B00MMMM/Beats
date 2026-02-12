@@ -1013,8 +1013,8 @@ function SocialPage() {
               {!searchLoading && searchResults.length === 0 && searchQuery && (
                 <div className={styles.emptyState}>No users found</div>
               )}
-              {searchResults.map(user => (
-                <div key={user.id} className={styles.searchResultItem}>
+              {searchResults.map((user, index) => (
+                <div key={user.id || index} className={styles.searchResultItem}>
                   <div className={styles.userInfo}>
                     <img src={user.avatar} alt={user.name} className={styles.avatar} />
                     <div>
@@ -1084,8 +1084,8 @@ function SocialPage() {
               <div className={styles.requestsList}>
                 <h3>Friend Requests - {friendRequests.length}</h3>
                 {friendRequests.length === 0 && <div className={styles.emptyState}>No pending requests</div>}
-                {friendRequests.map(req => (
-                  <div key={req.id} className={styles.requestItem}>
+                {friendRequests.map((req, index) => (
+                  <div key={req.id || index} className={styles.requestItem}>
                     <div className={styles.userInfo}>
                       <img src={req.avatar} alt={req.name} className={styles.avatar} />
                       <div>
@@ -1114,9 +1114,9 @@ function SocialPage() {
               <div className={styles.requestsList}>
                 <h3>My Groups - {groups.length}</h3>
                 {groups.length === 0 && <div className={styles.emptyState}>No groups yet. Create one!</div>}
-                {groups.map(group => (
+                {groups.map((group, index) => (
                   <div
-                    key={group._id}
+                    key={group._id || index}
                     className={`${styles.requestItem} ${styles.clickable}`}
                     onClick={() => handleGroupClick(group)}
                   >

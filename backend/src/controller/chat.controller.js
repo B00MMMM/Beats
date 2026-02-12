@@ -48,15 +48,27 @@ export const searchUsers = async (req, res) => {
     }).select('fullName imageUrl uniqueId _id clerkId friendRequests');
 
     // Check request status for each user
-    const usersWithRequestStatus = users.map(user => ({
-      _id: user._id,
-      clerkId: user.clerkId,
-      fullName: user.fullName,
-      imageUrl: user.imageUrl,
-      uniqueId: user.uniqueId,
-      requestSent: user.friendRequests.some(id => id.toString() === currentUser._id.toString()),
-      requestReceived: currentUser.friendRequests.some(id => id.toString() === user._id.toString())
-    }));
+    const usersWithRequestStatus = users.map(user => {
+      // Check if I sent a request to them
+      const requestSent = user.friendRequests.some(req =>
+        req.from && req.from.toString() === currentUser._id.toString()
+      );
+
+      // Check if they sent a request to me
+      const requestReceived = currentUser.friendRequests.some(req =>
+        req.from && req.from.toString() === user._id.toString()
+      );
+
+      return {
+        _id: user._id,
+        clerkId: user.clerkId,
+        fullName: user.fullName,
+        imageUrl: user.imageUrl,
+        uniqueId: user.uniqueId,
+        requestSent,
+        requestReceived
+      };
+    });
 
     res.json(usersWithRequestStatus);
   } catch (error) {
@@ -85,7 +97,12 @@ export const sendFriendRequest = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    if (recipient.friendRequests.includes(currentUser._id)) {
+    // Check if request already exists
+    const existingRequest = recipient.friendRequests.find(req =>
+      req.from.toString() === currentUser._id.toString()
+    );
+
+    if (existingRequest) {
       return res.status(400).json({ message: "Request already sent." });
     }
 
@@ -93,7 +110,8 @@ export const sendFriendRequest = async (req, res) => {
       return res.status(400).json({ message: "Already friends." });
     }
 
-    recipient.friendRequests.push(currentUser._id);
+    // Push object instead of ID
+    recipient.friendRequests.push({ from: currentUser._id });
     await recipient.save();
 
     // Create and emit notification to recipient
@@ -116,7 +134,7 @@ export const sendFriendRequest = async (req, res) => {
 // Accept friend request
 export const acceptFriendRequest = async (req, res) => {
   try {
-    const { requesterId } = req.body; // Internal DB _id
+    const { requesterId } = req.body; // Internal DB _id of the requester
     const { userId: currentUserId } = getAuth(req);
     const currentUser = await User.findOne({ clerkId: currentUserId });
     if (!currentUser) {
@@ -132,7 +150,12 @@ export const acceptFriendRequest = async (req, res) => {
     // Add to each other's friends list
     if (!currentUser.friends.includes(requester._id)) {
       currentUser.friends.push(requester._id);
-      currentUser.friendRequests = currentUser.friendRequests.filter(id => id.toString() !== requesterId);
+
+      // Remove from friendRequests (filtering objects)
+      currentUser.friendRequests = currentUser.friendRequests.filter(req =>
+        req.from.toString() !== requesterId
+      );
+
       await currentUser.save();
     }
 
@@ -171,8 +194,8 @@ export const declineFriendRequest = async (req, res) => {
     const requester = await User.findById(requesterId);
 
     // Remove requester from friendRequests
-    currentUser.friendRequests = currentUser.friendRequests.filter(
-      id => id.toString() !== requesterId
+    currentUser.friendRequests = currentUser.friendRequests.filter(req =>
+      req.from.toString() !== requesterId
     );
     await currentUser.save();
 
@@ -198,11 +221,19 @@ export const declineFriendRequest = async (req, res) => {
 export const getFriendRequests = async (req, res) => {
   try {
     const { userId: currentUserId } = getAuth(req);
-    const currentUser = await User.findOne({ clerkId: currentUserId }).populate('friendRequests', 'fullName imageUrl uniqueId _id clerkId');
+    const currentUser = await User.findOne({ clerkId: currentUserId })
+      .populate('friendRequests.from', 'fullName imageUrl uniqueId _id clerkId');
+
     if (!currentUser) {
       return res.status(404).json({ message: "User not found in database" });
     }
-    res.json(currentUser.friendRequests);
+
+    // Extract user objects from the requests to match frontend expectation
+    const requests = currentUser.friendRequests
+      .filter(req => req.from) // Filter out nulls if user deleted
+      .map(req => req.from);
+
+    res.json(requests);
   } catch (error) {
     console.error('Error fetching friend requests:', error);
     res.status(500).json({ message: 'Error fetching friend requests' });

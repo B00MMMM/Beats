@@ -2,8 +2,8 @@ import { Router } from "express";
 import {
     createPlanRequest,
     getUserPlanRequests,
-    getPendingRequests,
-    updateRequestStatus
+    getPlanRequests,
+    updatePlanRequestStatus
 } from "../controller/planRequest.controller.js";
 import { requireAuth } from "@clerk/express";
 
@@ -14,7 +14,8 @@ router.post("/request", requireAuth(), createPlanRequest);
 router.get("/my-requests", requireAuth(), getUserPlanRequests);
 
 // Admin routes (TODO: Add admin middleware)
-router.get("/pending", requireAuth(), getPendingRequests);
-router.patch("/:id/status", requireAuth(), updateRequestStatus);
+// Admin routes (TODO: Add admin middleware)
+router.get("/pending", requireAuth(), getPlanRequests);
+router.patch("/:id/status", requireAuth(), updatePlanRequestStatus);
 
 export default router;
