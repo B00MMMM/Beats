@@ -1,5 +1,6 @@
 import { deezerFetch } from '../lib/deezer.js';
 import { Song } from '../models/song.model.js';
+import { SongRequest } from '../models/songRequest.model.js';
 import { existsInDrive, getDriveFile, getDriveStream } from '../lib/drive.js';
 
 export const getTrendingSongs = async (req, res, next) => {
@@ -78,6 +79,7 @@ export const streamSong = async (req, res, next) => {
 
         if (!file) {
             const trackData = await deezerFetch(`/track/${deezerId}`);
+
             if (trackData && trackData.preview) {
                 return res.redirect(trackData.preview);
             }

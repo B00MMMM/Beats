@@ -1,0 +1,67 @@
+import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
+import AdminSidebar from '../components/admin/AdminSidebar';
+import AdminStats from '../components/admin/AdminStats';
+import UserManagement from '../components/admin/UserManagement';
+import PlanManagement from '../components/admin/PlanManagement';
+import SongManagement from '../components/admin/SongManagement';
+import AdminRoute from '../components/AdminRoute';
+import axiosInstance from '../api/axios';
+import './AdminDashboard.css';
+
+const AdminDashboard = () => {
+    const { getToken } = useAuth();
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const token = await getToken();
+                if (!token) return;
+
+                const response = await axiosInstance.get('/admin/stats', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setStats(response.data);
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="admin-loading-container">
+                <div className="admin-loading-spinner"></div>
+            </div>
+        );
+    }
+
+    return (
+        <AdminRoute>
+            <div className="admin-container">
+                <AdminSidebar />
+
+                <main className="admin-main">
+                    {/* Background gradient effect */}
+                    <div className="admin-background-gradient" />
+
+                    <Routes>
+                        <Route path="/" element={<AdminStats stats={stats} />} />
+                        <Route path="/users" element={<UserManagement />} />
+                        <Route path="/plans" element={<PlanManagement />} />
+                        <Route path="/songs" element={<SongManagement />} />
+                    </Routes>
+                </main>
+            </div>
+        </AdminRoute>
+    );
+};
+
+export default AdminDashboard;

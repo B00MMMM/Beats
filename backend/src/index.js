@@ -1,13 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
-import { clerkMiddleware } from "@clerk/express";
+import { clerkMiddleware } from '@clerk/express';
 import fileUpload from "express-fileupload";
 import path from "path";
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
-import { connectDB } from "./lib/db.js";
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
 import songRoutes from "./routes/song.route.js";
@@ -15,23 +14,20 @@ import playlistRoutes from "./routes/playlist.route.js";
 import chatRoutes from "./routes/chat.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import planRequestRoutes from "./routes/planRequest.routes.js";
+import adminRoutes from "./routes/admin.route.js";
 
-// ... (deps)
-
-// Load environment variables from .env file
+import { connectDB } from "./lib/db.js";
 
 dotenv.config();
 
 const __dirname = path.resolve();
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
-// Create HTTP server and Socket.IO
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
         origin: "http://localhost:3000",
-        credentials: true
     }
 });
 
@@ -64,9 +60,6 @@ io.on('connection', (socket) => {
         socket.emit('onlineUsers', Array.from(onlineUsers.keys()));
     });
 
-    // Note: Real-time message delivery is handled by the REST API (chat.controller.js)
-    // The sendMessage socket event is no longer used to prevent duplicate messages
-
     // Handle typing indicator
     socket.on('typing', ({ recipientId, isTyping }) => {
         const recipientSocketId = onlineUsers.get(recipientId);
@@ -88,21 +81,26 @@ io.on('connection', (socket) => {
 
 app.use(cors({
     origin: "http://localhost:3000",
-    credentials: true // Adjust this to your frontend URL
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.use(express.json());
-app.use(clerkMiddleware()); //this will add the Clerk middleware to handle authentication
-app.use(
-    fileUpload({
-        useTempFiles: true,
-        tempFileDir: path.join(__dirname, "tmp"),
-        createParentPath: true,
-        limits: {
-            fileSize: 10 * 1024 * 1024, //10MB maximum file size
-        }
-    })
-);
+app.use(express.json()); // to parse the req.body
+app.use(clerkMiddleware()); // this will add the auth to the reqObj => req.auth
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: path.join(__dirname, "tmp"),
+    createParentPath: true,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB  max file size
+    }
+}));
+
+// error handler 
+app.use((err, req, res, next) => {
+    res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message });
+});
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
@@ -111,13 +109,21 @@ app.use("/api/playlists", playlistRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/plans", planRequestRoutes);
+app.use("/api/admin", adminRoutes);
 
-//error handler
-app.use((err, req, res, next) => {
-    res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message });
-});
+// Connect only once
+connectDB()
+    .then(() => {
+        httpServer.listen(PORT, () => {
+            console.log("Server is running on port " + PORT);
+        });
 
-httpServer.listen(PORT, () => {
-    console.log("Server is running on port " + PORT);
-    connectDB();
-})
+        httpServer.on('error', (err) => {
+            console.error('Server error:', err);
+            process.exit(1);
+        });
+    })
+    .catch((err) => {
+        console.error("Failed to connect to DB:", err);
+        process.exit(1);
+    });

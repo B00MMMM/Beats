@@ -1,7 +1,17 @@
 import { User } from "../models/user.model.js";
 import { ListeningHistory } from "../models/listeningHistory.model.js";
+import { SongRequest } from "../models/songRequest.model.js";
 import { Song } from "../models/song.model.js";
 import { getAuth } from "@clerk/express";
+import { existsInDrive } from "../lib/drive.js";
+
+// ... (existing imports)
+
+// ... (existing code for toggleLike, getFavorites, getAllUsers)
+
+// ... (existing code)
+
+// ... (existing imports)
 
 export const toggleLike = async (req, res) => {
     try {
@@ -16,12 +26,6 @@ export const toggleLike = async (req, res) => {
             await entry.save();
             return res.json({ isLiked: entry.isLiked });
         } else {
-            // Create new entry, count 0 since not played yet via this action (unless called after play)
-            // But wait, if they like it, it's just a like. count default is 1 in model? 
-            // I should default count to 0 in code if created via like? 
-            // Or just let it be 1? 
-            // Technically "Like" isn't a "Play". 
-            // Let's set count to 0 if created via Like.
             await ListeningHistory.create({
                 userId,
                 deezerId,
@@ -30,7 +34,7 @@ export const toggleLike = async (req, res) => {
                 cover: songData.cover || songData.album?.cover_medium,
                 duration: songData.duration,
                 isLiked: true,
-                count: 0 // Not played yet
+                count: 0
             });
             return res.json({ isLiked: true });
         }
@@ -73,6 +77,36 @@ export const addListeningHistory = async (req, res) => {
             return res.status(400).json({ message: "Song data required" });
         }
 
+        // 1. Check if song needs to be requested (not in Drive)
+        // We do this here so it counts only on actual user play
+        const hasDrive = await existsInDrive(deezerId);
+
+        if (!hasDrive) {
+            try {
+                await SongRequest.findOneAndUpdate(
+                    { deezerId: String(deezerId) },
+                    {
+                        $inc: { playCount: 1 },
+                        $set: { lastPlayed: new Date() },
+                        $setOnInsert: {
+                            title: songData.title,
+                            artist: songData.artist?.name || songData.artist, // Handle object or string
+                            album: songData.album?.title || 'Unknown Album',
+                            duration: songData.duration,
+                            imageUrl: songData.cover || songData.album?.cover_medium || null,
+                            isPreviewOnly: true,
+                            isChecked: false
+                        }
+                    },
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
+                );
+                console.log(`Logged request for song: ${songData.title} (${deezerId})`);
+            } catch (reqErr) {
+                console.error("Failed to log song request:", reqErr);
+            }
+        }
+
+        // 2. Add to Listening History
         let entry = await ListeningHistory.findOne({ userId, deezerId });
 
         if (entry) {

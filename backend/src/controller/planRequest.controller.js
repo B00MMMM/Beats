@@ -1,54 +1,9 @@
 import { PlanRequest } from "../models/planRequest.model.js";
 import { User } from "../models/user.model.js";
 
-// Create a new plan request
 export const createPlanRequest = async (req, res) => {
     try {
         const { requestedPlan, explanation } = req.body;
-        const userId = req.auth.userId; // Clerk user ID
-
-        // Find the user in database
-        const user = await User.findOne({ clerkId: userId });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Check if user already has this plan
-        if (user.plan === requestedPlan) {
-            return res.status(400).json({ message: "You already have this plan" });
-        }
-
-        // Check if there's a pending request for this user
-        const pendingRequest = await PlanRequest.findOne({
-            userId: user._id,
-            status: 'pending'
-        });
-
-        if (pendingRequest) {
-            return res.status(400).json({
-                message: "You already have a pending plan request. Please wait for approval."
-            });
-        }
-
-        // Create new plan request
-        const planRequest = await PlanRequest.create({
-            userId: user._id,
-            requestedPlan,
-            explanation,
-        });
-
-        await planRequest.populate('userId', 'fullName imageUrl clerkId');
-
-        res.status(201).json(planRequest);
-    } catch (error) {
-        console.error('Error creating plan request:', error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-// Get current user's plan requests
-export const getUserPlanRequests = async (req, res) => {
-    try {
         const userId = req.auth.userId;
 
         const user = await User.findOne({ clerkId: userId });
@@ -56,44 +11,99 @@ export const getUserPlanRequests = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const requests = await PlanRequest.find({ userId: user._id })
-            .sort({ createdAt: -1 });
+        // Check if user already has a pending request
+        const existingRequest = await PlanRequest.findOne({
+            userId: user._id,
+            status: 'pending'
+        });
 
+        if (existingRequest) {
+            return res.status(400).json({ message: "You already have a pending request." });
+        }
+
+        const newRequest = new PlanRequest({
+            userId: user._id,
+            requestedPlan,
+            explanation
+        });
+
+        await newRequest.save();
+
+        res.status(201).json(newRequest);
+    } catch (error) {
+        console.error("Error creating plan request:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const getUserPlanRequests = async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+        const user = await User.findOne({ clerkId: userId });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const requests = await PlanRequest.find({ userId: user._id }).sort({ createdAt: -1 });
         res.json(requests);
+    } catch (error) {
+        console.error("Error fetching user requests:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// Admin: Get all requests
+export const getPlanRequests = async (req, res) => {
+    try {
+        const { status = 'all', page = 1, limit = 20 } = req.query;
+
+        const filter = {};
+        if (status !== 'all') {
+            filter.status = status;
+        }
+
+        const requests = await PlanRequest.find(filter)
+            .populate('userId', 'fullName imageUrl uniqueId')
+            .sort({ createdAt: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
+
+        const total = await PlanRequest.countDocuments(filter);
+
+        res.json({
+            requests,
+            totalPages: Math.ceil(total / limit),
+            currentPage: parseInt(page),
+            total
+        });
     } catch (error) {
         console.error('Error fetching plan requests:', error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
 
-// Get all pending requests (Admin only - to be implemented later)
-export const getPendingRequests = async (req, res) => {
-    try {
-        const requests = await PlanRequest.find({ status: 'pending' })
-            .populate('userId', 'fullName imageUrl clerkId uniqueId')
-            .sort({ createdAt: -1 });
-
-        res.json(requests);
-    } catch (error) {
-        console.error('Error fetching pending requests:', error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-};
-
-// Update request status (Admin only - to be implemented later)
-export const updateRequestStatus = async (req, res) => {
+// Admin: Update request status
+export const updatePlanRequestStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, adminNote } = req.body;
+        const { status, adminNotes } = req.body;
 
-        const planRequest = await PlanRequest.findById(id).populate('userId');
-        if (!planRequest) {
-            return res.status(404).json({ message: "Plan request not found" });
+        if (!['approved', 'rejected'].includes(status)) {
+            return res.status(400).json({ message: "Status must be 'approved' or 'rejected'" });
         }
 
-        planRequest.status = status;
-        if (adminNote) {
-            planRequest.adminNote = adminNote;
+        const planRequest = await PlanRequest.findByIdAndUpdate(
+            id,
+            {
+                status,
+                adminNote: adminNotes || '',
+            },
+            { new: true }
+        ).populate('userId', 'fullName plan');
+
+        if (!planRequest) {
+            return res.status(404).json({ message: "Plan request not found" });
         }
 
         // If approved, update user's plan
@@ -103,10 +113,7 @@ export const updateRequestStatus = async (req, res) => {
             });
         }
 
-        await planRequest.save();
-        await planRequest.populate('userId', 'fullName imageUrl clerkId');
-
-        res.json(planRequest);
+        res.json({ planRequest, message: `Plan request ${status} successfully` });
     } catch (error) {
         console.error('Error updating request status:', error);
         res.status(500).json({ message: "Internal server error" });
