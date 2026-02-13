@@ -123,6 +123,11 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.aiButton.active {
+  background-color: var(--primary-accent);
+  color: var(--bg-dark);
+}
+
 .premiumButton {
   padding: 8px 16px;
   border-radius: 20px;

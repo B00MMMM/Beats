@@ -84,6 +84,32 @@
   height: 100%;
 }
 
+/* AI Chat Expanded Layout */
+.aiChatExpanded {
+  --right-panel-w-expanded: 460px; /* Increased from 340px */
+}
+
+.aiChatPanel {
+  width: var(--right-panel-w-expanded);
+}
+
+.aiChatMainContent {
+  right: var(--right-panel-w-expanded);
+}
+
+.aiChatExpanded .rightPanel {
+  width: var(--right-panel-w-expanded);
+}
+
+.aiChatExpanded .mainContent {
+  right: var(--right-panel-w-expanded);
+}
+
+/* Global override for bottom player when AI chat is expanded */
+.aiChatExpanded {
+  --right-panel-w: var(--right-panel-w-expanded);
+}
+
 /* Tablet Responsive */
 @media (max-width: 1024px) {
   .contentArea {
@@ -93,6 +119,12 @@
   .rightPanel {
     padding: 16px;
     padding-bottom: calc(var(--player-h) + 1px);
+  }
+
+  /* AI Chat Expanded on Tablet */
+  .aiChatExpanded {
+    --right-panel-w-expanded: 380px; /* Slightly smaller on tablet */
+    --right-panel-w: var(--right-panel-w-expanded); /* Global override */
   }
 }
 
