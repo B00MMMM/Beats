@@ -8,7 +8,6 @@ import PlanManagement from '../components/admin/PlanManagement';
 import SongManagement from '../components/admin/SongManagement';
 import AdminRoute from '../components/AdminRoute';
 import axiosInstance from '../api/axios';
-import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { getToken } = useAuth();
@@ -20,7 +19,7 @@ const AdminDashboard = () => {
             try {
                 const token = await getToken();
                 if (!token) return;
-
+                
                 const response = await axiosInstance.get('/admin/stats', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -37,20 +36,20 @@ const AdminDashboard = () => {
 
     if (loading) {
         return (
-            <div className="admin-loading-container">
-                <div className="admin-loading-spinner"></div>
+            <div className="flex items-center justify-center h-screen bg-black">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-500"></div>
             </div>
         );
     }
 
     return (
         <AdminRoute>
-            <div className="admin-container">
+            <div className="flex h-screen bg-black overflow-hidden">
                 <AdminSidebar />
 
-                <main className="admin-main">
+                <main className="flex-1 overflow-y-auto p-8 relative">
                     {/* Background gradient effect */}
-                    <div className="admin-background-gradient" />
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-900/10 via-black to-black pointer-events-none -z-10" />
 
                     <Routes>
                         <Route path="/" element={<AdminStats stats={stats} />} />

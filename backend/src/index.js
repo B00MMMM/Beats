@@ -15,6 +15,7 @@ import chatRoutes from "./routes/chat.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import planRequestRoutes from "./routes/planRequest.routes.js";
 import adminRoutes from "./routes/admin.route.js";
+import aiChatRoutes from "./routes/aiChat.route.js";
 
 import { connectDB } from "./lib/db.js";
 
@@ -110,6 +111,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/plans", planRequestRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/ai-chat", aiChatRoutes);
 
 // Connect only once
 connectDB()

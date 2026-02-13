@@ -5,15 +5,18 @@ import MiniPlayer from '../components/MiniPlayer/MiniPlayer';
 import BottomNav from '../components/BottomNav/BottomNav';
 import ListeningActivityPanel from '../components/ListeningActivityPanel/ListeningActivityPanel';
 import NowPlaying from '../components/NowPlaying/NowPlaying';
+import AIChat from '../components/AIChat/AIChat';
 import { useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { useAIChat } from '../context/AIChatContext';
 import axios from '../api/axios';
 import styles from './Layout.module.css';
 
 function Layout({ children }) {
   const location = useLocation();
   const { user, isLoaded } = useUser();
+  const { isAIChatOpen } = useAIChat();
 
   useEffect(() => {
     const syncUser = async () => {
@@ -35,9 +38,9 @@ function Layout({ children }) {
   }, [isLoaded, user]);
 
   return (
-    <div className={styles.layout}>
+    <div className={`${styles.layout} ${isAIChatOpen ? styles.aiChatExpanded : ''}`}>
       {!location.pathname.startsWith('/song/') && <Sidebar />}
-      <div className={`${styles.mainContent} ${location.pathname.startsWith('/song/') ? styles.fullWidthContent : ''} ${location.pathname.startsWith('/song/') ? styles.songPageMain : ''}`}>
+      <div className={`${styles.mainContent} ${location.pathname.startsWith('/song/') ? styles.fullWidthContent : ''} ${location.pathname.startsWith('/song/') ? styles.songPageMain : ''} ${isAIChatOpen ? styles.aiChatMainContent : ''}`}>
         <div className={styles.topbarShell}>
           {!location.pathname.startsWith('/song/') && <TopNavbar />}
         </div>
@@ -47,12 +50,19 @@ function Layout({ children }) {
       </div>
 
       {!location.pathname.startsWith('/song/') && (
-        <aside className={styles.rightPanel}>
+        <aside className={`${styles.rightPanel} ${isAIChatOpen ? styles.aiChatPanel : ''}`}>
           {location.pathname.startsWith('/friends') ? (
             <>
               <div className={styles.rightPanelTitle}>LISTENING TOO</div>
               <div className={styles.rightPanelBody}>
                 <ListeningActivityPanel />
+              </div>
+            </>
+          ) : isAIChatOpen ? (
+            <>
+              <div className={styles.rightPanelTitle}>AI CHAT</div>
+              <div className={styles.rightPanelBody}>
+                <AIChat />
               </div>
             </>
           ) : (
