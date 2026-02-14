@@ -93,6 +93,18 @@ input {
   body {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* Globally hide scrollbars on mobile for app-like feel */
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    background: transparent !important;
+  }
 }
 
 @media (max-width: 480px) {

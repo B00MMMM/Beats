@@ -16,7 +16,7 @@ import styles from './Layout.module.css';
 function Layout({ children }) {
   const location = useLocation();
   const { user, isLoaded } = useUser();
-  const { isAIChatOpen, setIsAIChatOpen } = useAIChat();
+  const { isAIChatOpen, setIsAIChatOpen, toggleAIChat } = useAIChat();
 
   useEffect(() => {
     const syncUser = async () => {
@@ -100,6 +100,8 @@ function Layout({ children }) {
           )}
         </aside>
       )}
+
+
 
       <BottomPlayer />
       <MiniPlayer />

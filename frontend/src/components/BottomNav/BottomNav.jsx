@@ -1,4 +1,4 @@
-import { Home, Search, Library, Sparkles, Plus } from 'lucide-react'
+import { Home, Search, Library, Sparkles, MessageCircle } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './BottomNav.module.css'
 
@@ -11,7 +11,7 @@ function BottomNav() {
     { icon: Search, label: 'Search', path: '/search' },
     { icon: Library, label: 'Your Library', path: '/library' },
     { icon: Sparkles, label: 'Premium', path: '/premium' },
-    { icon: Plus, label: 'Create', path: '/create' }
+    { icon: MessageCircle, label: 'Social', path: '/friends' }
   ]
 
   const isActive = (path) => {

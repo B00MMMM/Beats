@@ -231,30 +231,54 @@
 
   .searchBar {
     padding: 10px 16px;
-    background-color: white;
+    background-color: #e5e7eb0a;
   }
 
   .searchBar input {
     font-size: 14px;
-    color: #000;
+    color: #ffffff;
   }
 
   .searchBar input::placeholder {
-    color: #999;
+    color: #999999;
   }
 
   .rightSection {
     gap: 12px;
   }
 
-  .mobileSearchButton,
-  .mobileCameraButton {
+  .mobileAIButton,
+  .mobileNotificationButton {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 36px;
     height: 36px;
     color: var(--text-primary);
+    position: relative;
+    transition: color 0.2s ease;
+  }
+
+  .mobileAIButton.active {
+    color: var(--primary-accent);
+  }
+
+  .mobileNotificationBadge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border-radius: 7px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--bg-dark);
   }
 
   .aiButton,

@@ -13,11 +13,12 @@ import {
   Volume2,
   VolumeX,
   Heart,
-  MoreHorizontal,
-  ListMusic
+  PlusCircle,
+  Check
 } from 'lucide-react';
 import Color from 'color-thief-react';
 import axios from '../api/axios';
+import { useAuth } from '@clerk/clerk-react';
 import AudioReactiveBars from '../components/AudioReactiveBars/AudioReactiveBars';
 
 function SongPage() {
@@ -44,10 +45,51 @@ function SongPage() {
     toggleLike
   } = usePlayer();
 
+  const { getToken } = useAuth();
+  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
+  const [playlists, setPlaylists] = useState([]);
+  const [playlistsWithSong, setPlaylistsWithSong] = useState(new Set());
+
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [repeatMode, setRepeatMode] = useState(0); // 0: off, 1: all, 2: one
   const [showReactiveBars, setShowReactiveBars] = useState(false);
+
+  const handleAddToPlaylistClick = async () => {
+    if (!showPlaylistMenu && song) {
+      try {
+        const token = await getToken();
+        // Use deezerId for checking
+        const songId = song.deezerId || song.id;
+
+        const [playlistsRes, checkRes] = await Promise.all([
+          axios.get('/playlists/my', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`/playlists/check/${songId}`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+
+        setPlaylists(playlistsRes.data);
+        setPlaylistsWithSong(new Set(checkRes.data));
+
+      } catch (error) {
+        console.error("Error fetching playlists data:", error);
+      }
+    }
+    setShowPlaylistMenu(!showPlaylistMenu);
+  };
+
+  const addToPlaylist = async (playlistId) => {
+    if (!song) return;
+    try {
+      const token = await getToken();
+      await axios.post(`/playlists/${playlistId}/songs`,
+        { songData: song }, // Ensure song object matches backend expectation
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPlaylistsWithSong(prev => new Set([...prev, playlistId]));
+    } catch (error) {
+      console.error("Error adding to playlist:", error);
+    }
+  };
 
   // Delay reactive bars by 2 seconds when page loads
   useEffect(() => {
@@ -125,10 +167,22 @@ function SongPage() {
   const albumName = song?.album?.title || 'Unknown Album';
   const releaseYear = song?.album?.release_date ? new Date(song.album.release_date).getFullYear() : '';
 
+  // Determine bar count based on screen width
+  const [barCount, setBarCount] = useState(window.innerWidth <= 768 ? 20 : 35);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setBarCount(window.innerWidth <= 768 ? 20 : 35);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className={styles.songPageWrapper}>
       {/* Audio Reactive Bars (synced with music) */}
-      {isPlaying && showReactiveBars && <AudioReactiveBars barCount={35} showBpm={true} />}
+      {isPlaying && showReactiveBars && <AudioReactiveBars barCount={barCount} showBpm={true} />}
 
       <Color src={albumCover} format="hex" crossOrigin="anonymous">
         {({ data: color }) => (
@@ -193,13 +247,31 @@ function SongPage() {
                         <Heart className={isLiked ? styles.heartFilled : ''} size={22} />
                       </button>
 
-                      <button className={styles.actionBtn} title="Add to Playlist">
-                        <ListMusic size={22} />
-                      </button>
+                      <div className={styles.playlistActionWrapper}>
+                        <button
+                          className={styles.actionBtn}
+                          title="Add to Playlist"
+                          onClick={handleAddToPlaylistClick}
+                        >
+                          <PlusCircle size={22} />
+                        </button>
 
-                      <button className={styles.actionBtn} title="More Options">
-                        <MoreHorizontal size={22} />
-                      </button>
+                        {showPlaylistMenu && (
+                          <div className={styles.playlistMenu}>
+                            <div className={styles.menuHeader}>Add to Playlist</div>
+                            {playlists.length > 0 ? (
+                              playlists.map(p => (
+                                <button key={p._id} className={styles.menuItem} onClick={() => addToPlaylist(p._id)}>
+                                  <span className={styles.playlistTitle}>{p.title}</span>
+                                  {playlistsWithSong.has(p._id) && <Check size={16} className={styles.checkIcon} />}
+                                </button>
+                              ))
+                            ) : (
+                              <div className={styles.emptyMsg}>No playlists</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Progress Bar */}
