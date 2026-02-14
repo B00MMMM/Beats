@@ -16,7 +16,7 @@ import styles from './Layout.module.css';
 function Layout({ children }) {
   const location = useLocation();
   const { user, isLoaded } = useUser();
-  const { isAIChatOpen } = useAIChat();
+  const { isAIChatOpen, setIsAIChatOpen } = useAIChat();
 
   useEffect(() => {
     const syncUser = async () => {
@@ -37,6 +37,28 @@ function Layout({ children }) {
     syncUser();
   }, [isLoaded, user]);
 
+  // Manage AI Chat visibility when entering/leaving Song Page
+  useEffect(() => {
+    const isSongPage = location.pathname.startsWith('/song/');
+
+    if (isSongPage) {
+      if (isAIChatOpen) {
+        // Save state to sessionStorage so we know to restore it
+        sessionStorage.setItem('restoreAIChat', 'true');
+        setIsAIChatOpen(false);
+      }
+    } else {
+      // Leaving song page (or on normal page)
+      const shouldRestore = sessionStorage.getItem('restoreAIChat');
+      if (shouldRestore === 'true') {
+        if (!isAIChatOpen) {
+          setIsAIChatOpen(true);
+        }
+        sessionStorage.removeItem('restoreAIChat');
+      }
+    }
+  }, [location.pathname, isAIChatOpen, setIsAIChatOpen]);
+
   return (
     <div className={`${styles.layout} ${isAIChatOpen ? styles.aiChatExpanded : ''}`}>
       {!location.pathname.startsWith('/song/') && <Sidebar />}
@@ -51,31 +73,31 @@ function Layout({ children }) {
 
       {!location.pathname.startsWith('/song/') && (
         <aside className={`${styles.rightPanel} ${isAIChatOpen ? styles.aiChatPanel : ''}`}>
-         {isAIChatOpen ? (
-          // AI Chat available on ALL pages when toggled
-          <>
-            <div className={styles.rightPanelTitle}>AI CHAT</div>
-            <div className={styles.rightPanelBody}>
-              <AIChat />
-            </div>
-          </>
-        ) : location.pathname.startsWith('/friends') ? (
-          // Friends page default: Shows "LISTENING TOO" 
-          <>
-            <div className={styles.rightPanelTitle}>LISTENING TOO</div>
-            <div className={styles.rightPanelBody}>
-              <ListeningActivityPanel />
-            </div>
-          </>
-        ) : (
-          // Other pages default: Shows "NOW PLAYING"
-          <>
-            <div className={styles.rightPanelTitle}>NOW PLAYING</div>
-            <div className={styles.rightPanelBody}>
-              <NowPlaying />
-            </div>
-          </>
-        )}
+          {isAIChatOpen ? (
+            // AI Chat available on ALL pages when toggled
+            <>
+              <div className={styles.rightPanelTitle}>AI CHAT</div>
+              <div className={styles.rightPanelBody}>
+                <AIChat />
+              </div>
+            </>
+          ) : location.pathname.startsWith('/friends') ? (
+            // Friends page default: Shows "LISTENING TOO" 
+            <>
+              <div className={styles.rightPanelTitle}>LISTENING TOO</div>
+              <div className={styles.rightPanelBody}>
+                <ListeningActivityPanel />
+              </div>
+            </>
+          ) : (
+            // Other pages default: Shows "NOW PLAYING"
+            <>
+              <div className={styles.rightPanelTitle}>NOW PLAYING</div>
+              <div className={styles.rightPanelBody}>
+                <NowPlaying />
+              </div>
+            </>
+          )}
         </aside>
       )}
 

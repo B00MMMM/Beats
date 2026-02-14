@@ -21,7 +21,7 @@ export const useAIChat = () => {
 
 export const AIChatProvider = ({ children }) => {
   const { getToken, userId } = useAuth();
-  
+
   // Chat state
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +31,7 @@ export const AIChatProvider = ({ children }) => {
   // Load chat history
   const loadChatHistory = useCallback(async () => {
     if (!userId) return;
-    
+
     try {
       const token = await getToken();
       if (!token) return;
@@ -39,7 +39,7 @@ export const AIChatProvider = ({ children }) => {
       const response = await axios.get('/ai-chat/history', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       const history = response.data.messages || [];
       setMessages(history);
       setChatHistory(history);
@@ -61,15 +61,15 @@ export const AIChatProvider = ({ children }) => {
     if (!userMessage.trim() || !userId) return;
 
     setIsLoading(true);
-    
+
     // Add user message immediately
     const newUserMessage = {
       id: Date.now().toString(),
-      role: 'user', 
+      role: 'user',
       content: userMessage,
       timestamp: new Date().toISOString()
     };
-    
+
     setMessages(prev => [...prev, newUserMessage]);
 
     try {
@@ -93,10 +93,10 @@ export const AIChatProvider = ({ children }) => {
       };
 
       setMessages(prev => [...prev, aiMessage]);
-      
+
     } catch (error) {
       console.error('Error sending message:', error);
-      
+
       // Add error message (marked so it's excluded from future history)
       const errorMessage = {
         id: (Date.now() + 1).toString(),
@@ -105,7 +105,7 @@ export const AIChatProvider = ({ children }) => {
         timestamp: new Date().toISOString(),
         isError: true
       };
-      
+
       // Remove the failed user message from local state so it doesn't accumulate
       setMessages(prev => [
         ...prev.filter(m => m.id !== newUserMessage.id),
@@ -127,7 +127,7 @@ export const AIChatProvider = ({ children }) => {
   // Clear chat
   const clearChat = useCallback(async () => {
     if (!userId) return;
-    
+
     try {
       const token = await getToken();
       if (!token) return;
@@ -135,7 +135,7 @@ export const AIChatProvider = ({ children }) => {
       await axios.delete('/ai-chat/clear', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       // Reset to welcome message
       const welcomeMessage = {
         id: 'welcome',
@@ -143,7 +143,7 @@ export const AIChatProvider = ({ children }) => {
         content: WELCOME_MESSAGE,
         timestamp: new Date().toISOString()
       };
-      
+
       setMessages([welcomeMessage]);
       setChatHistory([welcomeMessage]);
     } catch (error) {
@@ -157,6 +157,7 @@ export const AIChatProvider = ({ children }) => {
     isAIChatOpen,
     sendMessage,
     toggleAIChat,
+    setIsAIChatOpen,
     loadChatHistory,
     clearChat
   };
