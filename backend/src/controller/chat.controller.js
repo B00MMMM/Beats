@@ -2,9 +2,211 @@ import { Message } from '../models/message.model.js';
 import { User } from '../models/user.model.js';
 import { Group } from '../models/group.model.js';
 import { GroupMessage } from '../models/groupMessage.model.js';
+import { AIChatConversation } from '../models/aiChatConversation.model.js';
 import { getAuth } from "@clerk/express";
 import { createNotification } from './notification.controller.js';
 import cloudinary from '../lib/cloudinary.js';
+import { GeminiService } from '../lib/gemini.js';
+
+// Helper function to check if message mentions @mizu
+const containsMizuMention = (content) => {
+  if (!content || typeof content !== 'string') return false;
+  return content.toLowerCase().includes('@mizu');
+};
+
+// Helper function to generate AI response for @mizu mentions
+const handleMizuMention = async (originalMessage, chatContext, senderName, io, onlineUsers, isGroupChat = false, groupId = null) => {
+  try {
+    console.log('🤖 MIZU mention detected, generating AI response...');
+
+    // Generate AI response
+    const aiResult = await GeminiService.generateChatResponse(
+      originalMessage.content,
+      chatContext,
+      senderName
+    );
+
+    if (!aiResult.success) {
+      console.error('❌ AI response failed:', aiResult.error);
+      return;
+    }
+
+    console.log('📝 AI response received');
+
+    // Clean the response text and parse song recommendations
+    const cleanResponse = GeminiService.cleanResponseText(aiResult.response);
+    const songRecommendations = GeminiService.parseSongRecommendations(aiResult.response);
+
+    console.log('🎵 Parsed', songRecommendations.length, 'song recommendations');
+
+    // Store ONLY in AIChatConversation model (single source of truth)
+    let aiConversation = await AIChatConversation.findOne({ userId: 'SYSTEM_AI' });
+    if (!aiConversation) {
+      aiConversation = new AIChatConversation({
+        userId: 'SYSTEM_AI',
+        messages: []
+      });
+    }
+
+    // Add user message and AI response to conversation
+    const userMessage = {
+      role: 'user',
+      content: originalMessage.content
+    };
+
+    // Enrich with Deezer data (IDs, covers, previews) so they are playable
+    // Note: This is an async operation, so we do it before creating the message object
+    const enrichedRecommendations = await GeminiService.enrichRecommendations(songRecommendations);
+
+    const aiMessage = {
+      role: 'assistant',
+      content: cleanResponse,
+      recommendations: enrichedRecommendations
+    };
+
+    aiConversation.messages.push(userMessage, aiMessage);
+    await aiConversation.save();
+
+    console.log('💾 AI conversation saved with ID:', aiConversation._id);
+
+    // Also save AI message to regular Message/GroupMessage table for persistence
+    const persistedAIMessage = {
+      senderId: 'MIZU_AI',
+      senderName: 'MIZU',
+      senderAvatar: null,
+      content: cleanResponse,
+      content: cleanResponse,
+      // Store song recommendations as JSON string in content for retrieval
+      songRecommendations: JSON.stringify(enrichedRecommendations)
+    };
+
+    // Create AI message for real-time display
+    const realtimeAIMessage = {
+      _id: `ai_${Date.now()}`, // Temporary ID for frontend
+      senderId: 'MIZU_AI',
+      senderName: 'MIZU',
+      senderAvatar: null,
+      content: cleanResponse,
+      songRecommendations: enrichedRecommendations,
+      isAI: true,
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+
+    // Send AI response to relevant users via socket AND save to database for persistence
+    if (isGroupChat && groupId) {
+      // Save AI message to GroupMessage table for persistence
+      const savedGroupMessage = new GroupMessage({
+        groupId: groupId,
+        senderId: 'MIZU_AI',
+        senderName: 'MIZU',
+        senderAvatar: null,
+        content: cleanResponse,
+        songRecommendations: enrichedRecommendations,
+        isAI: true
+      });
+      await savedGroupMessage.save();
+      console.log('💾 AI message saved to GroupMessage:', savedGroupMessage._id);
+
+      // Add songRecommendations for real-time display
+      const groupAIMessage = {
+        ...savedGroupMessage.toObject(),
+        songRecommendations: enrichedRecommendations,
+        isAI: true
+      };
+
+      // Send to all online group members
+      const group = await Group.findById(groupId);
+      if (group) {
+        for (const member of group.members) {
+          const memberUser = await User.findById(member);
+          if (memberUser) {
+            const memberSocketId = onlineUsers.get(memberUser.clerkId);
+            if (memberSocketId) {
+              console.log(`📤 Sending AI group message to ${memberUser.fullName}`);
+              io.to(memberSocketId).emit('newGroupMessage', groupAIMessage);
+            }
+          }
+        }
+      } else {
+        console.log('❌ Group not found for AI message');
+      }
+    } else {
+      // Save AI message to Message table for persistence (private chat)
+      const savedMessage = new Message({
+        senderId: 'MIZU_AI',
+        receiverId: originalMessage.senderId, // Reply to the person who mentioned @mizu
+        chatPartnerId: originalMessage.receiverId, // Who they were chatting with (for query lookup)
+        senderName: 'MIZU',
+        senderAvatar: null,
+        content: cleanResponse,
+        songRecommendations: enrichedRecommendations,
+        isAI: true
+      });
+      await savedMessage.save();
+      console.log('💾 AI message saved to Message:', savedMessage._id, 'chatPartnerId:', originalMessage.receiverId);
+
+      // Send via socket with songRecommendations
+      const privateAIMessage = {
+        ...savedMessage.toObject(),
+        songRecommendations: enrichedRecommendations,
+        isAI: true
+      };
+
+      // Send to original sender if online
+      const senderSocketId = onlineUsers.get(originalMessage.senderId);
+      if (senderSocketId) {
+        console.log('📤 Sending AI message to sender:', originalMessage.senderId);
+        io.to(senderSocketId).emit('newMessage', privateAIMessage);
+      } else {
+        console.log('👻 Original sender not online');
+      }
+
+      // Send to the chat partner (the person the sender was talking to) if online
+      // We only do this if it's not a self-chat (though self-chat wouldn't have a distinct receiverId usually)
+      if (originalMessage.receiverId && originalMessage.receiverId !== originalMessage.senderId) {
+        const partnerSocketId = onlineUsers.get(originalMessage.receiverId);
+        if (partnerSocketId) {
+          console.log('📤 Sending AI message to partner:', originalMessage.receiverId);
+          io.to(partnerSocketId).emit('newMessage', privateAIMessage);
+        } else {
+          console.log('👻 Chat partner not online');
+        }
+      }
+    }
+
+    console.log('✅ MIZU AI response sent successfully');
+  } catch (error) {
+    console.error('Error handling MIZU mention:', error);
+  }
+};
+
+// Get AI conversation data by ID (for displaying AI responses)
+export const getAIConversation = async (req, res) => {
+  try {
+    const { conversationId, messageId } = req.params;
+
+    const conversation = await AIChatConversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: 'AI conversation not found' });
+    }
+
+    // Find specific message if messageId provided
+    if (messageId) {
+      const message = conversation.messages.id(messageId);
+      if (!message) {
+        return res.status(404).json({ message: 'AI message not found' });
+      }
+      return res.json(message);
+    }
+
+    // Return entire conversation
+    res.json(conversation);
+  } catch (error) {
+    console.error('Error fetching AI conversation:', error);
+    res.status(500).json({ message: 'Error fetching AI conversation' });
+  }
+};
 
 // Get all users for chat (friends list)
 export const getUsers = async (req, res) => {
@@ -249,7 +451,11 @@ export const getMessages = async (req, res) => {
     const messages = await Message.find({
       $or: [
         { senderId: currentUserId, receiverId: recipientId },
-        { senderId: recipientId, receiverId: currentUserId }
+        { senderId: recipientId, receiverId: currentUserId },
+        // Include AI messages that belong to this conversation context (for sender)
+        { senderId: 'MIZU_AI', receiverId: currentUserId, chatPartnerId: recipientId },
+        // Include AI messages visible to the chat partner (receiver side)
+        { senderId: 'MIZU_AI', receiverId: recipientId, chatPartnerId: currentUserId }
       ]
     }).sort({ createdAt: 1 });
 
@@ -270,6 +476,10 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ message: 'Recipient ID and either content or attachment are required' });
     }
 
+    // Get sender info for AI context
+    const senderUser = await User.findOne({ clerkId: senderId });
+    const senderName = senderUser?.fullName || 'User';
+
     const message = new Message({
       senderId,
       receiverId: recipientId,
@@ -288,7 +498,32 @@ export const sendMessage = async (req, res) => {
     if (recipientSocketId) {
       io.to(recipientSocketId).emit('newMessage', {
         ...message.toObject(),
-        senderInfo: await User.findOne({ clerkId: senderId })
+        senderInfo: senderUser
+      });
+    }
+
+    // Check for @mizu mention and handle AI response
+    if (containsMizuMention(content)) {
+      // Get recent chat history for context
+      const recentMessages = await Message.find({
+        $or: [
+          { senderId: senderId, receiverId: recipientId },
+          { senderId: recipientId, receiverId: senderId }
+        ]
+      })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+
+      // Convert messages to chat context format
+      const chatContext = recentMessages.reverse().map(msg => ({
+        senderName: msg.senderId === senderId ? senderName : 'Friend',
+        content: msg.content || ''
+      }));
+
+      // Handle AI response asynchronously (don't wait for it)
+      setImmediate(() => {
+        handleMizuMention(message, chatContext, senderName, io, onlineUsers, false, null);
       });
     }
 
@@ -531,6 +766,26 @@ export const sendGroupMessage = async (req, res) => {
           });
         }
       }
+    }
+
+    // Check for @mizu mention and handle AI response
+    if (containsMizuMention(content)) {
+      // Get recent group chat history for context
+      const recentMessages = await GroupMessage.find({ groupId: groupId })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+
+      // Convert messages to chat context format
+      const chatContext = recentMessages.reverse().map(msg => ({
+        senderName: msg.senderName || 'User',
+        content: msg.content || ''
+      }));
+
+      // Handle AI response asynchronously (don't wait for it)
+      setImmediate(() => {
+        handleMizuMention(message, chatContext, currentUser.fullName, io, onlineUsers, true, groupId);
+      });
     }
 
     res.status(201).json(message);

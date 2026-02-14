@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend, createGroup, getMyGroups, getGroupById, getGroupMessages, sendGroupMessage, addGroupMember, removeGroupMember, promoteToAdmin, demoteAdmin, updateGroupName, updateGroupImage, leaveGroup } from '../controller/chat.controller.js';
+import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend, createGroup, getMyGroups, getGroupById, getGroupMessages, sendGroupMessage, addGroupMember, removeGroupMember, promoteToAdmin, demoteAdmin, updateGroupName, updateGroupImage, leaveGroup, getAIConversation } from '../controller/chat.controller.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -12,6 +12,10 @@ router.get('/messages/:recipientId', protectRoute, getMessages);
 
 // Send a message
 router.post('/messages', protectRoute, sendMessage);
+
+// Get AI conversation data
+router.get('/ai-conversation/:conversationId/:messageId', protectRoute, getAIConversation);
+router.get('/ai-conversation/:conversationId', protectRoute, getAIConversation);
 
 // Get online users
 router.get('/online', protectRoute, getOnlineUsers);

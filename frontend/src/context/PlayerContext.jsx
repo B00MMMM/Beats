@@ -26,6 +26,7 @@ export const PlayerProvider = ({ children }) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isShuffled, setIsShuffled] = useState(false);
   const [likedSongs, setLikedSongs] = useState(new Set());
+  const [isLoadingTrack, setIsLoadingTrack] = useState(false);
 
   useEffect(() => {
     if (currentTrack) {
@@ -442,7 +443,9 @@ export const PlayerProvider = ({ children }) => {
     fetchLikedSongs,
     playlists,      // Exported
     fetchPlaylists, // Exported
-    setPlaylists    // Exported (optional, but useful)
+    setPlaylists,   // Exported (optional, but useful)
+    isLoadingTrack, // Loading state for async track fetching
+    setIsLoadingTrack
   };
 
   return (
