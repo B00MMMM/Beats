@@ -38,11 +38,11 @@ export const PlayerProvider = ({ children }) => {
         }
       }
 
-      // Record History only when track changes
+      // Record History only when track changes and has valid data
       const recordHistory = async () => {
         try {
           const token = await getToken();
-          if (token) {
+          if (token && currentTrack.deezerId && currentTrack.title) {
             // Record History
             await axios.post('/users/history',
               { songData: currentTrack },
@@ -65,12 +65,20 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     const updateActivity = async () => {
       if (!userId || !currentTrack) return;
-      
+
       try {
         const token = await getToken();
         if (token) {
+          const songId = currentTrack.deezerId || currentTrack.id;
+
+          // Debug check - if playing but no ID, avoid sending bad data
+          if (isPlaying && !songId) {
+            console.warn("Skipping activity update: No valid songId found for", currentTrack.title);
+            return;
+          }
+
           const activity = isPlaying ? {
-            songId: currentTrack.deezerId || currentTrack.id,
+            songId: songId,
             title: currentTrack.title,
             artist: typeof currentTrack.artist === 'string' ? currentTrack.artist : currentTrack.artist?.name,
             cover: currentTrack.cover || currentTrack.album?.cover_medium,

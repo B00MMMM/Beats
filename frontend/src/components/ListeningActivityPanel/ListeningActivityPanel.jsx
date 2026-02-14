@@ -50,8 +50,8 @@ function ListeningActivityPanel() {
       // data = { userId, name, avatar, activity }
       setFriendsActivity(prev => {
         const idx = prev.findIndex(f => f.userId === data.userId);
-        if (data.activity) {
-          // Update or Add
+        if (data.activity && data.activity.songId && data.activity.title) {
+          // Update or Add only if activity has valid data
           if (idx !== -1) {
             const newArr = [...prev];
             newArr[idx] = { ...newArr[idx], activity: data.activity };
@@ -93,7 +93,7 @@ function ListeningActivityPanel() {
 
   const handlePlayFriendSong = (e, activity) => {
     e.stopPropagation();
-    if (!activity) return;
+    if (!activity || !activity.songId) return;
 
     // Construct track object
     const track = {

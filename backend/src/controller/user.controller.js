@@ -206,10 +206,8 @@ export const toggleActivitySharing = async (req, res) => {
 
         user.isActivityShared = !user.isActivityShared;
 
-        // If turning off, clear activity
-        if (!user.isActivityShared) {
-            user.currentActivity = undefined;
-        }
+        // Don't clear currentActivity on toggle-off — it keeps being updated
+        // by the updateActivity endpoint. Just stop/start broadcasting it.
 
         await user.save();
 
@@ -219,16 +217,20 @@ export const toggleActivitySharing = async (req, res) => {
 
         const friends = await User.find({ _id: { $in: user.friends } });
 
+        // Only broadcast valid activity (must have songId and title)
+        const hasValidActivity = user.isActivityShared &&
+            user.currentActivity &&
+            user.currentActivity.songId &&
+            user.currentActivity.title;
+
         friends.forEach(friend => {
             const socketId = onlineUsers.get(friend.clerkId);
             if (socketId) {
-                // If turned off, send null activity; include full user info for re-adding
-                const activity = user.isActivityShared ? user.currentActivity : null;
                 io.to(socketId).emit('friend-activity-updated', {
                     userId: user.clerkId,
                     name: user.fullName,
                     avatar: user.imageUrl,
-                    activity
+                    activity: hasValidActivity ? user.currentActivity : null
                 });
             }
         });
@@ -250,7 +252,7 @@ export const getFriendsActivity = async (req, res) => {
         // Get friends who have sharing enabled and recent activity (e.g. last 24h?)
         // For now just return if they have activity
         const friendsActivity = user.friends
-            .filter(friend => friend.isActivityShared && friend.currentActivity && friend.currentActivity.title)
+            .filter(friend => friend.isActivityShared && friend.currentActivity && friend.currentActivity.songId && friend.currentActivity.title)
             .map(friend => ({
                 userId: friend.clerkId,
                 name: friend.fullName,
