@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ChevronDown, UserPlus, Search, UserCheck, X, Users } from 'lucide-react'
+import { ChevronDown, UserPlus, Search, UserCheck, X, Users, Music } from 'lucide-react'
 import { useAuth } from '@clerk/clerk-react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import FriendsList from '../components/FriendsList/FriendsList'
 import ChatWindow from '../components/ChatWindow/ChatWindow'
 import ConfirmPopup from '../components/ConfirmPopup/ConfirmPopup'
 import CreateGroupModal from '../components/CreateGroupModal/CreateGroupModal'
 import GroupSettingsModal from '../components/GroupSettingsModal/GroupSettingsModal'
+import ListeningActivityPanel from '../components/ListeningActivityPanel/ListeningActivityPanel'
 import { useSocket } from '../context/SocketContext'
 import axios from '../api/axios'
 import styles from './SocialPage.module.css'
@@ -15,6 +16,7 @@ function SocialPage() {
   const { getToken, userId } = useAuth()
   const { socket, onlineUsers } = useSocket()
   const location = useLocation()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(() => {
     // Check for tab param in URL or location state
     const params = new URLSearchParams(location.search)
@@ -38,6 +40,7 @@ function SocialPage() {
   const [groupMessages, setGroupMessages] = useState([])
   const [showGroupSettings, setShowGroupSettings] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
+  const [showMobileActivity, setShowMobileActivity] = useState(false)
 
   // Popup state
   const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'default', onConfirm: null })
@@ -402,8 +405,55 @@ function SocialPage() {
     fetchMessages()
   }, [selectedFriend, getToken, userId])
 
+  // Sync state with URL params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const mode = params.get('mode')
+    const id = params.get('id')
+    const type = params.get('type')
+
+    if (!mode) {
+      // If no mode, ensure we are not in chat
+      if (selectedFriend || selectedGroup) {
+        setSelectedFriend(null)
+        setSelectedGroup(null)
+        setGroupMessages([])
+        setShowAddFriend(false)
+      }
+      return
+    }
+
+    if (mode === 'chat' && id) {
+      if (type === 'group') {
+        const group = groups.find(g => g._id === id)
+        if (group && selectedGroup?._id !== group._id) {
+          handleGroupClick(group, false) // false = don't update URL again
+        }
+      } else {
+        const friend = friends.find(f => f.id === id)
+        if (friend && selectedFriend?.id !== friend.id) {
+          // We might need to construct a basic friend object if not found in list yet (e.g. from search)
+          // For now, rely on friends list.
+          setSelectedFriend(friend)
+        }
+      }
+    } else if (mode === 'add-friend') {
+      if (!showAddFriend) setShowAddFriend(true)
+    }
+  }, [location.search, groups, friends])
+
+
+
+
+
   const handleFriendClick = (friend) => {
     setSelectedFriend(friend)
+    // Update URL
+    const params = new URLSearchParams(location.search)
+    params.set('mode', 'chat')
+    params.set('id', friend.id)
+    params.set('type', 'private')
+    navigate(`${location.pathname}?${params.toString()}`)
   }
 
   const handleSendMessage = async (text, attachment = null) => {
@@ -463,14 +513,29 @@ function SocialPage() {
     setSelectedFriend(null)
     setSelectedGroup(null)
     setGroupMessages([])
+
+    // Clear URL params
+    const params = new URLSearchParams(location.search)
+    params.delete('mode')
+    params.delete('id')
+    params.delete('type')
+    navigate(`${location.pathname}?${params.toString()}`)
   }
 
   // Group chat handlers
-  const handleGroupClick = async (group) => {
+  const handleGroupClick = async (group, updateUrl = true) => {
     setSelectedGroup(group)
     setSelectedFriend(null)
 
-    // Fetch group messages
+    if (updateUrl) {
+      const params = new URLSearchParams(location.search)
+      params.set('mode', 'chat')
+      params.set('id', group._id)
+      params.set('type', 'group')
+      navigate(`${location.pathname}?${params.toString()}`)
+    }
+
+    // Fetch group messages logic... (rest of function)
     try {
       const token = await getToken()
       if (!token) return
@@ -479,13 +544,11 @@ function SocialPage() {
         headers: { Authorization: `Bearer ${token}` }
       })
 
+      // ... (rest of processing)
       const messagesData = response.data.map(msg => {
-        // Handle system messages
         if (msg.isSystemMessage) {
           return formatSystemMessage(msg)
         }
-
-        // Handle regular messages
         return {
           id: msg._id,
           sender: msg.senderId === userId ? 'You' : msg.senderName,
@@ -941,81 +1004,96 @@ function SocialPage() {
   return (
     <div className={styles.socialPage}>
       <div className={styles.mainContent}>
-        <div className={styles.tabs}>
-          {/* ID Circle Button */}
-          <div className={styles.idCircle}>
-            <span>ID</span>
-            <div className={styles.idTooltip}>
-              <span className={styles.idTooltipLabel}>My ID:</span>
-              <span className={styles.idTooltipValue}>{currentUserUniqueId}</span>
-            </div>
-          </div>
-          <button
-            className={`${styles.tab} ${activeTab === 'friends' ? styles.active : ''}`}
-            onClick={() => {
-              setActiveTab('friends');
-              setShowAddFriend(false);
-              setSelectedFriend(null);
-              setSelectedGroup(null);
-              setGroupMessages([]);
-            }}
-          >
-            Friends
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'requests' ? styles.active : ''}`}
-            onClick={() => {
-              setActiveTab('requests');
-              setShowAddFriend(false);
-              setSelectedFriend(null);
-            }}
-          >
-            Requests {friendRequests.length > 0 && <span className={styles.notificationBadge}>{friendRequests.length}</span>}
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'online' ? styles.active : ''}`}
-            onClick={() => {
-              setActiveTab('online')
-              setSelectedFriend(null)
-              setShowAddFriend(false)
-              setSelectedGroup(null)
-              setGroupMessages([])
-            }}
-          >
-            Online
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'groups' ? styles.active : ''}`}
-            onClick={() => {
-              setActiveTab('groups')
-              setSelectedFriend(null)
-              setShowAddFriend(false)
-            }}
-          >
-            Groups {groups.length > 0 && <span className={styles.notificationBadge}>{groups.length}</span>}
-          </button>
-          <div className={styles.actionButtonsContainer}>
-            <button
-              className={styles.addFriendButton}
-              onClick={() => {
-                setShowAddFriend(true);
-                setActiveTab('');
-                setSelectedFriend(null);
-              }}
-            >
-              <UserPlus size={18} />
-              <span>Add Friend</span>
-            </button>
-            <button
-              className={styles.iconButton}
-              onClick={() => setShowCreateGroup(true)}
-              title="Create Group"
-            >
-              <Users size={18} />
-            </button>
-          </div>
+        {/* Header Section - Hidden when Chat or Add Friend is active */}
+        {!selectedFriend && !selectedGroup && !showAddFriend && (
+          <>
+            <div className={styles.socialHeader}>
+              <div className={styles.tabsPill}>
+                <button
+                  className={`${styles.tab} ${activeTab === 'friends' ? styles.active : ''}`}
+                  onClick={() => {
+                    setActiveTab('friends');
+                    setShowAddFriend(false);
+                    setSelectedFriend(null);
+                    setSelectedGroup(null);
+                    setGroupMessages([]);
+                  }}
+                >
+                  Friends
+                </button>
+                <button
+                  className={`${styles.tab} ${activeTab === 'requests' ? styles.active : ''}`}
+                  onClick={() => {
+                    setActiveTab('requests');
+                    setShowAddFriend(false);
+                    setSelectedFriend(null);
+                  }}
+                >
+                  Requests {friendRequests.length > 0 && <span className={styles.notificationBadge}>{friendRequests.length}</span>}
+                </button>
+                <button
+                  className={`${styles.tab} ${activeTab === 'online' ? styles.active : ''}`}
+                  onClick={() => {
+                    setActiveTab('online')
+                    setSelectedFriend(null)
+                    setShowAddFriend(false)
+                    setSelectedGroup(null)
+                    setGroupMessages([])
+                  }}
+                >
+                  Online
+                </button>
+                <button
+                  className={`${styles.tab} ${activeTab === 'groups' ? styles.active : ''}`}
+                  onClick={() => {
+                    setActiveTab('groups')
+                    setSelectedFriend(null)
+                    setShowAddFriend(false)
+                  }}
+                >
+                  Groups {groups.length > 0 && <span className={styles.notificationBadge}>{groups.length}</span>}
+                </button>
+              </div>
 
-        </div>
+              <div className={styles.actionButtonsContainer}>
+                {/* Mobile "Listening" Badge */}
+                <button
+                  className={styles.mobileActivityBadge}
+                  onClick={() => setShowMobileActivity(true)}
+                >
+                  <span>Listening</span>
+                </button>
+
+                <button
+                  className={styles.iconButton}
+                  onClick={() => setShowCreateGroup(true)}
+                  title="Create Group"
+                >
+                  <Users size={18} />
+                </button>
+                <button
+                  className={styles.addFriendButton}
+                  onClick={() => {
+                    setShowAddFriend(true);
+                    setActiveTab('');
+                    setSelectedFriend(null);
+                  }}
+                >
+                  <UserPlus size={18} />
+                  <span>Add Friend</span>
+                </button>
+                {/* ID Circle Button - Now on the right */}
+                <div className={styles.idCircle}>
+                  <span>ID</span>
+                  <div className={styles.idTooltip}>
+                    <span className={styles.idTooltipLabel}>My ID:</span>
+                    <span className={styles.idTooltipValue}>{currentUserUniqueId}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {showAddFriend ? (
           <div className={styles.addFriendSection}>
@@ -1211,6 +1289,18 @@ function SocialPage() {
           onLeaveGroup={handleLeaveGroup}
         />
       )}
+      {/* Mobile Activity Drawer */}
+      <div className={`${styles.mobileActivityDrawer} ${showMobileActivity ? styles.open : ''}`}>
+        <div className={styles.drawerHeader}>
+          <h3>Friend Activity</h3>
+          <button onClick={() => setShowMobileActivity(false)} className={styles.closeBtn}>
+            <X size={20} />
+          </button>
+        </div>
+        <div className={styles.drawerContent}>
+          <ListeningActivityPanel />
+        </div>
+      </div>
     </div>
   )
 }

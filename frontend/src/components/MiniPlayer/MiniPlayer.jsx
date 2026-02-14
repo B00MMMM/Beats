@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/clerk-react';
 import axios from '../../api/axios';
 import { useState, useEffect, useRef } from 'react';
 
-function MiniPlayer() {
+function MiniPlayer({ isChatMode }) {
   const { currentTrack, isPlaying, togglePlayPause, likedSongs, toggleLike } = usePlayer();
   const location = useLocation();
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ function MiniPlayer() {
 
   return (
     // ... (rest of the component)
-    <div className={styles.miniPlayer}>
+    <div className={`${styles.miniPlayer} ${isChatMode ? styles.chatMode : ''}`}>
       <div className={styles.trackInfo} onClick={handlePlayerClick}>
         {currentTrack?.cover || currentTrack?.album?.cover_small ? (
           <img

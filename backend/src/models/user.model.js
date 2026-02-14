@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
             default: false // Default to false for privacy
         },
         currentActivity: {
+            songId: { type: String, default: null }, // Deezer ID needed for streaming
             title: { type: String, default: null },
             artist: { type: String, default: null },
             album: { type: String, default: null },

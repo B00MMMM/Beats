@@ -59,14 +59,21 @@ function Layout({ children }) {
     }
   }, [location.pathname, isAIChatOpen, setIsAIChatOpen]);
 
+  // Check for Social Page Chat Mode
+  const isSocialPage = location.pathname.startsWith('/social') || location.pathname.startsWith('/friends');
+  const searchParams = new URLSearchParams(location.search);
+  const isChatMode = isSocialPage && searchParams.get('mode') === 'chat';
+
+
+
   return (
     <div className={`${styles.layout} ${isAIChatOpen ? styles.aiChatExpanded : ''}`}>
       {!location.pathname.startsWith('/song/') && <Sidebar />}
-      <div className={`${styles.mainContent} ${location.pathname.startsWith('/song/') ? styles.fullWidthContent : ''} ${location.pathname.startsWith('/song/') ? styles.songPageMain : ''} ${isAIChatOpen ? styles.aiChatMainContent : ''}`}>
+      <div className={`${styles.mainContent} ${location.pathname.startsWith('/song/') ? styles.fullWidthContent : ''} ${location.pathname.startsWith('/song/') ? styles.songPageMain : ''} ${isAIChatOpen ? styles.aiChatMainContent : ''} ${isChatMode ? styles.socialChatMain : ''}`}>
         <div className={styles.topbarShell}>
           {!location.pathname.startsWith('/song/') && <TopNavbar />}
         </div>
-        <div className={`${styles.contentArea} ${location.pathname.startsWith('/song/') ? styles.songPageContent : ''}`}>
+        <div className={`${styles.contentArea} ${location.pathname.startsWith('/song/') ? styles.songPageContent : ''} ${isSocialPage ? styles.socialPageContent : ''}`}>
           {children}
         </div>
       </div>
@@ -101,11 +108,9 @@ function Layout({ children }) {
         </aside>
       )}
 
-
-
       <BottomPlayer />
-      <MiniPlayer />
-      {!location.pathname.startsWith('/song/') && <BottomNav />}
+      <MiniPlayer isChatMode={isChatMode} />
+      {!location.pathname.startsWith('/song/') && !isChatMode && <BottomNav />}
     </div>
   );
 }

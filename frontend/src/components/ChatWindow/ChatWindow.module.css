@@ -6,6 +6,14 @@
   border-radius: 8px;
 }
 
+@media (max-width: 768px) {
+  .chatWindow {
+    border-radius: 0;
+    height: 100%;
+    padding-bottom: calc(var(--mini-player-h) + 84px);
+  }
+}
+
 .chatHeader {
   display: flex;
   align-items: center;
@@ -166,6 +174,19 @@
 .inputContainer {
   width: 100%;
   border-top: 1px solid var(--border-color);
+  background-color: var(--bg-dark);
+}
+
+@media (max-width: 768px) {
+  .inputContainer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 202;
+    /* Topmost */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 .inputArea {
