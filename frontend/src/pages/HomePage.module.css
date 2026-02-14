@@ -137,8 +137,17 @@
     font-size: 13px;
   }
 
-  /* On mobile maybe duplicate single row? Or keep grid behavior? */
-  /* User requested scrollable row format */
+  /* Hide scrollbars for horizontal lists on mobile */
+  .horizontalScroll,
+  .twoRowGrid {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .horizontalScroll::-webkit-scrollbar,
+  .twoRowGrid::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {

@@ -90,14 +90,22 @@ function TopNavbar() {
       </div>
 
       <div className={styles.rightSection}>
-        <button className={styles.mobileSearchButton}>
-          <Search size={20} />
+        <button
+          className={`${styles.mobileAIButton} ${isAIChatOpen ? styles.active : ''}`}
+          onClick={toggleAIChat}
+        >
+          <Sparkles size={20} />
         </button>
-        <button className={styles.mobileCameraButton}>
-          <Camera size={20} />
+        <button className={styles.mobileNotificationButton} onClick={handleNotificationClick}>
+          <Bell size={20} />
+          {notificationCount > 0 && (
+            <span className={styles.mobileNotificationBadge}>
+              {notificationCount > 9 ? '9+' : notificationCount}
+            </span>
+          )}
         </button>
-        <button 
-          className={`${styles.aiButton} ${isAIChatOpen ? styles.active : ''}`} 
+        <button
+          className={`${styles.aiButton} ${isAIChatOpen ? styles.active : ''}`}
           onClick={toggleAIChat}
         >
           <Sparkles size={18} />
