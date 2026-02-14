@@ -264,7 +264,7 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack, onOpenSettin
                 <div className={`${styles.messageContent} ${isAIMessage ? styles.aiMessageContent : ''}`}>
                   {!msg.isOwn && (
                     <span className={`${styles.senderName} ${isAIMessage ? styles.aiSenderName : ''}`}>
-                      {isAIMessage ? 'MIZU 🤖' : msg.sender}
+                      {isAIMessage ? 'MIZU' : msg.sender}
                     </span>
                   )}
 

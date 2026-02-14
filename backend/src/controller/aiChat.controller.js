@@ -71,18 +71,12 @@ export const sendMessage = async (req, res) => {
             });
         }
 
-        // Add user message to conversation
-        const userMessage = {
-            role: 'user',
-            content: message.trim(),
-            recommendations: []
-        };
-        conversation.messages.push(userMessage);
-
         // Generate AI response using Gemini
+        // Use existing conversation history for context (don't add user msg to DB yet)
         const aiResult = await GeminiService.generateResponse(message, history || conversation.messages);
 
         if (!aiResult.success) {
+            // Don't save anything to DB on failure — keep conversation clean
             return res.status(500).json({ message: "AI service error", error: aiResult.error });
         }
 
@@ -95,6 +89,14 @@ export const sendMessage = async (req, res) => {
         // Enrich recommendations with Deezer data using shared service
         // This handles fetching IDs, covers, previews etc.
         const enrichedRecommendations = await GeminiService.enrichRecommendations(recommendedSongs);
+
+        // Only save to DB after successful AI response — both user + AI together
+        const userMessage = {
+            role: 'user',
+            content: message.trim(),
+            recommendations: []
+        };
+        conversation.messages.push(userMessage);
 
         // Add AI message to conversation
         const aiMessage = {
