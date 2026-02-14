@@ -78,7 +78,8 @@ export const AIChatProvider = ({ children }) => {
 
       const response = await axios.post('/ai-chat/message', {
         message: userMessage,
-        history: messages
+        // Only send successfully completed exchanges as history (filter out error placeholders)
+        history: messages.filter(m => m.id !== 'welcome' && !m.isError)
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -96,15 +97,20 @@ export const AIChatProvider = ({ children }) => {
     } catch (error) {
       console.error('Error sending message:', error);
       
-      // Add error message
+      // Add error message (marked so it's excluded from future history)
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isError: true
       };
       
-      setMessages(prev => [...prev, errorMessage]);
+      // Remove the failed user message from local state so it doesn't accumulate
+      setMessages(prev => [
+        ...prev.filter(m => m.id !== newUserMessage.id),
+        errorMessage
+      ]);
     } finally {
       setIsLoading(false);
     }

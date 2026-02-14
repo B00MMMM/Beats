@@ -14,9 +14,22 @@ const containsMizuMention = (content) => {
   return content.toLowerCase().includes('@mizu');
 };
 
+// Deduplication: track recently processed @mizu message IDs to prevent double processing
+const processedMizuMessages = new Set();
+const MIZU_DEDUP_TTL = 30000; // 30 seconds
+
 // Helper function to generate AI response for @mizu mentions
 const handleMizuMention = async (originalMessage, chatContext, senderName, io, onlineUsers, isGroupChat = false, groupId = null) => {
   try {
+    // Dedup check — skip if this message was already processed
+    const msgId = String(originalMessage._id);
+    if (processedMizuMessages.has(msgId)) {
+      console.log('⏭️ Skipping duplicate @mizu processing for message:', msgId);
+      return;
+    }
+    processedMizuMessages.add(msgId);
+    setTimeout(() => processedMizuMessages.delete(msgId), MIZU_DEDUP_TTL);
+
     console.log('🤖 MIZU mention detected, generating AI response...');
 
     // Generate AI response

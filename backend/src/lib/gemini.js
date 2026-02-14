@@ -12,6 +12,28 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+// Quota cooldown tracking — skip API calls after 429 until cooldown expires
+let quotaCooldownUntil = 0;
+
+const isQuotaExceeded = () => Date.now() < quotaCooldownUntil;
+
+const setQuotaCooldown = (retryAfterMs = 60000) => {
+    quotaCooldownUntil = Date.now() + retryAfterMs;
+    console.log(`⏱️ Gemini quota cooldown set for ${Math.ceil(retryAfterMs / 1000)}s (until ${new Date(quotaCooldownUntil).toLocaleTimeString()})`);
+};
+
+const parseRetryDelay = (error) => {
+    // Try to extract retry delay from error details
+    if (error.errorDetails) {
+        const retryInfo = error.errorDetails.find(d => d['@type']?.includes('RetryInfo'));
+        if (retryInfo?.retryDelay) {
+            const seconds = parseInt(retryInfo.retryDelay);
+            if (!isNaN(seconds)) return seconds * 1000;
+        }
+    }
+    return 60000; // Default 60s cooldown
+};
+
 // Pre-prompt for structured song recommendations
 const SYSTEM_PROMPT = `You are MIZU, an AI music assistant integrated into Beats chat conversations. You can participate in both private and group chats when mentioned with @mizu.
 
@@ -164,7 +186,7 @@ Enjoy your weekend with these bangers!`,
     static async generateChatResponse(userMessage, chatContext = [], senderName = 'User') {
         try {
             // Check for quota exceeded scenario and use mock response
-            if (process.env.USE_MOCK_AI === 'true') {
+            if (process.env.USE_MOCK_AI === 'true' || isQuotaExceeded()) {
                 console.log('🎭 Using mock AI response (quota exceeded or testing mode)');
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
                 return this.getMockChatResponse();
@@ -201,8 +223,9 @@ Enjoy your weekend with these bangers!`,
         } catch (error) {
             console.error('Gemini Chat API Error:', error);
 
-            // If quota exceeded, automatically switch to mock mode
+            // If quota exceeded, set cooldown and switch to mock
             if (error.status === 429) {
+                setQuotaCooldown(parseRetryDelay(error));
                 console.log('🚫 Quota exceeded, switching to mock response');
                 return this.getMockChatResponse();
             }
@@ -217,6 +240,12 @@ Enjoy your weekend with these bangers!`,
 
     static async generateResponse(userMessage, chatHistory = []) {
         try {
+            // Skip API call if in cooldown from a recent 429
+            if (isQuotaExceeded()) {
+                console.log('🎭 Using mock AI response (quota cooldown active)');
+                return this.getMockChatResponse();
+            }
+
             // Build conversation context
             let conversationContext = SYSTEM_PROMPT + '\n\nConversation History:\n';
 
@@ -240,6 +269,13 @@ Enjoy your weekend with these bangers!`,
 
         } catch (error) {
             console.error('Gemini API Error:', error);
+
+            // If quota exceeded, set cooldown and fall back to mock
+            if (error.status === 429) {
+                setQuotaCooldown(parseRetryDelay(error));
+                console.log('🚫 Quota exceeded, switching to mock response');
+                return this.getMockChatResponse();
+            }
 
             return {
                 success: false,
