@@ -14,13 +14,13 @@ What would you like to explore today?`;
 export const getChatHistory = async (req, res) => {
     try {
         const { userId } = getAuth(req);
-        
+
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
         let conversation = await AIChatConversation.findOne({ userId });
-        
+
         if (!conversation) {
             // Create new conversation with welcome message
             const welcomeMessage = {
@@ -33,13 +33,13 @@ export const getChatHistory = async (req, res) => {
                 userId,
                 messages: [welcomeMessage]
             });
-            
+
             await conversation.save();
         }
 
-        res.json({ 
+        res.json({
             messages: conversation.messages,
-            totalMessages: conversation.messages.length 
+            totalMessages: conversation.messages.length
         });
 
     } catch (error) {
@@ -81,47 +81,20 @@ export const sendMessage = async (req, res) => {
 
         // Generate AI response using Gemini
         const aiResult = await GeminiService.generateResponse(message, history || conversation.messages);
-        
+
         if (!aiResult.success) {
             return res.status(500).json({ message: "AI service error", error: aiResult.error });
         }
 
         // Parse song recommendations from AI response
         const recommendedSongs = GeminiService.parseSongRecommendations(aiResult.response);
-        
+
         // Clean the response text (remove song tags for cleaner display)
         const cleanedResponse = GeminiService.cleanResponseText(aiResult.response);
-        
-        const enrichedRecommendations = [];
 
-        // Enrich recommendations with Deezer data
-        for (const song of recommendedSongs) {
-            try {
-                const searchQuery = `${song.artist} ${song.title}`;
-                const deezerResult = await deezerFetch(`/search?q=${encodeURIComponent(searchQuery)}&limit=1`);
-                
-                if (deezerResult.data && deezerResult.data.length > 0) {
-                    const track = deezerResult.data[0];
-                    enrichedRecommendations.push({
-                        title: track.title,
-                        artist: track.artist.name,
-                        deezerId: String(track.id),
-                        cover: track.album.cover_medium,
-                        preview: track.preview
-                    });
-                }
-            } catch (error) {
-                console.error(`Error fetching Deezer data for ${song.title}:`, error);
-                // Add basic recommendation without Deezer data
-                enrichedRecommendations.push({
-                    title: song.title,
-                    artist: song.artist,
-                    deezerId: null,
-                    cover: null,
-                    preview: null
-                });
-            }
-        }
+        // Enrich recommendations with Deezer data using shared service
+        // This handles fetching IDs, covers, previews etc.
+        const enrichedRecommendations = await GeminiService.enrichRecommendations(recommendedSongs);
 
         // Add AI message to conversation
         const aiMessage = {
@@ -150,7 +123,7 @@ export const sendMessage = async (req, res) => {
 export const clearChatHistory = async (req, res) => {
     try {
         const { userId } = getAuth(req);
-        
+
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
@@ -164,7 +137,7 @@ export const clearChatHistory = async (req, res) => {
 
         await AIChatConversation.findOneAndUpdate(
             { userId },
-            { 
+            {
                 messages: [welcomeMessage],
                 lastActivity: new Date()
             },
@@ -185,9 +158,9 @@ export const testAIConnection = async (req, res) => {
         const result = await GeminiService.testConnection();
         res.json(result);
     } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            error: error.message 
+        res.status(500).json({
+            success: false,
+            error: error.message
         });
     }
 };

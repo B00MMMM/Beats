@@ -75,12 +75,31 @@ function SocialPage() {
         const isDuplicate = prev.some(m => m.id === message._id || (message._id && m.id === message._id));
         if (isDuplicate) return prev
 
+        // Check if message is from MIZU (AI)
+        const isAIMessage = message.isAI || message.senderId === 'MIZU_AI' || message.senderName === 'MIZU';
+
+        // If it's an AI message, checks if it belongs to the current conversation context
+        // logic: if I am chatting with someone, and MIZU replies, it should show up.
+        // We assume MIZU replies are always relevant to the current focused chat for now if they arrive while chatting.
+        const isRelevant =
+          message.groupId === selectedGroupRef.current?._id || // Group chat match
+          message.senderId === selectedFriendRef.current?.id || // Direct message from friend match
+          message.receiverId === userId || // Direct message to me
+          (isAIMessage && selectedFriendRef.current); // AI message while chatting with someone
+
+        if (!isRelevant && !message.groupId) {
+          // Background notification logic for DMs will go here
+        }
+
         return [...prev, {
           id: message._id,
           content: message.content,
           attachment: message.attachment,
           isOwn: false,
-          sender: message.senderInfo?.fullName || 'Unknown',
+          sender: isAIMessage ? 'MIZU' : (message.senderInfo?.fullName || 'Unknown'),
+          avatar: isAIMessage ? null : message.senderAvatar,
+          isAI: isAIMessage,
+          songRecommendations: message.songRecommendations || [],
           timestamp: new Date(message.createdAt).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
@@ -88,9 +107,9 @@ function SocialPage() {
         }]
       })
 
-      // Update unread count if not in chat with this user
+      // Update unread count if not in chat with this user AND not AI
       // Use ref to get current selectedFriend value (avoid stale closure)
-      if (selectedFriendRef.current?.id !== message.senderId) {
+      if (selectedFriendRef.current?.id !== message.senderId && message.senderId !== 'MIZU_AI') {
         setUnreadCounts(prev => ({
           ...prev,
           [message.senderId]: (prev[message.senderId] || 0) + 1
@@ -173,6 +192,8 @@ function SocialPage() {
           attachment: data.attachment,
           isOwn: data.senderId === userId,
           isSystemMessage: data.isSystemMessage,
+          isAI: data.isAI || data.senderId === 'MIZU_AI',
+          songRecommendations: data.songRecommendations || [],
           timestamp: new Date(data.createdAt).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
@@ -364,6 +385,8 @@ function SocialPage() {
           content: msg.content,
           attachment: msg.attachment,
           isOwn: msg.senderId === userId,
+          isAI: msg.isAI || msg.senderId === 'MIZU_AI',
+          songRecommendations: msg.songRecommendations || [],
           timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'
@@ -429,8 +452,10 @@ function SocialPage() {
 
       // Real-time delivery is handled by the REST API via socket emit in chat.controller.js
       // No need to emit via socket here as it would cause duplicate messages
+      return response
     } catch (error) {
       console.error('Error sending message:', error)
+      throw error
     }
   }
 
@@ -468,6 +493,8 @@ function SocialPage() {
           content: msg.content,
           attachment: msg.attachment,
           isOwn: msg.senderId === userId,
+          isAI: msg.isAI || msg.senderId === 'MIZU_AI',
+          songRecommendations: msg.songRecommendations || [],
           timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit'

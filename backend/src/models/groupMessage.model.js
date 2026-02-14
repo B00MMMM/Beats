@@ -10,6 +10,15 @@ const groupMessageSchema = new mongoose.Schema({
     senderName: { type: String, required: false }, // Optional for system messages
     senderAvatar: { type: String },
     isSystemMessage: { type: Boolean, default: false },
+    isAI: { type: Boolean, default: false }, // Flag for AI messages
+    // AI song recommendations (for MIZU AI responses)
+    songRecommendations: [{
+        title: { type: String },
+        artist: { type: String },
+        deezerId: { type: String },
+        cover: { type: String },
+        preview: { type: String }
+    }],
     systemMessageType: {
         type: String,
         enum: ['member_added', 'member_removed', 'member_left', 'admin_promoted', 'admin_demoted', 'group_name_changed', 'group_image_changed'],

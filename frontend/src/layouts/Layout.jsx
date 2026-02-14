@@ -51,28 +51,31 @@ function Layout({ children }) {
 
       {!location.pathname.startsWith('/song/') && (
         <aside className={`${styles.rightPanel} ${isAIChatOpen ? styles.aiChatPanel : ''}`}>
-          {location.pathname.startsWith('/friends') ? (
-            <>
-              <div className={styles.rightPanelTitle}>LISTENING TOO</div>
-              <div className={styles.rightPanelBody}>
-                <ListeningActivityPanel />
-              </div>
-            </>
-          ) : isAIChatOpen ? (
-            <>
-              <div className={styles.rightPanelTitle}>AI CHAT</div>
-              <div className={styles.rightPanelBody}>
-                <AIChat />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className={styles.rightPanelTitle}>NOW PLAYING</div>
-              <div className={styles.rightPanelBody}>
-                <NowPlaying />
-              </div>
-            </>
-          )}
+         {isAIChatOpen ? (
+          // AI Chat available on ALL pages when toggled
+          <>
+            <div className={styles.rightPanelTitle}>AI CHAT</div>
+            <div className={styles.rightPanelBody}>
+              <AIChat />
+            </div>
+          </>
+        ) : location.pathname.startsWith('/friends') ? (
+          // Friends page default: Shows "LISTENING TOO" 
+          <>
+            <div className={styles.rightPanelTitle}>LISTENING TOO</div>
+            <div className={styles.rightPanelBody}>
+              <ListeningActivityPanel />
+            </div>
+          </>
+        ) : (
+          // Other pages default: Shows "NOW PLAYING"
+          <>
+            <div className={styles.rightPanelTitle}>NOW PLAYING</div>
+            <div className={styles.rightPanelBody}>
+              <NowPlaying />
+            </div>
+          </>
+        )}
         </aside>
       )}
 
