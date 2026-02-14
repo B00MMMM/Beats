@@ -80,7 +80,7 @@ function AIChat() {
           </div>
           <div className={styles.headerText}>
             <h3>MIZU</h3>
-            <p>Powered by Gemini AI</p>
+            <p>Powered by Groq AI</p>
           </div>
         </div>
         <button className={styles.clearButton} onClick={clearChat} title="Clear Chat">

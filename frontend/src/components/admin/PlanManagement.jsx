@@ -48,21 +48,11 @@ const PlanManagement = () => {
     };
 
     const getPlanBadgeColor = (plan) => {
-        const colors = {
-            iron: 'bg-zinc-700 text-zinc-300 ring-1 ring-zinc-500',
-            gold: 'bg-yellow-900/30 text-yellow-500 ring-1 ring-yellow-500/50',
-            diamond: 'bg-blue-900/30 text-blue-400 ring-1 ring-blue-500/50'
-        };
-        return colors[plan] || 'bg-zinc-700 text-zinc-300';
+        return plan || 'iron';
     };
 
     const getStatusBadgeColor = (status) => {
-        const colors = {
-            pending: 'bg-orange-900/30 text-orange-400 ring-1 ring-orange-500/50',
-            approved: 'bg-emerald-900/30 text-emerald-400 ring-1 ring-emerald-500/50',
-            rejected: 'bg-red-900/30 text-red-400 ring-1 ring-red-500/50'
-        };
-        return colors[status] || 'bg-zinc-700 text-zinc-300';
+        return status || 'pending';
     };
 
     return (

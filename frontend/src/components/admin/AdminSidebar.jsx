@@ -16,14 +16,14 @@ const AdminSidebar = () => {
     };
 
     return (
-        <aside className="w-64 bg-zinc-900 text-white flex flex-col h-full border-r border-zinc-800">
-            <div className="p-6">
-                <h2 className="font-bold text-xl tracking-tight bg-gradient-to-r from-emerald-500 to-emerald-700 bg-clip-text text-transparent">
+        <aside className="admin-sidebar">
+            <div className="sidebar-header">
+                <h2 className="sidebar-title">
                     Admin Panel
                 </h2>
             </div>
 
-            <nav className="flex-1 mt-4">
+            <nav className="sidebar-nav">
                 {menuItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;
@@ -32,25 +32,22 @@ const AdminSidebar = () => {
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`flex items-center px-6 py-3 transition-all duration-200 ${isActive
-                                    ? 'bg-zinc-800 border-l-4 border-emerald-500 text-emerald-400'
-                                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                                }`}
+                            className={`sidebar-link ${isActive ? 'active' : ''}`}
                         >
-                            <Icon className="w-5 h-5" />
-                            <span className="ml-3 font-medium">{item.label}</span>
+                            <Icon className="sidebar-icon" />
+                            <span className="sidebar-label">{item.label}</span>
                         </Link>
                     );
                 })}
             </nav>
 
-            <div className="p-4 border-t border-zinc-800">
+            <div className="sidebar-footer">
                 <button
                     onClick={handleLogout}
-                    className="flex items-center w-full px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors"
+                    className="logout-button"
                 >
-                    <FiLogOut className="w-5 h-5" />
-                    <span className="ml-3 font-medium">Exit Admin</span>
+                    <FiLogOut className="sidebar-icon" />
+                    <span className="sidebar-label">Exit Admin</span>
                 </button>
             </div>
         </aside>

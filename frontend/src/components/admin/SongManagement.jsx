@@ -239,6 +239,7 @@ const SongManagement = () => {
                                 <thead>
                                     <tr>
                                         <th>Song</th>
+                                        <th>Deezer ID</th>
                                         <th>Stats</th>
                                         <th>Status</th>
                                         <th>Priority</th>
@@ -248,7 +249,7 @@ const SongManagement = () => {
                                 <tbody>
                                     {songRequests.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="no-data-cell">
+                                            <td colSpan="6" className="no-data-cell">
                                                 No songs found matching filters.
                                             </td>
                                         </tr>
@@ -273,6 +274,11 @@ const SongManagement = () => {
                                                     </div>
                                                 </td>
                                                 <td>
+                                                    <span className="text-zinc-400 font-mono text-xs">
+                                                        {song.deezerId || song.songId || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td>
                                                     <div className="stat-value">
                                                         <span className="stat-highlight">{song.playCount}</span> plays
                                                     </div>
@@ -281,10 +287,7 @@ const SongManagement = () => {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span className={`badge ${song.isChecked
-                                                        ? 'bg-emerald-900/30 text-emerald-400 ring-1 ring-emerald-500/50'
-                                                        : 'bg-orange-900/30 text-orange-400 ring-1 ring-orange-500/50'
-                                                        }`}>
+                                                    <span className={`badge ${song.isChecked ? 'checked' : 'pending'}`}>
                                                         {song.isChecked ? 'Checked' : 'Pending'}
                                                     </span>
                                                 </td>

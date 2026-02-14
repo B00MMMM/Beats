@@ -1,5 +1,5 @@
 import { AIChatConversation } from '../models/aiChatConversation.model.js';
-import { GeminiService } from '../lib/gemini.js';
+import { GroqService } from '../lib/groq.js';
 import { deezerFetch } from '../lib/deezer.js';
 import { getAuth } from "@clerk/express";
 
@@ -71,9 +71,9 @@ export const sendMessage = async (req, res) => {
             });
         }
 
-        // Generate AI response using Gemini
+        // Generate AI response using Groq
         // Use existing conversation history for context (don't add user msg to DB yet)
-        const aiResult = await GeminiService.generateResponse(message, history || conversation.messages);
+        const aiResult = await GroqService.generateResponse(message, history || conversation.messages);
 
         if (!aiResult.success) {
             // Don't save anything to DB on failure — keep conversation clean
@@ -81,14 +81,14 @@ export const sendMessage = async (req, res) => {
         }
 
         // Parse song recommendations from AI response
-        const recommendedSongs = GeminiService.parseSongRecommendations(aiResult.response);
+        const recommendedSongs = GroqService.parseSongRecommendations(aiResult.response);
 
         // Clean the response text (remove song tags for cleaner display)
-        const cleanedResponse = GeminiService.cleanResponseText(aiResult.response);
+        const cleanedResponse = GroqService.cleanResponseText(aiResult.response);
 
         // Enrich recommendations with Deezer data using shared service
         // This handles fetching IDs, covers, previews etc.
-        const enrichedRecommendations = await GeminiService.enrichRecommendations(recommendedSongs);
+        const enrichedRecommendations = await GroqService.enrichRecommendations(recommendedSongs);
 
         // Only save to DB after successful AI response — both user + AI together
         const userMessage = {
@@ -117,7 +117,11 @@ export const sendMessage = async (req, res) => {
 
     } catch (error) {
         console.error('Error sending message:', error);
-        res.status(500).json({ message: 'Error processing message' });
+        res.status(500).json({
+            message: 'Error processing message',
+            error: error.message,
+            stack: error.stack
+        });
     }
 };
 
@@ -157,7 +161,7 @@ export const clearChatHistory = async (req, res) => {
 // Test AI service connection (for debugging)
 export const testAIConnection = async (req, res) => {
     try {
-        const result = await GeminiService.testConnection();
+        const result = await GroqService.testConnection();
         res.json(result);
     } catch (error) {
         res.status(500).json({

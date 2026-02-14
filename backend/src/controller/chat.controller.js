@@ -6,7 +6,7 @@ import { AIChatConversation } from '../models/aiChatConversation.model.js';
 import { getAuth } from "@clerk/express";
 import { createNotification } from './notification.controller.js';
 import cloudinary from '../lib/cloudinary.js';
-import { GeminiService } from '../lib/gemini.js';
+import { GroqService } from '../lib/groq.js';
 
 // Helper function to check if message mentions @mizu
 const containsMizuMention = (content) => {
@@ -33,7 +33,7 @@ const handleMizuMention = async (originalMessage, chatContext, senderName, io, o
     console.log('🤖 MIZU mention detected, generating AI response...');
 
     // Generate AI response
-    const aiResult = await GeminiService.generateChatResponse(
+    const aiResult = await GroqService.generateChatResponse(
       originalMessage.content,
       chatContext,
       senderName
@@ -47,8 +47,8 @@ const handleMizuMention = async (originalMessage, chatContext, senderName, io, o
     console.log('📝 AI response received');
 
     // Clean the response text and parse song recommendations
-    const cleanResponse = GeminiService.cleanResponseText(aiResult.response);
-    const songRecommendations = GeminiService.parseSongRecommendations(aiResult.response);
+    const cleanResponse = GroqService.cleanResponseText(aiResult.response);
+    const songRecommendations = GroqService.parseSongRecommendations(aiResult.response);
 
     console.log('🎵 Parsed', songRecommendations.length, 'song recommendations');
 
@@ -69,7 +69,7 @@ const handleMizuMention = async (originalMessage, chatContext, senderName, io, o
 
     // Enrich with Deezer data (IDs, covers, previews) so they are playable
     // Note: This is an async operation, so we do it before creating the message object
-    const enrichedRecommendations = await GeminiService.enrichRecommendations(songRecommendations);
+    const enrichedRecommendations = await GroqService.enrichRecommendations(songRecommendations);
 
     const aiMessage = {
       role: 'assistant',
