@@ -73,7 +73,7 @@ function Layout({ children }) {
         <div className={styles.topbarShell}>
           {!location.pathname.startsWith('/song/') && <TopNavbar />}
         </div>
-        <div className={`${styles.contentArea} ${location.pathname.startsWith('/song/') ? styles.songPageContent : ''} ${isSocialPage ? styles.socialPageContent : ''} ${location.pathname === '/library' ? styles.libraryContent : ''}`}>
+        <div className={`${styles.contentArea} ${location.pathname.startsWith('/song/') ? styles.songPageContent : ''} ${isSocialPage ? styles.socialPageContent : ''} ${location.pathname === '/library' ? styles.libraryContent : ''} ${location.pathname.startsWith('/playlist/') || location.pathname === '/favorites' ? styles.playlistPageContent : ''}`}>
           {children}
         </div>
       </div>

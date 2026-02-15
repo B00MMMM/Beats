@@ -155,15 +155,19 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .row {
-    grid-template-columns: 30px 1fr 40px 40px;
-    /* # | Title | Duration | Actions */
-    gap: 8px;
-    padding: 8px 12px;
+    grid-template-columns: 1fr 40px 40px;
+    /* Title | Duration | Actions */
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .number {
+    display: none;
   }
 
   .rowCover {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
   }
 
   .artist {

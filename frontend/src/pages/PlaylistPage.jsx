@@ -9,6 +9,7 @@ import axios from '../api/axios'
 import { usePlayer } from '../context/PlayerContext'
 import Loader from '../components/Loader/Loader'
 import centeredLoaderStyles from '../components/Loader/CenteredLoader.module.css'
+import Color from 'color-thief-react'
 
 function PlaylistPage() {
   const { id } = useParams()
@@ -204,256 +205,282 @@ function PlaylistPage() {
   const isOwner = userId === playlist.userId;
 
   return (
-    <div className={styles.playlistPage}>
-      <div className={styles.mainContent}>
-        <div className={styles.playlistHeader}>
-          <div
-            className={`${styles.coverContainer} ${isOwner ? styles.editable : ''}`}
-            onClick={() => isOwner && fileInputRef.current?.click()}
-          >
-            {playlist.imageUrl ? (
-              <img src={playlist.imageUrl} alt={playlist.title} className={styles.cover} />
-            ) : (
-              <div className={styles.placeholderCover}>
-                <Camera size={48} />
-              </div>
-            )}
-            {isOwner && (
-              <div className={styles.coverOverlay}>
-                <Edit2 size={24} />
-                <span>Choose photo</span>
-              </div>
-            )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              hidden
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
-          </div>
-
-          <div className={styles.playlistInfo}>
-            <div className={styles.typeRow}>
-              <span className={styles.type}>
-                {playlist.availability === 'public' ? <Globe size={14} /> : <Lock size={14} />}
-                {playlist.availability === 'public' ? 'Public Playlist' : 'Private Playlist'}
-              </span>
-              {userId === playlist.userId && (
-                <label className={styles.toggleSwitch}>
-                  <input
-                    type="checkbox"
-                    checked={playlist.availability === 'public'}
-                    onChange={handleToggleAvailability}
-                  />
-                  <span className={styles.toggleSlider}></span>
-                </label>
-              )}
-            </div>
-            {isEditing && isOwner ? (
-              <div className={styles.editForm}>
-                <input
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className={styles.titleInput}
-                  autoFocus
-                />
-                <textarea
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  className={styles.descInput}
-                  placeholder="Add an optional description"
-                />
-                <div className={styles.editActions}>
-                  <button onClick={handleUpdatePlaylist}>Save</button>
-                  <button onClick={() => setIsEditing(false)}>Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <h1
-                  className={`${styles.playlistName} ${isOwner ? styles.editable : ''}`}
-                  onClick={() => isOwner && setIsEditing(true)}
-                >
-                  {playlist.title}
-                </h1>
-                <p
-                  className={`${styles.description} ${isOwner ? styles.editable : ''}`}
-                  onClick={() => isOwner && setIsEditing(true)}
-                >
-                  {playlist.description || (isOwner ? "Add a description" : "No description")}
-                </p>
-              </>
-            )}
-
-            <div className={styles.meta}>
-              <div className={styles.userIcon}>
-                <User size={16} /> {/* Placeholder for user avatar */}
-              </div>
-              <span className={styles.username}>User</span> {/* We could fetch creator name if needed */}
-              <span className={styles.stats}>• {playlist.songs?.length || 0} songs</span>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.actionsBar}>
-          <button className={styles.playButtonMain} onClick={() => playlist.songs?.[0] && playPlaylist(playlist.songs, 0)}>
-            {isPlaying && currentTrack?.deezerId === playlist.songs?.[0]?.deezerId ? (
-              <Pause size={28} fill="black" />
-            ) : (
-              <Play size={28} fill="black" />
-            )}
-          </button>
-          {isOwner && (
-            <div className={styles.dropdownContainer} ref={dropdownRef}>
-              <button
-                className={styles.iconButton}
-                onClick={() => setShowDropdown(!showDropdown)}
+    <Color src={playlist.imageUrl} format="hex" crossOrigin="anonymous">
+      {({ data: color }) => (
+        <div
+          className={styles.playlistPage}
+          style={color ? { background: `linear-gradient(to bottom, ${color}66 0%, #121212 100%)` } : {}}
+        >
+          <div className={styles.mainContent}>
+            <div className={styles.playlistHeader} style={color ? { background: `linear-gradient(to bottom, ${color}40 0%, rgba(0,0,0,0) 100%)` } : {}}>
+              <div
+                className={`${styles.coverContainer} ${isOwner ? styles.editable : ''}`}
+                onClick={() => isOwner && fileInputRef.current?.click()}
               >
-                <MoreVertical size={32} />
-              </button>
-              {showDropdown && (
-                <div className={styles.dropdown}>
-                  <button
-                    className={styles.dropdownItem}
-                    onClick={() => {
-                      setShowShareModal(true)
-                      setShowDropdown(false)
-                    }}
-                  >
-                    <Share2 size={18} />
-                    Share Playlist
-                  </button>
-                  <button
-                    className={`${styles.dropdownItem} ${styles.danger}`}
-                    onClick={() => {
-                      setShowDeleteConfirm(true)
-                      setShowDropdown(false)
-                    }}
-                  >
-                    <Trash2 size={18} />
-                    Delete Playlist
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className={styles.songsTable}>
-          <div className={styles.tableHeader}>
-            <div className={styles.headerNumber}>#</div>
-            <div className={styles.headerTitle}>Title</div>
-            <div className={styles.headerAlbum}>Artist</div>
-            <div className={styles.headerDate}>Date Added</div>
-            <div className={styles.headerDuration}>
-              <ClockIcon />
-            </div>
-          </div>
-          <div className={styles.tableBody}>
-            {playlist.songs?.map((song, index) => (
-              <div key={song._id || index} className={styles.songRowWrapper}>
-                <SongRow
-                  number={index + 1}
-                  cover={song.cover || song.album?.cover_medium}
-                  title={song.title}
-                  artist={song.artist?.name}
-                  dateAdded={song.addedAt ? new Date(song.addedAt).toLocaleDateString() : 'Just now'}
-                  duration={formatDuration(song.duration)}
-                  isPlaying={currentTrack?.deezerId === song.deezerId}
-                  onPlay={() => playPlaylist(playlist.songs, index)}
-                  isLiked={likedSongs.has(String(song.deezerId || song._id))}
-                  onLike={() => toggleLike(song)}
-                  onDelete={isOwner ? () => handleRemoveSong(song._id) : undefined}
+                {playlist.imageUrl ? (
+                  <img src={playlist.imageUrl} alt={playlist.title} className={styles.cover} />
+                ) : (
+                  <div className={styles.placeholderCover}>
+                    <Camera size={48} />
+                  </div>
+                )}
+                {isOwner && (
+                  <div className={styles.coverOverlay}>
+                    <Edit2 size={24} />
+                    <span>Choose photo</span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  hidden
+                  accept="image/*"
+                  onChange={handleImageUpload}
                 />
               </div>
-            ))}
-          </div>
-        </div>
 
-        {isOwner && (
-          <div className={styles.searchSection}>
-            <div className={styles.searchHeader}>
-              <h2>Let's find something for your playlist</h2>
-              <div className={styles.searchBar}>
-                <Search size={20} />
-                <input
-                  type="text"
-                  placeholder="Search for songs"
-                  value={searchQuery}
-                  onChange={handleSearch}
-                />
-                {searchQuery && (
-                  <button onClick={() => { setSearchQuery(''); setSearchResults([]) }}>
-                    <X size={20} />
-                  </button>
+              <div className={styles.playlistInfo}>
+                <div className={`${styles.typeRow} ${styles.desktopOnly}`}>
+                  <span className={styles.type}>
+                    {playlist.availability === 'public' ? <Globe size={14} /> : <Lock size={14} />}
+                    {playlist.availability === 'public' ? 'Public Playlist' : 'Private Playlist'}
+                  </span>
+                  {userId === playlist.userId && (
+                    <label className={styles.toggleSwitch}>
+                      <input
+                        type="checkbox"
+                        checked={playlist.availability === 'public'}
+                        onChange={handleToggleAvailability}
+                      />
+                      <span className={styles.toggleSlider}></span>
+                    </label>
+                  )}
+                </div>
+                {isEditing && isOwner ? (
+                  <div className={styles.editForm}>
+                    <input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className={styles.titleInput}
+                      autoFocus
+                    />
+                    <textarea
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      className={styles.descInput}
+                      placeholder="Add an optional description"
+                    />
+                    <div className={styles.editActions}>
+                      <button onClick={handleUpdatePlaylist}>Save</button>
+                      <button onClick={() => setIsEditing(false)}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h1
+                      className={`${styles.playlistName} ${isOwner ? styles.editable : ''}`}
+                      onClick={() => isOwner && setIsEditing(true)}
+                    >
+                      {playlist.title}
+                    </h1>
+                    <p
+                      className={`${styles.description} ${isOwner ? styles.editable : ''}`}
+                      onClick={() => isOwner && setIsEditing(true)}
+                    >
+                      {playlist.description || (isOwner ? "Add a description" : "No description")}
+                    </p>
+                  </>
+                )}
+
+                <div className={styles.meta}>
+                  <div className={styles.userIcon}>
+                    <User size={16} /> {/* Placeholder for user avatar */}
+                  </div>
+                  <span className={styles.username}>User</span> {/* We could fetch creator name if needed */}
+                  <span className={styles.stats}>• {playlist.songs?.length || 0} songs</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.actionsBar}>
+              <div className={`${styles.typeRow} ${styles.mobileOnly}`}>
+                <span className={styles.type}>
+                  {playlist.availability === 'public' ? <Globe size={14} /> : <Lock size={14} />}
+                  {playlist.availability === 'public' ? 'Public' : 'Private'}
+                </span>
+                {userId === playlist.userId && (
+                  <label className={styles.toggleSwitch}>
+                    <input
+                      type="checkbox"
+                      checked={playlist.availability === 'public'}
+                      onChange={handleToggleAvailability}
+                    />
+                    <span className={styles.toggleSlider}></span>
+                  </label>
                 )}
               </div>
-            </div>
 
-            <div className={styles.searchResults}>
-              {isSearching ? (
-                <div className={centeredLoaderStyles.centeredLoaderContainer}>
-                  <Loader />
-                </div>
-              ) : (
-                searchResults.map(song => (
-                  <div key={song.deezerId} className={styles.searchResultItem}>
-                    <div className={styles.resultImageContainer} onClick={() => playTrack(song)}>
-                      <img src={song.cover} alt={song.title} />
-                      <div className={styles.resultPlayOverlay}>
-                        <Play size={20} fill="white" />
-                      </div>
-                    </div>
-                    <div className={styles.resultInfo}>
-                      <span className={styles.resultTitle}>{song.title}</span>
-                      <span className={styles.resultArtist}>{song.artist.name}</span>
-                    </div>
-                    <button className={styles.addButton} onClick={() => handleAddSong(song)}>
-                      Add
+              <div className={styles.actionButtonsRight}>
+                {isOwner && (
+                  <div className={styles.dropdownContainer} ref={dropdownRef}>
+                    <button
+                      className={styles.iconButton}
+                      onClick={() => setShowDropdown(!showDropdown)}
+                    >
+                      <MoreVertical size={32} />
                     </button>
+                    {showDropdown && (
+                      <div className={styles.dropdown}>
+                        <button
+                          className={styles.dropdownItem}
+                          onClick={() => {
+                            setShowShareModal(true)
+                            setShowDropdown(false)
+                          }}
+                        >
+                          <Share2 size={18} />
+                          Share Playlist
+                        </button>
+                        <button
+                          className={`${styles.dropdownItem} ${styles.danger}`}
+                          onClick={() => {
+                            setShowDeleteConfirm(true)
+                            setShowDropdown(false)
+                          }}
+                        >
+                          <Trash2 size={18} />
+                          Delete Playlist
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ))
-              )}
+                )}
+                <button className={styles.playButtonMain} onClick={() => playlist.songs?.[0] && playPlaylist(playlist.songs, 0)}>
+                  {isPlaying && currentTrack?.deezerId === playlist.songs?.[0]?.deezerId ? (
+                    <Pause size={28} fill="black" />
+                  ) : (
+                    <Play size={28} fill="black" />
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
-        <div className={styles.confirmOverlay} onClick={() => setShowDeleteConfirm(false)}>
-          <div className={styles.confirmDialog} onClick={(e) => e.stopPropagation()}>
-            <h3>Delete Playlist?</h3>
-            <p>Are you sure you want to delete "{playlist.title}"? This action cannot be undone.</p>
-            <div className={styles.confirmActions}>
-              <button
-                className={styles.cancelButton}
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={deleting}
-              >
-                Cancel
-              </button>
-              <button
-                className={styles.deleteButton}
-                onClick={handleDeletePlaylist}
-                disabled={deleting}
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
+            <div className={styles.songsTable}>
+              <div className={styles.tableHeader}>
+                <div className={styles.headerNumber}>#</div>
+                <div className={styles.headerTitle}>Title</div>
+                <div className={styles.headerAlbum}>Artist</div>
+                <div className={styles.headerDate}>Date Added</div>
+                <div className={styles.headerDuration}>
+                  <ClockIcon />
+                </div>
+              </div>
+              <div className={styles.tableBody}>
+                {playlist.songs?.map((song, index) => (
+                  <div key={song._id || index} className={styles.songRowWrapper}>
+                    <SongRow
+                      number={index + 1}
+                      cover={song.cover || song.album?.cover_medium}
+                      title={song.title}
+                      artist={song.artist?.name}
+                      dateAdded={song.addedAt ? new Date(song.addedAt).toLocaleDateString() : 'Just now'}
+                      duration={formatDuration(song.duration)}
+                      isPlaying={currentTrack?.deezerId === song.deezerId}
+                      onPlay={() => playPlaylist(playlist.songs, index)}
+                      isLiked={likedSongs.has(String(song.deezerId || song._id))}
+                      onLike={() => toggleLike(song)}
+                      onDelete={isOwner ? () => handleRemoveSong(song._id) : undefined}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {isOwner && (
+              <div className={styles.searchSection}>
+                <div className={styles.searchHeader}>
+                  <h2>Let's find something for your playlist</h2>
+                  <div className={styles.searchBar}>
+                    <Search size={20} />
+                    <input
+                      type="text"
+                      placeholder="Search for songs"
+                      value={searchQuery}
+                      onChange={handleSearch}
+                    />
+                    {searchQuery && (
+                      <button onClick={() => { setSearchQuery(''); setSearchResults([]) }}>
+                        <X size={20} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.searchResults}>
+                  {isSearching ? (
+                    <div className={centeredLoaderStyles.centeredLoaderContainer}>
+                      <Loader />
+                    </div>
+                  ) : (
+                    searchResults.map(song => (
+                      <div key={song.deezerId} className={styles.searchResultItem}>
+                        <div className={styles.resultImageContainer} onClick={() => playTrack(song)}>
+                          <img src={song.cover} alt={song.title} />
+                          <div className={styles.resultPlayOverlay}>
+                            <Play size={20} fill="white" />
+                          </div>
+                        </div>
+                        <div className={styles.resultInfo}>
+                          <span className={styles.resultTitle}>{song.title}</span>
+                          <span className={styles.resultArtist}>{song.artist.name}</span>
+                        </div>
+                        <button className={styles.addButton} onClick={() => handleAddSong(song)}>
+                          Add
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Delete Confirmation Dialog */}
+          {showDeleteConfirm && (
+            <div className={styles.confirmOverlay} onClick={() => setShowDeleteConfirm(false)}>
+              <div className={styles.confirmDialog} onClick={(e) => e.stopPropagation()}>
+                <h3>Delete Playlist?</h3>
+                <p>Are you sure you want to delete "{playlist.title}"? This action cannot be undone.</p>
+                <div className={styles.confirmActions}>
+                  <button
+                    className={styles.cancelButton}
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={styles.deleteButton}
+                    onClick={handleDeletePlaylist}
+                    disabled={deleting}
+                  >
+                    {deleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Share Modal */}
+          {showShareModal && (
+            <SharePlaylistModal
+              playlist={playlist}
+              onClose={() => setShowShareModal(false)}
+            />
+          )}
         </div>
       )}
-
-      {/* Share Modal */}
-      {showShareModal && (
-        <SharePlaylistModal
-          playlist={playlist}
-          onClose={() => setShowShareModal(false)}
-        />
-      )}
-    </div>
+    </Color>
   )
 }
 

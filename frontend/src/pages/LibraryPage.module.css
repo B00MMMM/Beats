@@ -113,6 +113,11 @@
   overflow: hidden;
 }
 
+.likedSongsIcon {
+  background: linear-gradient(135deg, #d2c3ff, #00FFD9);
+  /* Purple/Pink gradient like Spotify */
+}
+
 .playlistInfo {
   flex: 1;
   display: flex;
