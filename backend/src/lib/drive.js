@@ -53,4 +53,17 @@ async function getDriveStream(fileId, range) {
   }
 }
 
-export { existsInDrive, getDriveFile, getDriveStream };
+async function getDriveFileMetadata(fileId) {
+  try {
+    const file = await drive.files.get({
+      fileId: fileId,
+      fields: "id, size, name",
+    });
+    return file.data;
+  } catch (error) {
+    console.error("Error getting Drive file metadata:", error);
+    return null;
+  }
+}
+
+export { existsInDrive, getDriveFile, getDriveStream, getDriveFileMetadata };

@@ -1,7 +1,9 @@
 import { deezerFetch } from '../lib/deezer.js';
 import { Song } from '../models/song.model.js';
 import { SongRequest } from '../models/songRequest.model.js';
-import { existsInDrive, getDriveFile, getDriveStream } from '../lib/drive.js';
+import { existsInDrive, getDriveFile, getDriveStream, getDriveFileMetadata } from '../lib/drive.js';
+
+import { DriveCollection } from '../models/driveCollection.model.js';
 
 export const getTrendingSongs = async (req, res, next) => {
     try {
@@ -10,14 +12,19 @@ export const getTrendingSongs = async (req, res, next) => {
 
         const tracks = [];
 
+        // Optimisation: Get all driveIds from DriveCollection in one query
+        const deezerIds = dzData.data.map(t => String(t.id));
+        const driveEntries = await DriveCollection.find({ deezerId: { $in: deezerIds } });
+        const driveMap = new Map(driveEntries.map(d => [d.deezerId, true]));
+
         for (const t of dzData.data) {
-            const hasDrive = await existsInDrive(t.id);
+            const hasDrive = driveMap.has(String(t.id));
 
             tracks.push({
                 deezerId: String(t.id),
                 title: t.title,
-                artist: t.artist, // Send full artist object (includes name, picture, etc.)
-                album: t.album,   // Send full album object (includes title, cover, etc.)
+                artist: t.artist,
+                album: t.album,
                 cover: t.album ? t.album.cover_medium : 'https://via.placeholder.com/150',
                 hasDrive,
                 previewUrl: t.preview,
@@ -47,8 +54,13 @@ export const searchSongs = async (req, res, next) => {
 
         const tracks = [];
 
+        // Optimisation: Get all driveIds from DriveCollection in one query
+        const deezerIds = dzData.data.map(t => String(t.id));
+        const driveEntries = await DriveCollection.find({ deezerId: { $in: deezerIds } });
+        const driveMap = new Map(driveEntries.map(d => [d.deezerId, true]));
+
         for (const t of dzData.data) {
-            const hasDrive = await existsInDrive(t.id);
+            const hasDrive = driveMap.has(String(t.id));
 
             tracks.push({
                 deezerId: String(t.id),
@@ -75,18 +87,38 @@ export const streamSong = async (req, res, next) => {
     const deezerId = req.params.deezerId;
 
     try {
-        const file = await getDriveFile(deezerId);
+        let fileId = null;
+        let fileSize = null;
 
-        if (!file) {
+        // 1. Check DriveCollection for cached driveId
+        const driveEntry = await DriveCollection.findOne({ deezerId: String(deezerId) });
+
+        if (driveEntry) {
+            fileId = driveEntry.driveId;
+            // Check metadata from DB or fetch fresh? 
+            // Fetching fresh ensures link is valid, but DB size is faster. 
+            // Let's verify metadata quickly.
+            const meta = await getDriveFileMetadata(fileId);
+            if (meta) {
+                fileSize = parseInt(meta.size);
+            } else {
+                fileId = null; // Invalid driveId in DB?
+            }
+        }
+
+        // 2. Fallback to Search REMOVED (Strict Mode: Collection Only)
+        // If not in DriveCollection, we skip directly to Deezer Preview to save API calls.
+
+        if (!fileId) {
+            // Try fetching from Deezer preview as last resort
             const trackData = await deezerFetch(`/track/${deezerId}`);
-
             if (trackData && trackData.preview) {
                 return res.redirect(trackData.preview);
             }
-            return res.status(404).json({ error: "Not in Drive and no Deezer preview available" });
+            return res.status(404).json({ error: "Not in Drive Collection and no Deezer preview" });
         }
 
-        const fileSize = file.size;
+        // 3. Stream from Drive using fileId
         const range = req.headers.range;
 
         if (range) {
@@ -103,7 +135,7 @@ export const streamSong = async (req, res, next) => {
             };
 
             res.writeHead(206, head);
-            const stream = await getDriveStream(file.id, `bytes=${start}-${end}`);
+            const stream = await getDriveStream(fileId, `bytes=${start}-${end}`);
             stream.data.pipe(res);
         } else {
             const head = {
@@ -111,12 +143,15 @@ export const streamSong = async (req, res, next) => {
                 'Content-Type': 'audio/mpeg',
             };
             res.writeHead(200, head);
-            const stream = await getDriveStream(file.id);
+            const stream = await getDriveStream(fileId);
             stream.data.pipe(res);
         }
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Stream failed" });
+        console.error("Stream error:", err);
+        // Only one response
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Stream failed" });
+        }
     }
 }
 
