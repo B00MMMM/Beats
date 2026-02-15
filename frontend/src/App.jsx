@@ -11,6 +11,7 @@ import SearchPage from './pages/SearchPage'
 import SongPage from './pages/SongPage'
 import FavoritesPage from './pages/FavoritesPage'
 import PremiumPage from './pages/PremiumPage'
+import LibraryPage from './pages/LibraryPage'
 import AdminDashboard from './pages/AdminDashboard'
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
                                 <Route path="/music/:id" element={<MusicDetailsPage />} />
                                 <Route path="/friends" element={<SocialPage />} />
                                 <Route path="/song/:deezerId" element={<SongPage />} />
+                                <Route path="/library" element={<LibraryPage />} />
                                 <Route path="/premium" element={<PremiumPage />} />
                                 {/* Add a fallback route for signed-in users */}
                                 <Route path="*" element={<HomePage />} />

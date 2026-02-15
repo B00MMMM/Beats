@@ -182,7 +182,13 @@ function PlaylistPage() {
         headers: { Authorization: `Bearer ${token}` }
       })
       fetchPlaylists() // Refresh sidebar
-      navigate('/') // Navigate to home
+
+      // Redirect based on screen size
+      if (window.innerWidth <= 768) {
+        navigate('/library')
+      } else {
+        navigate('/')
+      }
     } catch (error) {
       console.error("Error deleting playlist:", error)
       alert('Failed to delete playlist')

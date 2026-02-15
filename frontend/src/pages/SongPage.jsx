@@ -101,23 +101,50 @@ function SongPage() {
   }, []);
 
   useEffect(() => {
+    if (isPlaying && currentTrack && currentTrack.deezerId && currentTrack.deezerId.toString() !== deezerId) {
+      navigate(`/song/${currentTrack.deezerId}`, { replace: true });
+    }
+  }, [currentTrack, deezerId, isPlaying, navigate]);
+
+  useEffect(() => {
+    let isMounted = true;
+
     const fetchSong = async () => {
       try {
-        setLoading(true);
+        if (!isMounted) return;
         if (currentTrack && currentTrack.deezerId?.toString() === deezerId) {
-          setSong(currentTrack);
+          if (isMounted) {
+            setSong(currentTrack);
+            setLoading(false);
+          }
         } else {
-          const response = await axios.get(`/songs/track/${deezerId}`);
-          setSong(response.data);
+          // If we don't have the data yet (e.g. manual navigation), show spinner
+          if (isMounted) setLoading(true);
         }
+
+        // Always fetch fresh data to ensure we have full details 
+        // (and to fix any stale context)
+        const response = await axios.get(`/songs/track/${deezerId}`);
+
+        if (isMounted) {
+          setSong(response.data);
+          setLoading(false);
+        }
+
       } catch (error) {
         console.error('Error fetching song details:', error);
+        // If optimistic update worked, we might not want to show error?
+        // But for now logging is fine.
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchSong();
+
+    return () => {
+      isMounted = false;
+    };
   }, [deezerId, currentTrack]);
 
   // Format time helper
