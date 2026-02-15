@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Heart } from 'lucide-react';
 import styles from './LibraryPage.module.css';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { usePlayer } from '../context/PlayerContext';
@@ -69,6 +69,20 @@ function LibraryPage() {
             </div>
 
             <div className={styles.playlistList}>
+                {/* Pinned Liked Songs */}
+                <button
+                    className={styles.playlistItem}
+                    onClick={() => navigate('/favorites')}
+                >
+                    <div className={`${styles.playlistIcon} ${styles.likedSongsIcon}`}>
+                        <Heart size={28} fill="white" color="white" />
+                    </div>
+                    <div className={styles.playlistInfo}>
+                        <span className={styles.playlistName}>Liked Songs</span>
+                        <span className={styles.playlistMeta}>Playlist • {playlists.reduce((acc, p) => acc + (p.songs ? p.songs.length : 0), 0) > 0 ? 'Pinned' : 'Pinned'}</span>
+                    </div>
+                </button>
+
                 {filteredPlaylists.map((playlist) => (
                     <button
                         key={playlist._id}

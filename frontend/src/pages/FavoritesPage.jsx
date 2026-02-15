@@ -45,10 +45,18 @@ function FavoritesPage() {
 
     if (isLoading) return <div style={{ color: 'white', padding: '32px' }}>Loading...</div>
 
+    const themeColor = '#00FFD9'; // Teal for Favorites
+
     return (
-        <div className={styles.playlistPage}>
+        <div
+            className={styles.playlistPage}
+            style={{ background: `linear-gradient(to bottom, ${themeColor}66 0%, #121212 100%)` }}
+        >
             <div className={styles.mainContent}>
-                <div className={styles.playlistHeader}>
+                <div
+                    className={styles.playlistHeader}
+                    style={{ background: `linear-gradient(to bottom, ${themeColor}40 0%, rgba(0,0,0,0) 100%)` }}
+                >
                     <div className={styles.coverContainer}>
                         <Heart size={80} fill="white" color="white" />
                     </div>

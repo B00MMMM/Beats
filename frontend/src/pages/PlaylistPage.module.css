@@ -502,6 +502,20 @@
   transform: scale(1.05);
 }
 
+.mobileOnly {
+  display: none;
+}
+
+.desktopOnly {
+  display: flex;
+}
+
+.actionButtonsRight {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .tableHeader {
@@ -510,6 +524,14 @@
 }
 
 @media (max-width: 768px) {
+  .mobileOnly {
+    display: flex;
+  }
+
+  .desktopOnly {
+    display: none;
+  }
+
   .playlistHeader {
     flex-direction: column;
     align-items: center;
@@ -541,7 +563,50 @@
   }
 
   .actionsBar {
-    justify-content: center;
+    justify-content: space-between;
+    /* Space out left (toggle) and right (buttons) */
+    padding: 16px 24px;
+    width: 100%;
+  }
+
+  .actionButtonsRight {
+    gap: 16px;
+  }
+
+  .searchSection {
+    margin: 0 16px 32px 16px;
+  }
+
+  .searchHeader {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .searchHeader h2 {
+    display: block;
+    /* Show text again */
+    font-size: 18px;
+    /* Reduced size */
+    text-align: left;
+    width: 100%;
+  }
+
+  .searchBar {
+    width: 100%;
+  }
+
+  .mainContent {
+    overflow-x: hidden;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+  }
+
+  .mainContent::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
   }
 }
 
