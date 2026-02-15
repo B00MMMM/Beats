@@ -3,6 +3,8 @@ import { SongRequest } from "../models/songRequest.model.js";
 import { PlanRequest } from "../models/planRequest.model.js";
 import { Song } from "../models/song.model.js";
 import { Playlist } from "../models/playlist.model.js";
+import { DriveCollection } from "../models/driveCollection.model.js";
+import { getDriveFile } from "../lib/drive.js";
 
 // Dashboard Stats
 export const getDashboardStats = async (req, res) => {
@@ -224,6 +226,50 @@ export const updateSongRequestStatus = async (req, res) => {
 
         if (!request) {
             return res.status(404).json({ message: "Song request not found" });
+        }
+
+        // Optimistic Caching: If approved, ensure we have the Drive ID
+        if (isChecked && request.deezerId) {
+            try {
+                // Check if DriveCollection has this ID
+                const driveEntry = await DriveCollection.findOne({ deezerId: request.deezerId });
+
+                // If not found, fetch and save
+                if (!driveEntry) {
+                    const file = await getDriveFile(request.deezerId);
+                    if (file) {
+                        await DriveCollection.updateOne(
+                            { deezerId: request.deezerId },
+                            {
+                                $set: {
+                                    driveId: file.id,
+                                    fileName: file.name,
+                                    fileSize: parseInt(file.size)
+                                }
+                            },
+                            { upsert: true }
+                        );
+                        console.log(`Cached Drive ID for approved song: ${request.title}`);
+
+                        // Also ensure Song exists in main collection (for playlist/history)
+                        await Song.updateOne(
+                            { deezerId: request.deezerId },
+                            {
+                                $set: {
+                                    title: request.title,
+                                    artist: request.artist,
+                                    album: request.album,
+                                    cover: request.cover,
+                                    duration: request.duration
+                                }
+                            },
+                            { upsert: true }
+                        );
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to cache drive ID for approved song:", err);
+            }
         }
 
         res.json(request);
