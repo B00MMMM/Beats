@@ -1,3 +1,4 @@
+import RotateWarning from './components/RotateWarning'
 import { Routes, Route } from 'react-router-dom'
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import Layout from './layouts/Layout'
@@ -18,6 +19,7 @@ import LandingPage from './pages/LandingPage'
 function App() {
     return (
         <>
+            <RotateWarning />
             <SignedOut>
                 <Routes>
                     <Route path="/" element={<LandingPage />} />

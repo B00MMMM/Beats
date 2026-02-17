@@ -33,6 +33,18 @@ export const PlayerProvider = ({ children }) => {
     if (currentTrack) {
       localStorage.setItem('lastPlayed', JSON.stringify(currentTrack));
 
+      // Keep lastPlaylistSession in sync with the currently playing song
+      if (currentTrack.deezerId) {
+        try {
+          const session = localStorage.getItem('lastPlaylistSession');
+          if (session) {
+            const parsed = JSON.parse(session);
+            parsed.songDeezerId = String(currentTrack.deezerId);
+            localStorage.setItem('lastPlaylistSession', JSON.stringify(parsed));
+          }
+        } catch (e) { /* ignore parse errors */ }
+      }
+
       // Record History only when track changes and has valid data
       const recordHistory = async () => {
         try {
@@ -208,27 +220,26 @@ export const PlayerProvider = ({ children }) => {
     if (track?.deezerId === currentTrack?.deezerId) {
       togglePlayPause();
     } else {
-      // If playing a single track not in queue, reset queue often, but for now simple fallback
-      // Ideally, single play might clear queue or be "next up"
       setQueue([track]);
       setOriginalQueue([track]);
       setCurrentIndex(0);
       setCurrentTrack(track);
       setIsPlaying(true);
+      // Clear playlist session — single track play has no playlist to restore
+      localStorage.removeItem('lastPlaylistSession');
     }
   };
 
-  const playPlaylist = (songs, startIndex = 0) => {
+  const playPlaylist = (songs, startIndex = 0, sourcePlaylistId = null) => {
     if (!songs || songs.length === 0) return;
 
     setOriginalQueue(songs);
 
+    let selectedTrack;
     if (isShuffled) {
       const shuffled = [...songs];
-      // Keep the start track first, shuffle others
       const first = shuffled[startIndex];
       const others = shuffled.filter((_, i) => i !== startIndex);
-      // Fisher-Yates shuffle
       for (let i = others.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [others[i], others[j]] = [others[j], others[i]];
@@ -237,12 +248,22 @@ export const PlayerProvider = ({ children }) => {
       setQueue(NEW_QUEUE);
       setCurrentIndex(0);
       setCurrentTrack(NEW_QUEUE[0]);
+      selectedTrack = NEW_QUEUE[0];
     } else {
       setQueue(songs);
       setCurrentIndex(startIndex);
       setCurrentTrack(songs[startIndex]);
+      selectedTrack = songs[startIndex];
     }
     setIsPlaying(true);
+
+    // Persist playlist session so queue can be restored on next visit
+    if (sourcePlaylistId && selectedTrack?.deezerId) {
+      localStorage.setItem('lastPlaylistSession', JSON.stringify({
+        playlistId: sourcePlaylistId,
+        songDeezerId: String(selectedTrack.deezerId),
+      }));
+    }
   };
 
   const toggleShuffle = () => {
@@ -443,6 +464,56 @@ export const PlayerProvider = ({ children }) => {
     } else {
       setPlaylists([]);
     }
+  }, [userId]);
+
+  // Restore queue from last playlist session on mount
+  const hasRestoredRef = useRef(false);
+  useEffect(() => {
+    if (!userId || hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
+
+    const restoreSession = async () => {
+      try {
+        const savedSession = localStorage.getItem('lastPlaylistSession');
+        if (!savedSession) return;
+
+        const { playlistId, songDeezerId } = JSON.parse(savedSession);
+        if (!playlistId) return;
+
+        const token = await getToken();
+        if (!token) return;
+
+        let songs = [];
+        if (playlistId === 'favorites') {
+          const res = await axios.get('/users/favorites', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          songs = res.data;
+        } else {
+          const res = await axios.get(`/playlists/${playlistId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          songs = res.data?.songs;
+        }
+
+        if (!songs || songs.length === 0) return;
+
+        // Find the song that was playing
+        const matchIndex = songs.findIndex(s => String(s.deezerId) === String(songDeezerId));
+        const startIdx = matchIndex !== -1 ? matchIndex : 0;
+
+        // Set queue without auto-playing
+        setOriginalQueue(songs);
+        setQueue(songs);
+        setCurrentIndex(startIdx);
+        setCurrentTrack(songs[startIdx]);
+        // Don't auto-play — user can press play when ready
+      } catch (error) {
+        console.error('Error restoring playlist session:', error);
+      }
+    };
+
+    restoreSession();
   }, [userId]);
 
   const value = {
