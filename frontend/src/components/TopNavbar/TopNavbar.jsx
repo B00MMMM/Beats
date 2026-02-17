@@ -123,7 +123,7 @@ function TopNavbar() {
           )}
         </button>
         <SignedIn>
-          <UserButton afterSignOutUrl="/sign-in" />
+          <UserButton afterSignOutUrl="/" />
         </SignedIn>
         <SignedOut>
           <a href="/sign-in" className={styles.signInButton}>Sign In</a>

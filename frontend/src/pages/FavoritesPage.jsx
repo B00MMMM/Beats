@@ -79,7 +79,7 @@ function FavoritesPage() {
                 <div className={styles.actionsBar}>
                     <button
                         className={styles.playButtonMain}
-                        onClick={() => favorites.length > 0 && playPlaylist(favorites, 0)}
+                        onClick={() => favorites.length > 0 && playPlaylist(favorites, 0, 'favorites')}
                         disabled={favorites.length === 0}
                     >
                         {isPlaying && favorites.some(s => s.deezerId === currentTrack?.deezerId) ? (
@@ -111,7 +111,7 @@ function FavoritesPage() {
                                     dateAdded={song.createdAt ? new Date(song.createdAt).toLocaleDateString() : 'Unknown'}
                                     duration={formatDuration(song.duration)}
                                     isPlaying={currentTrack?.deezerId === song.deezerId}
-                                    onPlay={() => playPlaylist(favorites, index)}
+                                    onPlay={() => playPlaylist(favorites, index, 'favorites')}
                                     isLiked={true} // It's the liked songs page!
                                     onLike={() => toggleLike(song)}
                                 />

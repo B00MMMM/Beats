@@ -14,6 +14,7 @@ const TOTAL_FRAMES = framePaths.length;
 
 const HeroSection = () => {
     const sectionRef = useRef(null);
+    const contentRef = useRef(null);
     const canvasRef = useRef(null);
     const textRef = useRef(null);
     const framesRef = useRef([]);
@@ -151,6 +152,17 @@ const HeroSection = () => {
                 onUpdate: (self) => {
                     targetFrame = self.progress * (frames.length - 1);
                     startLoop();
+
+                    // Fade out check
+                    if (contentRef.current) {
+                        const fadeStart = 0.8; // Start fading at 80% scroll
+                        if (self.progress > fadeStart) {
+                            const opacity = Math.max(0, 1 - (self.progress - fadeStart) * 5); // 5 = 1 / 0.2
+                            contentRef.current.style.opacity = opacity;
+                        } else {
+                            contentRef.current.style.opacity = 1;
+                        }
+                    }
                 },
                 onRefresh: (self) => {
                     // Force update on refresh/resize
@@ -160,6 +172,17 @@ const HeroSection = () => {
                     currentFrame = frame;
                     lastDrawnFrame = frame;
                     drawFrame(frame);
+
+                    // Initial opacity check
+                    if (contentRef.current) {
+                        const fadeStart = 0.8;
+                        if (progress > fadeStart) {
+                            const opacity = Math.max(0, 1 - (progress - fadeStart) * 5);
+                            contentRef.current.style.opacity = opacity;
+                        } else {
+                            contentRef.current.style.opacity = 1;
+                        }
+                    }
                 },
             });
 
@@ -178,7 +201,7 @@ const HeroSection = () => {
 
     return (
         <div ref={sectionRef} className="h-[300vh] bg-black relative">
-            <div className="sticky top-0 w-full h-screen overflow-hidden">
+            <div ref={contentRef} className="sticky top-0 w-full h-screen overflow-hidden transition-opacity duration-100 ease-linear">
                 {!isReady && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-black gap-6">
                         <p className="text-neonCyan text-sm tracking-[0.5em] uppercase animate-pulse">
@@ -195,6 +218,7 @@ const HeroSection = () => {
                 )}
 
                 <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+                <div className="absolute inset-0 bg-black/40 pointer-events-none" />
 
                 <div ref={textRef} className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none mix-blend-difference">
                     <h1 className="text-6xl md:text-9xl font-bold text-white tracking-widest opacity-80"
@@ -203,8 +227,10 @@ const HeroSection = () => {
                     </h1>
                 </div>
 
-                <div className="absolute bottom-10 w-full text-center text-neonCyan animate-bounce z-20 pointer-events-none">
-                    <p className="text-xs md:text-sm tracking-[0.5em] uppercase opacity-70">Scroll to Initialize</p>
+                <div className="absolute bottom-10 w-full text-center text-neonCyan animate-pulse z-20 pointer-events-none">
+                    <p className="text-xs md:text-sm tracking-[0.5em] uppercase opacity-90 drop-shadow-[0_0_10px_rgba(0,255,217,0.8)]">
+                        Use Headphones For Best Experience
+                    </p>
                 </div>
             </div>
         </div>
