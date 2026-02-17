@@ -2,8 +2,9 @@ import { deezerFetch } from '../lib/deezer.js';
 import { Song } from '../models/song.model.js';
 import { SongRequest } from '../models/songRequest.model.js';
 import { existsInDrive, getDriveFile, getDriveStream, getDriveFileMetadata } from '../lib/drive.js';
-
 import { DriveCollection } from '../models/driveCollection.model.js';
+import { getAuth } from '@clerk/express';
+import { User } from '../models/user.model.js';
 
 export const getTrendingSongs = async (req, res, next) => {
     try {
@@ -87,6 +88,37 @@ export const streamSong = async (req, res, next) => {
     const deezerId = req.params.deezerId;
 
     try {
+        // ─── Plan Check: Determine if user can stream from Drive ───
+        let canStreamDrive = false;
+        try {
+            const { userId: clerkId } = getAuth(req);
+            if (clerkId) {
+                const user = await User.findOne({ clerkId });
+                const plan = user?.plan || 'free';
+
+                // Check expiry
+                if (user?.planExpiresAt && new Date() > new Date(user.planExpiresAt)) {
+                    // Plan expired, treat as free
+                    canStreamDrive = false;
+                } else {
+                    // gold, diamond, test can stream; free, iron cannot
+                    canStreamDrive = ['gold', 'diamond', 'test'].includes(plan);
+                }
+            }
+        } catch (authErr) {
+            // Auth check failed — treat as free tier
+            canStreamDrive = false;
+        }
+
+        // If user can't stream from Drive, go straight to Deezer preview
+        if (!canStreamDrive) {
+            const trackData = await deezerFetch(`/track/${deezerId}`);
+            if (trackData && trackData.preview) {
+                return res.redirect(trackData.preview);
+            }
+            return res.status(403).json({ error: "Upgrade your plan to stream full songs." });
+        }
+
         let fileId = null;
         let fileSize = null;
 
@@ -95,22 +127,16 @@ export const streamSong = async (req, res, next) => {
 
         if (driveEntry) {
             fileId = driveEntry.driveId;
-            // Check metadata from DB or fetch fresh? 
-            // Fetching fresh ensures link is valid, but DB size is faster. 
-            // Let's verify metadata quickly.
             const meta = await getDriveFileMetadata(fileId);
             if (meta) {
                 fileSize = parseInt(meta.size);
             } else {
-                fileId = null; // Invalid driveId in DB?
+                fileId = null;
             }
         }
 
-        // 2. Fallback to Search REMOVED (Strict Mode: Collection Only)
-        // If not in DriveCollection, we skip directly to Deezer Preview to save API calls.
-
+        // 2. If not in Drive, fall back to Deezer preview
         if (!fileId) {
-            // Try fetching from Deezer preview as last resort
             const trackData = await deezerFetch(`/track/${deezerId}`);
             if (trackData && trackData.preview) {
                 return res.redirect(trackData.preview);
@@ -148,7 +174,6 @@ export const streamSong = async (req, res, next) => {
         }
     } catch (err) {
         console.error("Stream error:", err);
-        // Only one response
         if (!res.headersSent) {
             res.status(500).json({ error: "Stream failed" });
         }

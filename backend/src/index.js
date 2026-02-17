@@ -88,6 +88,15 @@ app.use(cors({
 }));
 
 app.use(express.json()); // to parse the req.body
+
+// Forward query token to Authorization header (for <audio> elements that can't set headers)
+app.use((req, res, next) => {
+    if (req.query.token && !req.headers.authorization) {
+        req.headers.authorization = `Bearer ${req.query.token}`;
+    }
+    next();
+});
+
 app.use(clerkMiddleware()); // this will add the auth to the reqObj => req.auth
 app.use(fileUpload({
     useTempFiles: true,

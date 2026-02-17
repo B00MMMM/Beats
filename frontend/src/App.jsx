@@ -13,15 +13,17 @@ import FavoritesPage from './pages/FavoritesPage'
 import PremiumPage from './pages/PremiumPage'
 import LibraryPage from './pages/LibraryPage'
 import AdminDashboard from './pages/AdminDashboard'
+import LandingPage from './pages/LandingPage'
 
 function App() {
     return (
         <>
             <SignedOut>
                 <Routes>
+                    <Route path="/" element={<LandingPage />} />
                     <Route path="/sign-in" element={<SignInPage />} />
                     <Route path="/sign-up" element={<SignUpPage />} />
-                    <Route path="*" element={<RedirectToSignIn />} />
+                    <Route path="*" element={<LandingPage />} />
                 </Routes>
             </SignedOut>
             <SignedIn>

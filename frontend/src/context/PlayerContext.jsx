@@ -27,23 +27,17 @@ export const PlayerProvider = ({ children }) => {
   const [isShuffled, setIsShuffled] = useState(false);
   const [likedSongs, setLikedSongs] = useState(new Set());
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
+  const [streamUrl, setStreamUrl] = useState('');
 
   useEffect(() => {
     if (currentTrack) {
       localStorage.setItem('lastPlayed', JSON.stringify(currentTrack));
-      if (audioRef.current) {
-        audioRef.current.load();
-        if (isPlaying) {
-          audioRef.current.play();
-        }
-      }
 
       // Record History only when track changes and has valid data
       const recordHistory = async () => {
         try {
           const token = await getToken();
           if (token && currentTrack.deezerId && currentTrack.title) {
-            // Record History
             await axios.post('/users/history',
               { songData: currentTrack },
               { headers: { Authorization: `Bearer ${token}` } }
@@ -57,9 +51,18 @@ export const PlayerProvider = ({ children }) => {
       if (userId) {
         recordHistory();
       }
-
     }
   }, [currentTrack?.deezerId]);
+
+  // Load and play audio when streamUrl is ready (avoids race condition with async token fetch)
+  useEffect(() => {
+    if (streamUrl && audioRef.current) {
+      audioRef.current.load();
+      if (isPlaying) {
+        audioRef.current.play().catch(() => { });
+      }
+    }
+  }, [streamUrl]);
 
   // Update activity when play/pause state changes
   useEffect(() => {
@@ -354,6 +357,25 @@ export const PlayerProvider = ({ children }) => {
   const audioContextRef = useRef(null);
   const sourceRef = useRef(null);
 
+  // Build stream URL with auth token (so backend can check user's plan)
+
+  useEffect(() => {
+    const buildStreamUrl = async () => {
+      if (!currentTrack?.deezerId) {
+        setStreamUrl('');
+        return;
+      }
+      try {
+        const token = await getToken();
+        const base = `http://localhost:5000/api/songs/stream/${currentTrack.deezerId}`;
+        setStreamUrl(token ? `${base}?token=${token}` : base);
+      } catch {
+        setStreamUrl(`http://localhost:5000/api/songs/stream/${currentTrack.deezerId}`);
+      }
+    };
+    buildStreamUrl();
+  }, [currentTrack?.deezerId]);
+
   useEffect(() => {
     if (audioRef.current && !audioContextRef.current) {
       // Initialize AudioContext on first user interaction or mount if allowed
@@ -460,7 +482,7 @@ export const PlayerProvider = ({ children }) => {
     <PlayerContext.Provider value={value}>
       <audio
         ref={audioRef}
-        src={currentTrack ? `http://localhost:5000/api/songs/stream/${currentTrack.deezerId}` : ''}
+        src={streamUrl}
         crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
