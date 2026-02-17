@@ -10,6 +10,7 @@ const PlanManagement = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [durationMap, setDurationMap] = useState({}); // { requestId: months }
 
     useEffect(() => {
         fetchPlanRequests();
@@ -35,10 +36,14 @@ const PlanManagement = () => {
     const handleRequestAction = async (requestId, status, adminNotes = '') => {
         try {
             const token = await getToken();
-            await axiosInstance.put(`/admin/plan-requests/${requestId}`, {
-                status,
-                adminNotes
-            }, {
+            const payload = { status, adminNotes };
+
+            // Add duration when approving
+            if (status === 'approved') {
+                payload.durationMonths = durationMap[requestId] || 1;
+            }
+
+            await axiosInstance.put(`/admin/plan-requests/${requestId}`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchPlanRequests(); // Refresh the list
@@ -136,7 +141,22 @@ const PlanManagement = () => {
                                         </td>
                                         <td className="text-right">
                                             {request.status === 'pending' && (
-                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', alignItems: 'center' }}>
+                                                    {/* Duration selector */}
+                                                    <select
+                                                        value={durationMap[request._id] || 1}
+                                                        onChange={(e) => setDurationMap(prev => ({
+                                                            ...prev,
+                                                            [request._id]: parseInt(e.target.value)
+                                                        }))}
+                                                        className="filter-select"
+                                                        style={{ width: 'auto', minWidth: '80px', fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                                        title="Plan duration"
+                                                    >
+                                                        <option value={1}>1 Month</option>
+                                                        <option value={2}>2 Months</option>
+                                                        <option value={3}>3 Months</option>
+                                                    </select>
                                                     <button
                                                         onClick={() => handleRequestAction(request._id, 'approved')}
                                                         className="action-btn pending"

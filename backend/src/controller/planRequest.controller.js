@@ -87,7 +87,7 @@ export const getPlanRequests = async (req, res) => {
 export const updatePlanRequestStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, adminNotes } = req.body;
+        const { status, adminNotes, durationMonths } = req.body;
 
         if (!['approved', 'rejected'].includes(status)) {
             return res.status(400).json({ message: "Status must be 'approved' or 'rejected'" });
@@ -106,11 +106,19 @@ export const updatePlanRequestStatus = async (req, res) => {
             return res.status(404).json({ message: "Plan request not found" });
         }
 
-        // If approved, update user's plan
+        // If approved, update user's plan with expiry
         if (status === 'approved') {
-            await User.findByIdAndUpdate(planRequest.userId._id, {
-                plan: planRequest.requestedPlan
-            });
+            const updateData = {
+                plan: planRequest.requestedPlan,
+            };
+
+            // Calculate expiry date (1, 2, or 3 months)
+            const months = [1, 2, 3].includes(durationMonths) ? durationMonths : 1;
+            const expiresAt = new Date();
+            expiresAt.setMonth(expiresAt.getMonth() + months);
+            updateData.planExpiresAt = expiresAt;
+
+            await User.findByIdAndUpdate(planRequest.userId._id, updateData);
         }
 
         res.json({ planRequest, message: `Plan request ${status} successfully` });
