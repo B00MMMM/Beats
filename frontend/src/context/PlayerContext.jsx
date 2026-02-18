@@ -71,9 +71,14 @@ export const PlayerProvider = ({ children }) => {
     if (streamUrl && audioRef.current) {
       audioRef.current.load();
       if (isPlaying) {
-        audioRef.current.play().catch(() => { });
+        audioRef.current.play().catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.error('Audio play error:', err);
+          }
+        });
       }
     }
+
   }, [streamUrl]);
 
   // Update activity when play/pause state changes
