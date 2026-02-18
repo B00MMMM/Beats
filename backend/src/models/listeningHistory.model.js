@@ -16,6 +16,15 @@ const listeningHistorySchema = new mongoose.Schema(
         duration: { type: Number },
         isLiked: { type: Boolean, default: false },
 
+        // Context for playback (playlist, album, artist)
+        contextType: {
+            type: String,
+            enum: ['song', 'playlist', 'album', 'artist'],
+            default: 'song'
+        },
+        contextId: { type: String },
+
+
         listenedAt: {
             type: Date,
             default: Date.now,
@@ -26,6 +35,7 @@ const listeningHistorySchema = new mongoose.Schema(
 );
 
 listeningHistorySchema.index({ userId: 1, listenedAt: -1 });
-listeningHistorySchema.index({ userId: 1, deezerId: 1 }); // Optimize lookup for upsert
+listeningHistorySchema.index({ userId: 1, deezerId: 1, contextType: 1, contextId: 1 }); // Optimize lookup
+
 
 export const ListeningHistory = mongoose.model("ListeningHistory", listeningHistorySchema);

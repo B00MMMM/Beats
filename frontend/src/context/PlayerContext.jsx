@@ -28,6 +28,8 @@ export const PlayerProvider = ({ children }) => {
   const [likedSongs, setLikedSongs] = useState(new Set());
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [streamUrl, setStreamUrl] = useState('');
+  const [playContext, setPlayContext] = useState(null); // { type: 'playlist'|'album'|'artist', id: string, title: string, cover: string }
+
 
   useEffect(() => {
     if (currentTrack) {
@@ -51,7 +53,12 @@ export const PlayerProvider = ({ children }) => {
           const token = await getToken();
           if (token && currentTrack.deezerId && currentTrack.title) {
             await axios.post('/users/history',
-              { songData: currentTrack },
+              {
+                songData: currentTrack,
+                contextType: playContext?.type || 'song',
+                contextId: playContext?.id,
+                contextData: playContext // { title, cover }
+              },
               { headers: { Authorization: `Bearer ${token}` } }
             );
           }
@@ -230,12 +237,13 @@ export const PlayerProvider = ({ children }) => {
       setCurrentIndex(0);
       setCurrentTrack(track);
       setIsPlaying(true);
+      setPlayContext(null); // Clear playlist context for single track
       // Clear playlist session — single track play has no playlist to restore
       localStorage.removeItem('lastPlaylistSession');
     }
   };
 
-  const playPlaylist = (songs, startIndex = 0, sourcePlaylistId = null) => {
+  const playPlaylist = (songs, startIndex = 0, sourcePlaylistId = null, playlistData = null) => {
     if (!songs || songs.length === 0) return;
 
     setOriginalQueue(songs);
@@ -261,6 +269,19 @@ export const PlayerProvider = ({ children }) => {
       selectedTrack = songs[startIndex];
     }
     setIsPlaying(true);
+
+    // Set Context
+    if (sourcePlaylistId && playlistData && sourcePlaylistId !== 'favorites') { // Exclude favorites
+      setPlayContext({
+        type: 'playlist',
+        id: sourcePlaylistId,
+        title: playlistData.title,
+        cover: playlistData.cover || playlistData.imageUrl || playlistData.image, // Handle different cover field names
+      });
+
+    } else {
+      setPlayContext(null);
+    }
 
     // Persist playlist session so queue can be restored on next visit
     if (sourcePlaylistId && selectedTrack?.deezerId) {
@@ -499,6 +520,16 @@ export const PlayerProvider = ({ children }) => {
             headers: { Authorization: `Bearer ${token}` }
           });
           songs = res.data?.songs;
+
+          // Restore Context
+          if (res.data) {
+            setPlayContext({
+              type: 'playlist',
+              id: playlistId,
+              title: res.data.title,
+              cover: res.data.image || res.data.cover,
+            });
+          }
         }
 
         if (!songs || songs.length === 0) return;

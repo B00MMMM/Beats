@@ -355,7 +355,8 @@ function PlaylistPage() {
                     )}
                   </div>
                 )}
-                <button className={styles.playButtonMain} onClick={() => playlist.songs?.[0] && playPlaylist(playlist.songs, 0, id)}>
+                <button className={styles.playButtonMain} onClick={() => playlist.songs?.[0] && playPlaylist(playlist.songs, 0, id, playlist)}>
+
                   {isPlaying && currentTrack?.deezerId === playlist.songs?.[0]?.deezerId ? (
                     <Pause size={28} fill="black" />
                   ) : (
@@ -386,7 +387,8 @@ function PlaylistPage() {
                       dateAdded={song.addedAt ? new Date(song.addedAt).toLocaleDateString() : 'Just now'}
                       duration={formatDuration(song.duration)}
                       isPlaying={currentTrack?.deezerId === song.deezerId}
-                      onPlay={() => playPlaylist(playlist.songs, index, id)}
+                      onPlay={() => playPlaylist(playlist.songs, index, id, playlist)}
+
                       isLiked={likedSongs.has(String(song.deezerId || song._id))}
                       onLike={() => toggleLike(song)}
                       onDelete={isOwner ? () => handleRemoveSong(song._id) : undefined}
