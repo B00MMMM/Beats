@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axios';
 import { FiCheck, FiX, FiFilter } from 'react-icons/fi';
 import { useAuth } from '@clerk/clerk-react';
+import InputPopup from '../InputPopup/InputPopup';
 
 const PlanManagement = () => {
     const { getToken } = useAuth();
@@ -11,6 +12,10 @@ const PlanManagement = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [durationMap, setDurationMap] = useState({}); // { requestId: months }
+
+    // Input Popup State
+    const [inputOpen, setInputOpen] = useState(false);
+    const [currentRequestId, setCurrentRequestId] = useState(null);
 
     useEffect(() => {
         fetchPlanRequests();
@@ -166,10 +171,8 @@ const PlanManagement = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            const notes = prompt('Rejection reason (optional):');
-                                                            if (notes !== null) {
-                                                                handleRequestAction(request._id, 'rejected', notes);
-                                                            }
+                                                            setCurrentRequestId(request._id);
+                                                            setInputOpen(true);
                                                         }}
                                                         className="action-btn"
                                                         style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-red-500)' }}
@@ -210,6 +213,24 @@ const PlanManagement = () => {
                     </div>
                 )}
             </div>
+
+            <InputPopup
+                isOpen={inputOpen}
+                onClose={() => {
+                    setInputOpen(false);
+                    setCurrentRequestId(null);
+                }}
+                title="Reject Plan Request"
+                message="Please provide a reason for rejection (optional):"
+                placeholder="Ex: Invalid payment proof..."
+                submitText="Reject"
+                cancelText="Cancel"
+                onSubmit={(value) => {
+                    if (currentRequestId) {
+                        handleRequestAction(currentRequestId, 'rejected', value);
+                    }
+                }}
+            />
         </div>
     );
 };

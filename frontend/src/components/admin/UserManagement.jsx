@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axiosInstance from '../../api/axios';
 import { FiTrash2, FiSearch } from 'react-icons/fi';
 import { useAuth } from '@clerk/clerk-react';
+import ConfirmPopup from '../ConfirmPopup/ConfirmPopup';
 
 const UserManagement = () => {
     const { getToken } = useAuth();
@@ -10,6 +11,16 @@ const UserManagement = () => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+
+    // Confirm Popup State
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState({
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        type: 'default',
+        confirmText: 'Confirm'
+    });
 
     useEffect(() => {
         fetchUsers();
@@ -70,17 +81,24 @@ const UserManagement = () => {
     };
 
     const handleDeleteUser = async (userId) => {
-        if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-            try {
-                const token = await getToken();
-                await axiosInstance.delete(`/admin/users/${userId}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                fetchUsers(); // Refresh the list
-            } catch (error) {
-                console.error('Failed to delete user:', error);
+        setConfirmConfig({
+            title: 'Delete User',
+            message: 'Are you sure you want to delete this user? This action cannot be undone.',
+            confirmText: 'Delete',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    const token = await getToken();
+                    await axiosInstance.delete(`/admin/users/${userId}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    fetchUsers(); // Refresh the list
+                } catch (error) {
+                    console.error('Failed to delete user:', error);
+                }
             }
-        }
+        });
+        setConfirmOpen(true);
     };
 
     return (
@@ -211,6 +229,12 @@ const UserManagement = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmPopup
+                isOpen={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                {...confirmConfig}
+            />
         </div>
     );
 };

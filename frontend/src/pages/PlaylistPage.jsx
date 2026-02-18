@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { Pause, Play, Heart, MoreVertical, Edit2, Camera, Search, Plus, X, Trash2, Globe, Lock, Share2 } from 'lucide-react'
 import SongRow from '../components/SongRow/SongRow'
 import SharePlaylistModal from '../components/SharePlaylistModal/SharePlaylistModal'
@@ -192,7 +193,7 @@ function PlaylistPage() {
       }
     } catch (error) {
       console.error("Error deleting playlist:", error)
-      alert('Failed to delete playlist')
+      toast.error('Failed to delete playlist')
     } finally {
       setDeleting(false)
       setShowDeleteConfirm(false)

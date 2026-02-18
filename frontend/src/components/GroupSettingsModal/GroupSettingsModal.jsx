@@ -1,12 +1,23 @@
 import { X, UserPlus, Settings, LogOut, Crown, UserMinus, Shield, ShieldOff, Edit2, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import axios from '../../api/axios';
+import ConfirmPopup from '../ConfirmPopup/ConfirmPopup';
 import styles from './GroupSettingsModal.module.css';
 
 
 function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAddMember, onRemoveMember, onPromoteAdmin, onDemoteAdmin, onUpdateName, onUpdateImage, onLeaveGroup, onDismissGroup }) {
 
     const [activeTab, setActiveTab] = useState('members');
+    // Confirm Popup State
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState({
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        type: 'default',
+        confirmText: 'Confirm'
+    });
     const [showAddMember, setShowAddMember] = useState(false);
     const [editingName, setEditingName] = useState(false);
     const [newGroupName, setNewGroupName] = useState(group?.name || '');
@@ -33,9 +44,14 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
     };
 
     const handleRemoveMember = (member) => {
-        if (window.confirm(`Remove ${member.fullName} from the group?`)) {
-            onRemoveMember(member._id);
-        }
+        setConfirmConfig({
+            title: 'Remove Member',
+            message: `Remove ${member.fullName} from the group?`,
+            confirmText: 'Remove',
+            type: 'danger',
+            onConfirm: () => onRemoveMember(member._id)
+        });
+        setConfirmOpen(true);
     };
 
     const handlePromoteAdmin = (member) => {
@@ -43,9 +59,14 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
     };
 
     const handleDemoteAdmin = (member) => {
-        if (window.confirm(`Remove ${member.fullName} as admin?`)) {
-            onDemoteAdmin(member._id);
-        }
+        setConfirmConfig({
+            title: 'Remove Admin',
+            message: `Remove ${member.fullName} as admin?`,
+            confirmText: 'Remove',
+            type: 'danger',
+            onConfirm: () => onDemoteAdmin(member._id)
+        });
+        setConfirmOpen(true);
     };
 
     const handleSaveName = () => {
@@ -64,10 +85,17 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
     };
 
     const handleLeaveGroup = () => {
-        if (window.confirm('Are you sure you want to leave this group?')) {
-            onLeaveGroup();
-            onClose();
-        }
+        setConfirmConfig({
+            title: 'Leave Group',
+            message: 'Are you sure you want to leave this group?',
+            confirmText: 'Leave',
+            type: 'danger',
+            onConfirm: () => {
+                onLeaveGroup();
+                onClose();
+            }
+        });
+        setConfirmOpen(true);
     };
 
     const isMemberAdmin = (member) => {
@@ -272,9 +300,16 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
                             <div className={styles.dangerZone}>
                                 {(isCreator || isAdmin) && (
                                     <button className={`${styles.leaveBtn} ${styles.dismissBtn}`} onClick={() => {
-                                        if (window.confirm('Are you sure you want to dismiss this group? This action cannot be undone and will remove the group for all members.')) {
-                                            if (onDismissGroup) onDismissGroup();
-                                        }
+                                        setConfirmConfig({
+                                            title: 'Dismiss Group',
+                                            message: 'Are you sure you want to dismiss this group? This action cannot be undone and will remove the group for all members.',
+                                            confirmText: 'Dismiss',
+                                            type: 'danger',
+                                            onConfirm: () => {
+                                                if (onDismissGroup) onDismissGroup();
+                                            }
+                                        });
+                                        setConfirmOpen(true);
                                     }}>
                                         <ShieldOff size={18} />
                                         Dismiss Group
@@ -290,6 +325,12 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
                     )}
                 </div>
             </div>
+
+            <ConfirmPopup
+                isOpen={confirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                {...confirmConfig}
+            />
         </div>,
         document.body
     );
