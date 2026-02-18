@@ -40,8 +40,5 @@ Desktop.ini
 *.tmp
 backend/tmp/
 
-# Hero animation frames (large assets)
-frontend/src/assets/frames/
-
 # Credentials (sensitive)
 backend/credentials.json
