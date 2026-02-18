@@ -110,9 +110,22 @@
 
     .scrollContainer {
         gap: 16px;
+        overflow-x: auto;
+        /* Enable scrolling */
+        scroll-snap-type: x mandatory;
+        /* Snap to elements */
+        padding-bottom: 8px;
+        /* Space for scrollbar if visible */
+    }
+
+    .scrollContainer::-webkit-scrollbar {
+        display: none;
+        /* Hide scrollbar for cleaner look */
     }
 
     .scrollContainer>* {
         width: 140px;
+        scroll-snap-align: start;
+        flex-shrink: 0;
     }
 }
