@@ -158,7 +158,8 @@ export const rateLimiter = (actionType) => {
                 }
             }
 
-            // Update cooldown timestamp
+            // Update cooldown timestamp and usage count
+            const updateFields = {};
             const cooldownField = COOLDOWN_FIELD_MAP[actionType];
             if (cooldownField && shouldIncrement) {
                 updateFields.$set = { [cooldownField]: new Date() };
