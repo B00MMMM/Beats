@@ -253,6 +253,9 @@ export const PlayerProvider = ({ children }) => {
     if (track?.deezerId === currentTrack?.deezerId) {
       togglePlayPause();
     } else {
+      // Stop old audio immediately to prevent flash of previous song
+      if (audioRef.current) audioRef.current.pause();
+      setStreamUrl('');
       setQueue([track]);
       setOriginalQueue([track]);
       setCurrentIndex(0);
@@ -266,6 +269,10 @@ export const PlayerProvider = ({ children }) => {
 
   const playPlaylist = (songs, startIndex = 0, sourcePlaylistId = null, playlistData = null) => {
     if (!songs || songs.length === 0) return;
+
+    // Stop old audio immediately to prevent flash of previous song
+    if (audioRef.current) audioRef.current.pause();
+    setStreamUrl('');
 
     setOriginalQueue(songs);
 
@@ -347,6 +354,9 @@ export const PlayerProvider = ({ children }) => {
     if (queue.length === 0) return;
     const nextIndex = currentIndex + 1;
     if (nextIndex < queue.length) {
+      // Stop old audio immediately to prevent flash of previous song
+      if (audioRef.current) audioRef.current.pause();
+      setStreamUrl('');
       setCurrentIndex(nextIndex);
       setCurrentTrack(queue[nextIndex]);
       setIsPlaying(true);
@@ -360,6 +370,9 @@ export const PlayerProvider = ({ children }) => {
     if (queue.length === 0) return;
     const prevIndex = currentIndex - 1;
     if (prevIndex >= 0) {
+      // Stop old audio immediately to prevent flash of previous song
+      if (audioRef.current) audioRef.current.pause();
+      setStreamUrl('');
       setCurrentIndex(prevIndex);
       setCurrentTrack(queue[prevIndex]);
       setIsPlaying(true);
