@@ -1,5 +1,5 @@
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import { clerkMiddleware } from '@clerk/express';
 import fileUpload from "express-fileupload";
 import path from "path";
@@ -18,8 +18,6 @@ import adminRoutes from "./routes/admin.route.js";
 import aiChatRoutes from "./routes/aiChat.route.js";
 
 import { connectDB } from "./lib/db.js";
-
-dotenv.config();
 
 const __dirname = path.resolve();
 const app = express();
