@@ -32,16 +32,22 @@ const HeroSection = () => {
         let lastW = 0, lastH = 0;
         const resize = () => {
             isMobile = window.innerWidth <= 768;
+            const container = contentRef.current;
+            if (!container) return;
+
             const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
-            const w = Math.round(window.innerWidth * dpr);
-            const h = Math.round(window.innerHeight * dpr);
+            // Use container dimensions, not window dimensions
+            const w = Math.round(container.clientWidth * dpr);
+            const h = Math.round(container.clientHeight * dpr);
+
             if (w === lastW && h === lastH) return;
             lastW = w;
             lastH = h;
             canvas.width = w;
             canvas.height = h;
-            canvas.style.width = window.innerWidth + 'px';
-            canvas.style.height = window.innerHeight + 'px';
+            // Remove manual style setting so CSS (w-full h-full) controls it
+            // canvas.style.width = window.innerWidth + 'px';
+            // canvas.style.height = window.innerHeight + 'px';
             if (framesRef.current.length > 0) {
                 drawFrame(currentFrameRef.current);
             }
