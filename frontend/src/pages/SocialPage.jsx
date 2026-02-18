@@ -52,6 +52,29 @@ function SocialPage() {
   // Update ref when selected friend changes
   useEffect(() => {
     selectedFriendRef.current = selectedFriend
+    if (selectedFriend) {
+      // Mark messages as read in backend
+      const markAsRead = async () => {
+        try {
+          const token = await getToken();
+          if (!token) return; // Prevent 401 if token not ready
+
+          await axios.post('/chat/messages/read', { senderId: selectedFriend.id }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (error) {
+          console.error("Failed to mark messages as read", error);
+        }
+      };
+      markAsRead();
+
+      // Clear unread count locally
+      setUnreadCounts(prev => {
+        const newCounts = { ...prev }
+        delete newCounts[selectedFriend.id]
+        return newCounts
+      })
+    }
   }, [selectedFriend])
 
   // Update ref when selected group changes
@@ -85,10 +108,12 @@ function SocialPage() {
         // logic: if I am chatting with someone, and MIZU replies, it should show up.
         // We assume MIZU replies are always relevant to the current focused chat for now if they arrive while chatting.
         const isRelevant =
-          message.groupId === selectedGroupRef.current?._id || // Group chat match
-          message.senderId === selectedFriendRef.current?.id || // Direct message from friend match
-          message.receiverId === userId || // Direct message to me
-          (isAIMessage && selectedFriendRef.current); // AI message while chatting with someone
+          (selectedGroupRef.current && message.groupId === selectedGroupRef.current._id) || // Group chat match
+          (selectedFriendRef.current && (
+            message.senderId === selectedFriendRef.current.id || // Message from current friend
+            (message.receiverId === selectedFriendRef.current.id && message.senderId === userId) // My message to current friend
+          )) ||
+          (isAIMessage && selectedFriendRef.current); // AI message while chatting
 
         if (!isRelevant && !message.groupId) {
           // Background notification logic for DMs will go here
@@ -314,9 +339,19 @@ function SocialPage() {
           dbId: u._id,
           name: u.fullName,
           avatar: u.imageUrl,
-          uniqueId: u.uniqueId
+          uniqueId: u.uniqueId,
+          unreadCount: u.unreadCount || 0
           // status is calculated dynamically now
         }))
+
+        // Initialize unread counts
+        const initialUnread = {};
+        usersData.forEach(u => {
+          if (u.unreadCount > 0) {
+            initialUnread[u.id] = u.unreadCount;
+          }
+        });
+        setUnreadCounts(initialUnread);
 
         const requestsData = requestsResponse.data.map(u => ({
           id: u.clerkId,

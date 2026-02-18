@@ -18,52 +18,9 @@ function ChatWindow({ friend, messages = [], onSendMessage, onBack, onOpenSettin
   const navigate = useNavigate()
   const [loadingSongKey, setLoadingSongKey] = useState(null)
 
-  // Track if we've initialized with props messages
-  const [initialized, setInitialized] = useState(false)
-
-  // Initialize messages from props only once, then manage locally
+  // Sync local state with props
   useEffect(() => {
-    if (!initialized && messages.length > 0) {
-      setAllMessages(messages);
-      setInitialized(true);
-    } else if (!initialized && messages.length === 0) {
-      setAllMessages([]);
-    }
-  }, [messages, initialized])
-
-  // When messages prop updates with new messages, merge them (for initial load)
-  // When messages prop updates, merge/update local state
-  // We prioritize local state for real-time updates to avoid jitter, but sync with props if they change drastically (e.g. chat switch)
-  useEffect(() => {
-    if (messages.length > 0) {
-      setAllMessages(prev => {
-        // If we switched chats (detected by checking if current messages belong to a different context, effectively)
-        // Or if the prop messages array is entirely different.
-        // Simple heuristic: if the first or last message ID is different, or length changed drastically.
-
-        // Actually, the safest way is to trust the parent for historical messages
-        // and trust the socket for new ones.
-
-        const existingIds = new Set(prev.map(m => m._id || m.id));
-        const newFromProps = messages.filter(m => !existingIds.has(m._id || m.id));
-
-        if (newFromProps.length > 0) {
-          // If we have new messages from props, add them.
-          // This handles the "refresh" case or initial load case.
-          // Sort by timestamp to be safe
-          const combined = [...prev, ...newFromProps].sort((a, b) =>
-            new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp)
-          );
-          return combined;
-        }
-
-        return prev.length === 0 ? messages : prev;
-      });
-    } else {
-      // If props are empty, likely switched to empty chat
-      // We initially setAllMessages in the other effect, but need to handle this update too if it happens dynamically
-      // Use initialized check to avoid wiping out optimistic updates if props are momentarily empty
-    }
+    setAllMessages(messages);
   }, [messages])
 
   // Auto-scroll to bottom when new messages arrive

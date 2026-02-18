@@ -221,7 +221,7 @@ export const getAIConversation = async (req, res) => {
   }
 };
 
-// Get all users for chat (friends list)
+// Get all users for chat (friends list) with unread counts
 export const getUsers = async (req, res) => {
   try {
     const { userId: currentUserId } = getAuth(req);
@@ -229,7 +229,22 @@ export const getUsers = async (req, res) => {
     if (!currentUser) {
       return res.status(404).json({ message: "User not found in database" });
     }
-    res.json(currentUser.friends);
+
+    // Calculate unread counts for each friend
+    const friendsWithUnread = await Promise.all(currentUser.friends.map(async (friend) => {
+      const unreadCount = await Message.countDocuments({
+        senderId: friend.clerkId,
+        receiverId: currentUserId,
+        read: false
+      });
+
+      return {
+        ...friend.toObject(),
+        unreadCount
+      };
+    }));
+
+    res.json(friendsWithUnread);
   } catch (error) {
     console.error('Error getting users:', error);
     res.status(500).json({ message: 'Error fetching users' });
@@ -559,6 +574,36 @@ export const getOnlineUsers = async (req, res) => {
   } catch (error) {
     console.error('Error getting online users:', error);
     res.status(500).json({ message: 'Error fetching online users' });
+  }
+};
+
+// Mark messages as read
+export const markMessagesAsRead = async (req, res) => {
+  try {
+    const { senderId } = req.body;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update all messages from senderId to current user that are unread
+    await Message.updateMany(
+      {
+        senderId: senderId,
+        receiverId: currentUserId,
+        read: false
+      },
+      {
+        $set: { read: true }
+      }
+    );
+
+    res.status(200).json({ message: "Messages marked as read" });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ message: 'Error marking messages as read' });
   }
 };
 
