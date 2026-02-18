@@ -1,4 +1,5 @@
 import RotateWarning from './components/RotateWarning'
+import { Toaster } from 'react-hot-toast'
 import { Routes, Route } from 'react-router-dom'
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import Layout from './layouts/Layout'
@@ -19,6 +20,7 @@ import LandingPage from './pages/LandingPage'
 function App() {
     return (
         <>
+            <Toaster position="top-center" reverseOrder={false} />
             <RotateWarning />
             <SignedOut>
                 <Routes>
