@@ -28,6 +28,7 @@ export const PlayerProvider = ({ children }) => {
   const [likedSongs, setLikedSongs] = useState(new Set());
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
   const [streamUrl, setStreamUrl] = useState('');
+  const pendingSeekRef = useRef(null); // Stores position to restore after token-refresh reload
   const [playContext, setPlayContext] = useState(null); // { type: 'playlist'|'album'|'artist', id: string, title: string, cover: string }
 
 
@@ -77,15 +78,23 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     if (streamUrl && audioRef.current) {
       audioRef.current.load();
+
+      // If resuming with a refreshed token, restore the playback position
+      if (pendingSeekRef.current !== null) {
+        const seekTo = pendingSeekRef.current;
+        pendingSeekRef.current = null;
+        const restorePosition = () => {
+          audioRef.current.currentTime = seekTo;
+        };
+        audioRef.current.addEventListener('loadedmetadata', restorePosition, { once: true });
+      }
+
       if (isPlaying) {
         audioRef.current.play().catch((err) => {
           if (err.name !== 'AbortError') {
             console.error('Audio play error:', err);
-            // Optional: You could show a toast here if err.message or response indicates 429
-            // But standard Audio element doesn't expose the HTTP status code directly in the error.
             if (err.name === 'NotSupportedError') {
               console.warn("Playback failed: Source not supported or rate limited.");
-              // We might want to stop playing state
               setIsPlaying(false);
             }
           }
@@ -229,7 +238,11 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().catch(err => {
+          if (err.name !== 'AbortError') {
+            console.error('Play error on toggle:', err);
+          }
+        });
       } else {
         audioRef.current.pause();
       }
@@ -363,7 +376,22 @@ export const PlayerProvider = ({ children }) => {
     setIsPlaying(false);
   };
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
+    if (!isPlaying && currentTrack?.deezerId) {
+      // Refresh token before resuming to avoid expired-token failures
+      try {
+        const token = await getToken();
+        const base = `http://localhost:5000/api/songs/stream/${currentTrack.deezerId}`;
+        const newUrl = token ? `${base}?token=${token}` : base;
+        if (newUrl !== streamUrl) {
+          // Save current position so it's restored after load()
+          pendingSeekRef.current = audioRef.current?.currentTime || 0;
+          setStreamUrl(newUrl);
+        }
+      } catch (e) {
+        console.warn('Token refresh failed, attempting play anyway:', e);
+      }
+    }
     setIsPlaying(!isPlaying);
   };
 
