@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: process.env.FRONTEND_URL || "http://localhost:3000",
     }
 });
 
@@ -41,13 +41,13 @@ app.set('onlineUsers', onlineUsers);
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-    console.log('New socket connection:', socket.id);
+    if (process.env.NODE_ENV !== 'production') console.log('New socket connection:', socket.id);
 
     const userId = socket.handshake.query.userId;
 
     if (userId && userId !== 'undefined') {
         onlineUsers.set(userId, socket.id);
-        console.log('User connected:', userId);
+        if (process.env.NODE_ENV !== 'production') console.log('User connected:', userId);
 
         // Broadcast online users to all clients
         io.emit('onlineUsers', Array.from(onlineUsers.keys()));
@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         if (userId) {
             onlineUsers.delete(userId);
-            console.log('User disconnected:', userId);
+            if (process.env.NODE_ENV !== 'production') console.log('User disconnected:', userId);
 
             // Broadcast updated online users
             io.emit('onlineUsers', Array.from(onlineUsers.keys()));
@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
 });
 
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -107,11 +107,6 @@ app.use(fileUpload({
     }
 }));
 
-// error handler 
-app.use((err, req, res, next) => {
-    res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message });
-});
-
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/songs", songRoutes);
@@ -121,6 +116,11 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/plans", planRequestRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/ai-chat", aiChatRoutes);
+
+// error handler (must be AFTER routes to catch route errors)
+app.use((err, req, res, next) => {
+    res.status(500).json({ message: process.env.NODE_ENV === "production" ? "Internal Server Error" : err.message });
+});
 
 // Connect only once
 connectDB()
