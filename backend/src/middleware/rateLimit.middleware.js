@@ -158,15 +158,13 @@ export const rateLimiter = (actionType) => {
                 }
             }
 
-            // All checks passed — increment usage ONLY if it's a new stream
-            const updateFields = {};
-            if (shouldIncrement) {
-                updateFields.$inc = { [field]: 1 };
-            }
-
-            // Update cooldown timestamp (always, or only on increment? Always for DOS protection is safer)
-            if (cooldownField) { // cooldownField is already defined above
+            // Update cooldown timestamp
+            const cooldownField = COOLDOWN_FIELD_MAP[actionType];
+            if (cooldownField && shouldIncrement) {
                 updateFields.$set = { [cooldownField]: new Date() };
+                updateFields.$inc = { [field]: 1 };
+            } else if (shouldIncrement) {
+                updateFields.$inc = { [field]: 1 };
             }
 
             // Execute update

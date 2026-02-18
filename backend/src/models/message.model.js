@@ -23,7 +23,8 @@ const messageSchema = new mongoose.Schema({
         artist: { type: String },
         image: { type: String },
         audioUrl: { type: String } // Optional preview URL
-    }
+    },
+    read: { type: Boolean, default: false } // Track if message is read
 }, { timestamps: true });
 
 export const Message = mongoose.model("Message", messageSchema);
