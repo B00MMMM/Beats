@@ -249,14 +249,17 @@ export const searchUsers = async (req, res) => {
     // Get friend IDs to exclude
     const friendIds = currentUser.friends.map(id => id.toString());
 
+    // Escape regex
+    const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const users = await User.find({
       $and: [
         { _id: { $ne: currentUser._id } },
         { _id: { $nin: currentUser.friends } }, // Exclude already friends
         {
           $or: [
-            { uniqueId: { $regex: query, $options: 'i' } },
-            { fullName: { $regex: query, $options: 'i' } }
+            { uniqueId: { $regex: safeQuery, $options: 'i' } },
+            { fullName: { $regex: safeQuery, $options: 'i' } }
           ]
         }
       ]

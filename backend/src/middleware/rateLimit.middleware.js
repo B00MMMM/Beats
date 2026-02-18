@@ -4,18 +4,20 @@ import { RateUsage } from "../models/rateUsage.model.js";
 
 // ─── Tier Limits Configuration ───────────────────────────────────────
 const TIER_LIMITS = {
-    free: { searches: 20, streams: 0, aiMessages: 2 },
-    iron: { searches: 20, streams: 0, aiMessages: 2 },
-    gold: { searches: 30, streams: 10, aiMessages: 5 },
-    diamond: { searches: 40, streams: 50, aiMessages: 20 },
+    iron: { searches: 20, streams: 20, aiMessages: 2 }, // Default/Basic Plan
+    gold: { searches: 50, streams: 100, aiMessages: 10 },
+    diamond: { searches: 100, streams: 500, aiMessages: 50 }, // High limit for personal use
     test: { searches: Infinity, streams: 200, aiMessages: Infinity },
 };
+
+
+
 
 // Cooldowns in milliseconds
 const COOLDOWNS = {
     search: 5000,   // 5 seconds between searches
-    stream: 10000,  // 10 seconds between streams
-    aiMessage: 0,   // no cooldown for AI messages
+    stream: 500,    // 0.5s cooldown (prevent rapid-fire but allow skipping)
+    aiMessage: 4000,   // no cooldown for AI messages
 };
 
 // Map action types to the RateUsage field names
@@ -52,22 +54,23 @@ const getOrCreateUsage = async (clerkId) => {
 
 // ─── Helper: Check if user plan has expired ──────────────────────────
 const getEffectivePlan = async (user) => {
-    if (!user) return 'free';
+    if (!user) return 'iron'; // Default to iron for unauthenticated
 
-    const plan = user.plan || 'free';
+    const plan = user.plan || 'iron';
 
     // Check if plan has expired
     if (user.planExpiresAt && new Date() > new Date(user.planExpiresAt)) {
-        // Plan expired — revert to free
+        // Plan expired — revert to iron
         await User.findByIdAndUpdate(user._id, {
-            plan: 'free',
+            plan: 'iron',
             planExpiresAt: null,
         });
-        return 'free';
+        return 'iron';
     }
 
     return plan;
 };
+
 
 // ─── Rate Limiter Middleware Factory ─────────────────────────────────
 export const rateLimiter = (actionType) => {
@@ -83,7 +86,8 @@ export const rateLimiter = (actionType) => {
             // Get user and determine effective plan
             const user = await User.findOne({ clerkId });
             const plan = await getEffectivePlan(user);
-            const limits = TIER_LIMITS[plan] || TIER_LIMITS.free;
+            const limits = TIER_LIMITS[plan] || TIER_LIMITS.iron;
+
 
             // Get the field name for this action
             const field = ACTION_FIELD_MAP[actionType];
@@ -113,7 +117,17 @@ export const rateLimiter = (actionType) => {
             const currentCount = usage[field] || 0;
 
             // Check daily limit
-            if (currentCount >= dailyLimit) {
+            // For streams, check if this is a Range request (seeking/buffering)
+            // If it is a range request starting > 0, we don't count it as a new stream usage
+            let shouldIncrement = true;
+            if (actionType === 'stream' && req.headers.range) {
+                const rangeStart = parseInt(req.headers.range.replace(/bytes=/, "").split("-")[0], 10);
+                if (!isNaN(rangeStart) && rangeStart > 0) {
+                    shouldIncrement = false;
+                }
+            }
+
+            if (currentCount >= dailyLimit && shouldIncrement) {
                 return res.status(429).json({
                     message: actionType === 'stream'
                         ? "Daily streaming limit reached — previews still available."
@@ -129,7 +143,7 @@ export const rateLimiter = (actionType) => {
 
             // Check cooldown
             const cooldownMs = COOLDOWNS[actionType] || 0;
-            if (cooldownMs > 0) {
+            if (cooldownMs > 0 && shouldIncrement) { // Only force cooldown on new streams? Or all? Let's say all for DOS protection
                 const cooldownField = COOLDOWN_FIELD_MAP[actionType];
                 if (cooldownField && usage[cooldownField]) {
                     const elapsed = Date.now() - new Date(usage[cooldownField]).getTime();
@@ -144,19 +158,23 @@ export const rateLimiter = (actionType) => {
                 }
             }
 
-            // All checks passed — increment usage
-            const updateFields = { $inc: { [field]: 1 } };
+            // All checks passed — increment usage ONLY if it's a new stream
+            const updateFields = {};
+            if (shouldIncrement) {
+                updateFields.$inc = { [field]: 1 };
+            }
 
-            // Update cooldown timestamp
-            const cooldownField = COOLDOWN_FIELD_MAP[actionType];
-            if (cooldownField) {
+            // Update cooldown timestamp (always, or only on increment? Always for DOS protection is safer)
+            if (cooldownField) { // cooldownField is already defined above
                 updateFields.$set = { [cooldownField]: new Date() };
             }
 
+            // Execute update
             await RateUsage.updateOne(
                 { clerkId, date: getTodayString() },
                 updateFields
             );
+
 
             // Attach usage info to request for downstream use
             req.rateLimit = {
@@ -185,7 +203,8 @@ export const getUserUsageStats = async (req, res) => {
 
         const user = await User.findOne({ clerkId });
         const plan = await getEffectivePlan(user);
-        const limits = TIER_LIMITS[plan] || TIER_LIMITS.free;
+        const limits = TIER_LIMITS[plan] || TIER_LIMITS.iron;
+
         const usage = await getOrCreateUsage(clerkId);
 
         res.json({

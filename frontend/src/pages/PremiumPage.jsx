@@ -1,17 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Check, Sparkles, Zap, Crown, X } from 'lucide-react'
 import styles from './PremiumPage.module.css'
 import PlanRequestModal from '../components/PlanRequestModal/PlanRequestModal'
+import { useAuth } from '@clerk/clerk-react'
+import axios from '../api/axios'
 
 function PremiumPage() {
+    const { getToken, userId } = useAuth()
     const [selectedPlan, setSelectedPlan] = useState(null)
     const [showModal, setShowModal] = useState(false)
+    const [currentPlan, setCurrentPlan] = useState('iron') // Default to iron
+    const [isLoadingPlan, setIsLoadingPlan] = useState(true)
+
+
+    useEffect(() => {
+        const fetchUserPlan = async () => {
+            if (!userId) return;
+            try {
+                const token = await getToken();
+                const response = await axios.get('/users/usage', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setCurrentPlan(response.data.plan || 'iron');
+
+            } catch (error) {
+                console.error("Error fetching user plan:", error);
+            } finally {
+                setIsLoadingPlan(false);
+            }
+        };
+
+        fetchUserPlan();
+    }, [userId]);
+
+    const isIron = currentPlan === 'iron';
 
     const ironPlan = {
         id: 'iron',
         name: 'Iron',
         icon: Sparkles,
-        tagline: 'Current Plan',
+        tagline: isIron ? 'Current Plan' : 'Basic Plan',
+
         description: 'Your default starting experience on Beats',
         features: [
             'API service with 30-second previews',
@@ -62,6 +91,7 @@ function PremiumPage() {
     ]
 
     const handlePlanSelect = (planId) => {
+        if (planId === currentPlan) return;
         setSelectedPlan(planId)
         setShowModal(true)
     }
@@ -113,6 +143,12 @@ function PremiumPage() {
                                 <h3 className={styles.defaultPlanName}>{ironPlan.name} Plan</h3>
                                 <p className={styles.defaultPlanTagline}>{ironPlan.tagline}</p>
                             </div>
+                            {isIron && (
+                                <div className={styles.currentPlanBadge}>
+                                    Active
+                                </div>
+                            )}
+
                         </div>
                         <p className={styles.defaultPlanDescription}>{ironPlan.description}</p>
 
@@ -148,15 +184,23 @@ function PremiumPage() {
                 <div className={styles.upgradeGrid}>
                     {upgradePlans.map((plan) => {
                         const Icon = plan.icon
+                        const isCurrent = currentPlan === plan.id
+
                         return (
                             <div
                                 key={plan.id}
-                                className={`${styles.planCard} ${plan.popular ? styles.popular : ''}`}
+                                className={`${styles.planCard} ${plan.popular ? styles.popular : ''} ${isCurrent ? styles.currentPlanCard : ''}`}
                             >
-                                {plan.popular && (
+                                {plan.popular && !isCurrent && (
                                     <div className={styles.popularBadge}>
                                         <Sparkles size={14} />
                                         <span>Most Popular</span>
+                                    </div>
+                                )}
+                                {isCurrent && (
+                                    <div className={styles.popularBadge} style={{ background: '#1db954' }}>
+                                        <Check size={14} />
+                                        <span>Current Plan</span>
                                     </div>
                                 )}
                                 <div className={styles.planHeader}>
@@ -164,7 +208,7 @@ function PremiumPage() {
                                         <Icon size={32} />
                                     </div>
                                     <h3 className={styles.planName}>{plan.name}</h3>
-                                    <p className={styles.planTagline}>{plan.tagline}</p>
+                                    <p className={styles.planTagline}>{isCurrent ? 'Active Plan' : plan.tagline}</p>
                                     <p className={styles.planDescription}>{plan.description}</p>
                                 </div>
 
@@ -195,16 +239,18 @@ function PremiumPage() {
                                 </div>
 
                                 <button
-                                    className={styles.planButton}
+                                    className={`${styles.planButton} ${isCurrent ? styles.disabledButton : ''}`}
                                     onClick={() => handlePlanSelect(plan.id)}
+                                    disabled={isCurrent}
                                 >
-                                    Request {plan.name}
+                                    {isCurrent ? 'Current Plan' : `Request ${plan.name}`}
                                 </button>
                             </div>
                         )
                     })}
                 </div>
             </div>
+
 
             {/* Comparison Table */}
             <div className={styles.comparisonSection}>

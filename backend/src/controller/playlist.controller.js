@@ -58,6 +58,11 @@ export const getPlaylistById = async (req, res) => {
             addedAt: ps.createdAt
         }));
 
+        // Security Check: Ensure user has access
+        if (playlist.userId !== req.auth.userId && playlist.availability !== 'public') {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
         res.json({ ...playlist.toObject(), songs });
     } catch (error) {
         console.error("Error fetching playlist details:", error);
@@ -216,9 +221,12 @@ export const searchPublicPlaylists = async (req, res) => {
             return res.json([]);
         }
 
+        // Escape regex special characters to prevent ReDoS
+        const safeQuery = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         const playlists = await Playlist.find({
             availability: 'public',
-            title: { $regex: q, $options: 'i' }
+            title: { $regex: safeQuery, $options: 'i' }
         })
             .limit(20)
             .sort({ createdAt: -1 });

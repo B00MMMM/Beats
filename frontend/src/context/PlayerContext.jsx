@@ -81,8 +81,16 @@ export const PlayerProvider = ({ children }) => {
         audioRef.current.play().catch((err) => {
           if (err.name !== 'AbortError') {
             console.error('Audio play error:', err);
+            // Optional: You could show a toast here if err.message or response indicates 429
+            // But standard Audio element doesn't expose the HTTP status code directly in the error.
+            if (err.name === 'NotSupportedError') {
+              console.warn("Playback failed: Source not supported or rate limited.");
+              // We might want to stop playing state
+              setIsPlaying(false);
+            }
           }
         });
+
       }
     }
 

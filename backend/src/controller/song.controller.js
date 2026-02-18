@@ -94,21 +94,22 @@ export const streamSong = async (req, res, next) => {
             const { userId: clerkId } = getAuth(req);
             if (clerkId) {
                 const user = await User.findOne({ clerkId });
-                const plan = user?.plan || 'free';
+                const plan = user?.plan || 'iron';
 
                 // Check expiry
                 if (user?.planExpiresAt && new Date() > new Date(user.planExpiresAt)) {
-                    // Plan expired, treat as free
+                    // Plan expired, treat as iron
                     canStreamDrive = false;
                 } else {
-                    // gold, diamond, test can stream; free, iron cannot
+                    // gold, diamond, test can stream; iron cannot
                     canStreamDrive = ['gold', 'diamond', 'test'].includes(plan);
                 }
             }
         } catch (authErr) {
-            // Auth check failed — treat as free tier
+            // Auth check failed — treat as iron tier
             canStreamDrive = false;
         }
+
 
         // If user can't stream from Drive, go straight to Deezer preview
         if (!canStreamDrive) {

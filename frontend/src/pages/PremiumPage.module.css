@@ -440,3 +440,34 @@
         padding: 12px;
     }
 }
+
+.currentPlanBadge {
+    background: #1db954;
+    color: #000;
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-left: auto;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.currentPlanCard {
+    border-color: #1db954;
+    box-shadow: 0 0 30px rgba(29, 185, 84, 0.2);
+    transform: translateY(-4px);
+}
+
+.disabledButton {
+    background: var(--surface-light);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.disabledButton:hover {
+    background: var(--surface-light);
+    transform: none;
+    box-shadow: none;
+}
