@@ -26,11 +26,12 @@ const HeroSection = () => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d', { willReadFrequently: false });
         const section = sectionRef.current;
-        const isMobile = window.innerWidth <= 768;
+        let isMobile = window.innerWidth <= 768;
 
         // Set canvas size — skip if unchanged to prevent flicker
         let lastW = 0, lastH = 0;
         const resize = () => {
+            isMobile = window.innerWidth <= 768;
             const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
             const w = Math.round(window.innerWidth * dpr);
             const h = Math.round(window.innerHeight * dpr);
@@ -49,6 +50,7 @@ const HeroSection = () => {
         window.addEventListener('resize', resize);
 
         // Draw frame directly — no clearing needed, cover mode fills entire canvas
+        // Draw frame directly — no clearing needed, cover mode fills entire canvas
         const drawFrame = (index) => {
             const frame = framesRef.current[index];
             if (!frame) return;
@@ -56,13 +58,25 @@ const HeroSection = () => {
 
             const cw = canvas.width;
             const ch = canvas.height;
+
+            // Clear canvas to prevent "ghosting" or overlapping artifacts when shifting
+            ctx.clearRect(0, 0, cw, ch);
+
             const fw = frame.width;
             const fh = frame.height;
 
             const scale = Math.max(cw / fw, ch / fh);
             const w = fw * scale;
             const h = fh * scale;
-            const x = (cw - w) / 2;
+
+            // Center normally, but shift left on mobile
+            // Check width directly to ensure fresh state on initial draw
+            const isMobileView = window.innerWidth <= 768;
+            let x = (cw - w) / 2;
+            if (isMobileView) {
+                x -= 100; // Shift left by 100px on mobile
+            }
+
             const y = (ch - h) / 2;
 
             ctx.drawImage(frame, x, y, w, h);
@@ -155,9 +169,10 @@ const HeroSection = () => {
 
                     // Fade out check
                     if (contentRef.current) {
-                        const fadeStart = 0.8; // Start fading at 80% scroll
+                        // Sudden fade: Start fading at 95% scroll (much later) and fade quickly
+                        const fadeStart = 0.95;
                         if (self.progress > fadeStart) {
-                            const opacity = Math.max(0, 1 - (self.progress - fadeStart) * 5); // 5 = 1 / 0.2
+                            const opacity = Math.max(0, 1 - (self.progress - fadeStart) * 20); // 20 = 1 / 0.05
                             contentRef.current.style.opacity = opacity;
                         } else {
                             contentRef.current.style.opacity = 1;
@@ -175,9 +190,9 @@ const HeroSection = () => {
 
                     // Initial opacity check
                     if (contentRef.current) {
-                        const fadeStart = 0.8;
+                        const fadeStart = 0.95;
                         if (progress > fadeStart) {
-                            const opacity = Math.max(0, 1 - (progress - fadeStart) * 5);
+                            const opacity = Math.max(0, 1 - (progress - fadeStart) * 20);
                             contentRef.current.style.opacity = opacity;
                         } else {
                             contentRef.current.style.opacity = 1;
