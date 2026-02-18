@@ -15,7 +15,7 @@ const TIER_LIMITS = {
 
 // Cooldowns in milliseconds
 const COOLDOWNS = {
-    search: 5000,   // 5 seconds between searches
+    search: 6000,   // 5 seconds between searches
     stream: 500,    // 0.5s cooldown (prevent rapid-fire but allow skipping)
     aiMessage: 4000,   // no cooldown for AI messages
 };
