@@ -107,24 +107,61 @@ export const addListeningHistory = async (req, res) => {
         }
 
         // 2. Add to Listening History
-        let entry = await ListeningHistory.findOne({ userId, deezerId });
+        const { contextType, contextId, contextData } = req.body;
 
-        if (entry) {
-            entry.count += 1;
-            entry.listenedAt = Date.now();
-            await entry.save();
-        } else {
-            await ListeningHistory.create({
+        if (contextType === 'playlist' && contextId && contextData) {
+            // Check for existing playlist entry
+            // We use contextId as deezerId for playlists to ensure uniqueness per playlist
+            let entry = await ListeningHistory.findOne({
                 userId,
-                deezerId,
-                title: songData.title,
-                artist: songData.artist?.name || songData.artist,
-                cover: songData.cover || songData.album?.cover_medium,
-                duration: songData.duration,
-                count: 1,
-                listenedAt: Date.now()
+                contextType: 'playlist',
+                contextId: String(contextId)
             });
+
+            if (entry) {
+                entry.count += 1;
+                entry.listenedAt = Date.now();
+                // Update metadata in case it changed
+                entry.title = contextData.title || entry.title;
+                entry.cover = contextData.cover || entry.cover;
+                await entry.save();
+            } else {
+                await ListeningHistory.create({
+                    userId,
+                    deezerId: String(contextId), // Use playlist ID as deezerId
+                    title: contextData.title,
+                    artist: 'Playlist', // Placeholder
+                    cover: contextData.cover,
+                    duration: 0,
+                    count: 1,
+                    listenedAt: Date.now(),
+                    contextType: 'playlist',
+                    contextId: String(contextId)
+                });
+            }
+        } else {
+            // Default Song History
+            let entry = await ListeningHistory.findOne({ userId, deezerId, contextType: 'song' });
+
+            if (entry) {
+                entry.count += 1;
+                entry.listenedAt = Date.now();
+                await entry.save();
+            } else {
+                await ListeningHistory.create({
+                    userId,
+                    deezerId,
+                    title: songData.title,
+                    artist: songData.artist?.name || songData.artist,
+                    cover: songData.cover || songData.album?.cover_medium,
+                    duration: songData.duration,
+                    count: 1,
+                    listenedAt: Date.now(),
+                    contextType: 'song'
+                });
+            }
         }
+
 
         res.status(201).json({ message: "History recorded" });
 

@@ -96,7 +96,14 @@ function HomePage() {
               <PlaylistCard
                 key={song._id || song.deezerId}
                 song={song}
-                onClick={() => playTrack(song)}
+                onClick={() => {
+                  if (song.contextType === 'playlist' && song.contextId) {
+                    navigate(`/playlist/${song.contextId}`);
+                  } else {
+                    playTrack(song);
+                  }
+                }}
+
               />
             ))}
           </ScrollableSection>

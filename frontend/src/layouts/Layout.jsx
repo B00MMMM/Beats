@@ -70,9 +70,12 @@ function Layout({ children }) {
     <div className={`${styles.layout} ${isAIChatOpen ? styles.aiChatExpanded : ''}`}>
       {!location.pathname.startsWith('/song/') && <Sidebar />}
       <div className={`${styles.mainContent} ${location.pathname.startsWith('/song/') ? styles.fullWidthContent : ''} ${location.pathname.startsWith('/song/') ? styles.songPageMain : ''} ${isAIChatOpen ? styles.aiChatMainContent : ''} ${isChatMode ? styles.socialChatMain : ''}`}>
-        <div className={styles.topbarShell}>
-          {!location.pathname.startsWith('/song/') && <TopNavbar />}
-        </div>
+        {!location.pathname.startsWith('/song/') && (
+          <div className={styles.topbarShell}>
+            <TopNavbar />
+          </div>
+        )}
+
         <div className={`${styles.contentArea} ${location.pathname.startsWith('/song/') ? styles.songPageContent : ''} ${isSocialPage ? styles.socialPageContent : ''} ${location.pathname === '/library' ? styles.libraryContent : ''} ${location.pathname.startsWith('/playlist/') || location.pathname === '/favorites' ? styles.playlistPageContent : ''}`}>
           {children}
         </div>
