@@ -1279,3 +1279,71 @@ export const leaveGroup = async (req, res) => {
   }
 };
 
+// Dismiss (delete) a group
+export const dismissGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const { userId: currentUserId } = getAuth(req);
+    const currentUser = await User.findOne({ clerkId: currentUserId });
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+
+    // Check if current user is the creator or an admin
+    const isAdmin = group.admins?.includes(currentUser._id);
+    if (group.creatorId !== currentUserId && !isAdmin) {
+      return res.status(403).json({ message: "Only the group creator or admins can dismiss the group" });
+    }
+
+
+    // Notify all members about group dismissal
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+
+    if (group.members) {
+      for (const memberId of group.members) {
+        const member = await User.findById(memberId);
+        if (member) {
+          // Create notification
+          // Note: using 'group_image_changed' type temporarily or skipping notification type check if strict
+          // preferably usage of a generic type like 'system_notification' or 'group_dismissed' if schema allows
+          // For now using 'member_removed' context or just skipping strict type check by passing a string
+
+          await createNotification(
+            req,
+            member._id,
+            'member_removed', // Fallback type or new type if supported
+            currentUser,
+            `Group "${group.name}" has been dismissed by ${currentUser.fullName}`
+          );
+
+          // Real-time socket event
+          const memberSocketId = onlineUsers.get(member.clerkId);
+          if (memberSocketId) {
+            io.to(memberSocketId).emit('group_dismissed', {
+              groupId: group._id,
+              name: group.name,
+              dismissedBy: currentUser.fullName
+            });
+          }
+        }
+      }
+    }
+
+    // Delete all group messages and the group itself
+    await GroupMessage.deleteMany({ groupId: group._id });
+    await Group.findByIdAndDelete(groupId);
+
+    res.json({ message: "Group dismissed successfully" });
+  } catch (error) {
+    console.error('Error dismissing group:', error);
+    res.status(500).json({ message: 'Error dismissing group' });
+  }
+};

@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import styles from './GroupSettingsModal.module.css';
 
-function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAddMember, onRemoveMember, onPromoteAdmin, onDemoteAdmin, onUpdateName, onUpdateImage, onLeaveGroup }) {
+
+function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAddMember, onRemoveMember, onPromoteAdmin, onDemoteAdmin, onUpdateName, onUpdateImage, onLeaveGroup, onDismissGroup }) {
+
     const [activeTab, setActiveTab] = useState('members');
     const [showAddMember, setShowAddMember] = useState(false);
     const [editingName, setEditingName] = useState(false);
@@ -268,11 +270,22 @@ function GroupSettingsModal({ isOpen, onClose, group, currentUser, friends, onAd
                             </div>
 
                             <div className={styles.dangerZone}>
+                                {(isCreator || isAdmin) && (
+                                    <button className={`${styles.leaveBtn} ${styles.dismissBtn}`} onClick={() => {
+                                        if (window.confirm('Are you sure you want to dismiss this group? This action cannot be undone and will remove the group for all members.')) {
+                                            if (onDismissGroup) onDismissGroup();
+                                        }
+                                    }}>
+                                        <ShieldOff size={18} />
+                                        Dismiss Group
+                                    </button>
+                                )}
                                 <button className={styles.leaveBtn} onClick={handleLeaveGroup}>
                                     <LogOut size={18} />
                                     Leave Group
                                 </button>
                             </div>
+
                         </div>
                     )}
                 </div>

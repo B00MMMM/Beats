@@ -236,6 +236,41 @@ function SocialPage() {
       }
     }
 
+    const handleGroupDismissed = (data) => {
+      // Remove group from list
+      setGroups(prev => prev.filter(g => g._id !== data.groupId))
+
+      // If currently viewing this group, close it
+      if (selectedGroupRef.current && selectedGroupRef.current._id === data.groupId) {
+        setSelectedGroup(null)
+        setGroupMessages([])
+        setShowGroupSettings(false)
+
+        // Show popup
+        setPopup({
+          isOpen: true,
+          title: 'Group Dismissed',
+          message: `Group "${data.name}" has been dismissed by ${data.dismissedBy}`,
+          type: 'info',
+          onConfirm: null
+        })
+
+
+        // Ensure other views are cleared
+        setShowAddFriend(false)
+        setSelectedFriend(null)
+
+        // Clear URL params to reset Layout (bring back bottom nav)
+        const params = new URLSearchParams(location.search)
+        params.delete('mode')
+        params.delete('id')
+        params.delete('type')
+        navigate(`${location.pathname}?${params.toString()}`)
+      }
+
+
+    }
+
     socket.on('newGroupMessage', handleNewGroupMessage)
     socket.on('groupMemberAdded', handleGroupUpdate)
     socket.on('groupMemberRemoved', handleGroupMemberRemoved)
@@ -244,6 +279,7 @@ function SocialPage() {
     socket.on('groupAdminDemoted', handleGroupUpdate)
     socket.on('groupNameUpdated', handleGroupUpdate)
     socket.on('groupImageUpdated', handleGroupUpdate)
+    socket.on('group_dismissed', handleGroupDismissed)
 
     return () => {
       socket.off('newGroupMessage', handleNewGroupMessage)
@@ -254,7 +290,9 @@ function SocialPage() {
       socket.off('groupAdminDemoted', handleGroupUpdate)
       socket.off('groupNameUpdated', handleGroupUpdate)
       socket.off('groupImageUpdated', handleGroupUpdate)
+      socket.off('group_dismissed', handleGroupDismissed)
     }
+
   }, [socket, userId])
 
   // Fetch users (friends) and friend requests
@@ -1001,7 +1039,43 @@ function SocialPage() {
     }
   }
 
+
+  const handleDismissGroup = async () => {
+    try {
+      const token = await getToken()
+      if (!token) return
+
+      await axios.delete(`/chat/groups/${selectedGroup._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      // Remove group from local state
+      setGroups(prev => prev.filter(g => g._id !== selectedGroup._id))
+      setSelectedGroup(null)
+      setGroupMessages([])
+      setShowGroupSettings(false)
+
+      setPopup({
+        isOpen: true,
+        title: 'Group Dismissed',
+        message: 'The group has been dismissed successfully',
+        type: 'success',
+        onConfirm: null
+      })
+    } catch (error) {
+      console.error('Error dismissing group:', error)
+      setPopup({
+        isOpen: true,
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to dismiss group',
+        type: 'danger',
+        onConfirm: null
+      })
+    }
+  }
+
   return (
+
     <div className={styles.socialPage}>
       <div className={styles.mainContent}>
         {/* Header Section - Hidden when Chat or Add Friend is active */}
@@ -1287,7 +1361,9 @@ function SocialPage() {
           onUpdateName={handleUpdateGroupName}
           onUpdateImage={handleUpdateGroupImage}
           onLeaveGroup={handleLeaveGroup}
+          onDismissGroup={handleDismissGroup}
         />
+
       )}
       {/* Mobile Activity Drawer */}
       <div className={`${styles.mobileActivityDrawer} ${showMobileActivity ? styles.open : ''}`}>

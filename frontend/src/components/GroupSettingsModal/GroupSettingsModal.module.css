@@ -415,11 +415,15 @@
 .dangerZone {
     padding-top: 24px;
     border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .leaveBtn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 12px 16px;
     background: #dc3545;
@@ -429,8 +433,20 @@
     font-size: 1rem;
     cursor: pointer;
     transition: background 0.2s;
+    flex: 1;
 }
 
 .leaveBtn:hover {
     background: #c82333;
+}
+
+.dismissBtn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.dismissBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
 }
