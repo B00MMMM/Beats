@@ -702,6 +702,35 @@ export const createGroup = async (req, res) => {
     const populatedGroup = await Group.findById(group._id).populate('members', 'fullName imageUrl clerkId uniqueId');
 
     res.status(201).json(populatedGroup);
+
+    // Notify added members
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+
+    for (const memberId of members) {
+      if (memberId.toString() !== currentUser._id.toString()) {
+        const member = await User.findById(memberId);
+        if (member) {
+          // Persistent notification
+          await createNotification(
+            req,
+            member._id,
+            'group-added',
+            currentUser,
+            `You were added to group "${name.trim()}" by ${currentUser.fullName}`
+          );
+
+          // Socket event (optional, if client handles it specifically outside of group list update)
+          const memberSocketId = onlineUsers.get(member.clerkId);
+          if (memberSocketId) {
+            io.to(memberSocketId).emit('groupAdded', {
+              group: populatedGroup,
+              addedBy: currentUser.fullName
+            });
+          }
+        }
+      }
+    }
   } catch (error) {
     console.error('Error creating group:', error);
     res.status(500).json({ message: 'Error creating group' });
@@ -934,6 +963,15 @@ export const addGroupMember = async (req, res) => {
       }
     }
 
+    // Create persistent notification for the new member
+    await createNotification(
+      req,
+      newMember._id,
+      'group-added',
+      currentUser,
+      `You were added to group "${group.name}" by ${currentUser.fullName}`
+    );
+
     res.status(200).json({ message: "Member added successfully", group: populatedGroup, systemMessage });
   } catch (error) {
     console.error('Error adding group member:', error);
@@ -1009,6 +1047,15 @@ export const removeGroupMember = async (req, res) => {
         systemMessage
       });
     }
+
+    // Create persistent notification for removed member
+    await createNotification(
+      req,
+      memberToRemove._id,
+      'group-removed',
+      currentUser,
+      `You were removed from group "${group.name}" by ${currentUser.fullName}`
+    );
 
     res.status(200).json({ message: "Member removed successfully", group: populatedGroup, systemMessage });
   } catch (error) {
@@ -1367,7 +1414,7 @@ export const dismissGroup = async (req, res) => {
           await createNotification(
             req,
             member._id,
-            'member_removed', // Fallback type or new type if supported
+            'group-dismissed',
             currentUser,
             `Group "${group.name}" has been dismissed by ${currentUser.fullName}`
           );
