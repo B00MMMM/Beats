@@ -168,7 +168,7 @@ export const PlayerProvider = ({ children }) => {
     };
 
     enrichTrackData();
-  }, [currentTrack]);
+  }, [currentTrack?.deezerId]);
 
   const fetchLikedSongs = async () => {
     if (!userId) return;
