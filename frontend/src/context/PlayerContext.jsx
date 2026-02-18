@@ -3,6 +3,8 @@ import { useAuth } from '@clerk/clerk-react';
 import axios from '../api/axios';
 import { useSocket } from './SocketContext'; // Import
 
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const PlayerContext = createContext();
 
 export const usePlayer = () => useContext(PlayerContext);
@@ -153,7 +155,7 @@ export const PlayerProvider = ({ children }) => {
       )) {
         try {
           // Use the proxy endpoint directly
-          const response = await axios.get(`http://localhost:5000/api/songs/${currentTrack.deezerId}`);
+          const response = await axios.get(`${BACKEND_URL}/api/songs/${currentTrack.deezerId}`);
           const fullTrack = response.data;
 
           setCurrentTrack(prev => ({
@@ -394,7 +396,7 @@ export const PlayerProvider = ({ children }) => {
       // Refresh token before resuming to avoid expired-token failures
       try {
         const token = await getToken();
-        const base = `http://localhost:5000/api/songs/stream/${currentTrack.deezerId}`;
+        const base = `${BACKEND_URL}/api/songs/stream/${currentTrack.deezerId}`;
         const newUrl = token ? `${base}?token=${token}` : base;
         if (newUrl !== streamUrl) {
           // Save current position so it's restored after load()
@@ -463,10 +465,10 @@ export const PlayerProvider = ({ children }) => {
       }
       try {
         const token = await getToken();
-        const base = `http://localhost:5000/api/songs/stream/${currentTrack.deezerId}`;
+        const base = `${BACKEND_URL}/api/songs/stream/${currentTrack.deezerId}`;
         setStreamUrl(token ? `${base}?token=${token}` : base);
       } catch {
-        setStreamUrl(`http://localhost:5000/api/songs/stream/${currentTrack.deezerId}`);
+        setStreamUrl(`${BACKEND_URL}/api/songs/stream/${currentTrack.deezerId}`);
       }
     };
     buildStreamUrl();

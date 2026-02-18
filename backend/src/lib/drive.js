@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: path.join(__dirname, "../../credentials.json"),
+  keyFile: process.env.GOOGLE_CREDENTIALS_PATH || path.join(__dirname, "../../credentials.json"),
   scopes: ["https://www.googleapis.com/auth/drive.readonly"],
 });
 

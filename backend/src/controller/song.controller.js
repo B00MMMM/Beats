@@ -9,7 +9,7 @@ import { User } from '../models/user.model.js';
 export const getTrendingSongs = async (req, res, next) => {
     try {
         const dzData = await deezerFetch(`/search?q=top&limit=15`);
-        console.log("Trending songs data from Deezer:", JSON.stringify(dzData, null, 2));
+        if (process.env.NODE_ENV !== 'production') console.log("Trending songs data from Deezer:", JSON.stringify(dzData, null, 2));
 
         const tracks = [];
 
@@ -51,7 +51,7 @@ export const searchSongs = async (req, res, next) => {
             `/search?q=${encodeURIComponent(q)}&limit=10`
         );
 
-        console.log("Search data from Deezer:", JSON.stringify(dzData, null, 2));
+        if (process.env.NODE_ENV !== 'production') console.log("Search data from Deezer:", JSON.stringify(dzData, null, 2));
 
         const tracks = [];
 
