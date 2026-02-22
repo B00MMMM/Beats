@@ -13,6 +13,13 @@
   z-index: 240;
 }
 
+.miniPlayer.chatMode {
+  bottom: 60px;
+  border-bottom: 1px solid var(--border-color);
+  z-index: 201;
+  /* Ensure it's above chart messages but below input if they overlap */
+}
+
 .trackInfo {
   display: flex;
   align-items: center;
@@ -116,4 +123,92 @@
   .miniPlayer {
     display: flex;
   }
+}
+
+/* Playlist Menu Styles */
+.playlistActionWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.playlistMenu {
+  position: absolute;
+  bottom: 120%;
+  right: 0;
+  /* Align to right for mobile player */
+  width: 200px;
+  background-color: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menuHeader {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b3b3b3;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.menuItem {
+  padding: 10px 12px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.menuItem:hover {
+  background-color: hsla(0, 0%, 100%, .1);
+}
+
+.playlistTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.checkIcon {
+  color: var(--primary-accent);
+  flex-shrink: 0;
+}
+
+.emptyMsg {
+  padding: 16px;
+  text-align: center;
+  color: #b3b3b3;
+  font-size: 12px;
 }

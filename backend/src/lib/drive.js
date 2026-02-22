@@ -6,7 +6,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const auth = new google.auth.GoogleAuth({
-  keyFile: path.join(__dirname, "../../credentials.json"),
+  credentials: process.env.GOOGLE_CREDENTIALS ? JSON.parse(process.env.GOOGLE_CREDENTIALS) : undefined,
+  // keyFile: !process.env.GOOGLE_CREDENTIALS ? (process.env.GOOGLE_CREDENTIALS_PATH || path.join(__dirname, "../../credentials.json")) : undefined,
   scopes: ["https://www.googleapis.com/auth/drive.readonly"],
 });
 
@@ -53,4 +54,17 @@ async function getDriveStream(fileId, range) {
   }
 }
 
-export { existsInDrive, getDriveFile, getDriveStream };
+async function getDriveFileMetadata(fileId) {
+  try {
+    const file = await drive.files.get({
+      fileId: fileId,
+      fields: "id, size, name",
+    });
+    return file.data;
+  } catch (error) {
+    console.error("Error getting Drive file metadata:", error);
+    return null;
+  }
+}
+
+export { existsInDrive, getDriveFile, getDriveStream, getDriveFileMetadata };

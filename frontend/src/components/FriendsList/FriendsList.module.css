@@ -20,6 +20,8 @@
   flex-direction: column;
   height: 100%;
   gap: 16px;
+  padding: 16px;
+  /* Added padding */
 }
 
 .searchBox {

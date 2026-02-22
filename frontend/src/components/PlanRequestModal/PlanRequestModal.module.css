@@ -1,0 +1,234 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    padding: 20px;
+}
+
+.modalContent {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0, 255, 217, 0.2);
+}
+
+.closeButton {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+    background: var(--surface-dark);
+    color: var(--text-primary);
+}
+
+.modalHeader {
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.modalHeader h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.modalHeader p {
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formGroup label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.formGroup textarea {
+    background: var(--surface-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+    transition: all 0.2s ease;
+}
+
+.formGroup textarea:focus {
+    outline: none;
+    border-color: var(--primary-accent);
+    box-shadow: 0 0 0 3px rgba(0, 255, 217, 0.1);
+}
+
+.formGroup textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.charCount {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: right;
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid #ff4444;
+    border-radius: 8px;
+    color: #ff6666;
+    font-size: 14px;
+}
+
+.infoBox {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(0, 255, 217, 0.1);
+    border: 1px solid rgba(0, 255, 217, 0.3);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.infoBox svg {
+    color: var(--primary-accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.infoBox strong {
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.infoBox p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.submitButton {
+    padding: 14px 24px;
+    background: var(--primary-accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.submitButton:hover:not(:disabled) {
+    background: #00e6c3;
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 255, 217, 0.4);
+}
+
+.submitButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Success State */
+.successContent {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.successIcon {
+    color: var(--primary-accent);
+    margin-bottom: 24px;
+}
+
+.successContent h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+.successContent p {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+.successNote {
+    font-size: 14px !important;
+    color: var(--text-muted) !important;
+    max-width: 400px;
+    margin: 16px auto 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modalContent {
+        padding: 24px;
+    }
+
+    .modalHeader h2 {
+        font-size: 24px;
+    }
+}

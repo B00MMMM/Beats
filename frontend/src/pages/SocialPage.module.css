@@ -7,79 +7,140 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
-.tabs {
+/* Social Header Container */
+.socialHeader {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-bottom: 16px;
+  justify-content: space-between;
+  padding: 16px 24px;
+  /* Desktop padding */
   border-bottom: 1px solid var(--border-color);
+  gap: 16px;
+}
+
+/* Desktop Tabs Pill */
+.tabsPill {
+  display: flex;
+  align-items: center;
+  background-color: var(--surface-light);
+  /* Light gray pill background */
+  border-radius: 9999px;
+  /* Full pill shape */
+  padding: 4px;
+  gap: 4px;
+}
+
+.actionButtonsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ID Circle Button */
+.idCircle {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--surface-dark);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.idCircle>span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary-accent);
+  letter-spacing: 0.5px;
+}
+
+.idCircle:hover {
+  background-color: var(--primary-accent);
+  border-color: var(--primary-accent);
+}
+
+.idCircle:hover>span {
+  color: var(--bg-dark);
+}
+
+.idTooltip {
+  position: absolute;
+  left: auto;
+  right: 0;
+  top: calc(100% + 8px);
+  transform: none;
+  background-color: #000;
+  border: 1px solid #496d6d;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(90, 137, 130, 0.2);
+}
+
+.idCircle:hover .idTooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.idTooltipLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.idTooltipValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-accent);
+  font-family: monospace;
 }
 
 .tab {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 8px 16px;
+  padding: 8px 12px;
+  /* Adjusted padding for pill */
   border-radius: 20px;
   background-color: transparent;
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
   transition: all 150ms ease;
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
 }
 
 .tab:hover {
   color: var(--text-primary);
-  background-color: var(--surface-dark);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .tab.active {
-  color: var(--primary-accent);
-  background-color: rgba(0, 255, 217, 0.1);
-}
-
-.uniqueIdContainer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background-color: var(--surface-dark);
-  border-radius: 8px;
-  width: fit-content;
-  border: 1px solid var(--border-color);
-}
-
-.uniqueIdLabel {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.uniqueIdValue {
-  font-size: 14px;
+  color: var(--bg-dark);
+  background-color: var(--primary-accent);
   font-weight: 600;
-  color: var(--primary-accent);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: monospace;
-}
-
-.toggleIdBtn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  transition: color 0.2s;
-}
-
-.toggleIdBtn:hover {
-  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 255, 217, 0.2);
 }
 
 .addFriendButton {
@@ -92,7 +153,6 @@
   color: var(--bg-dark);
   font-size: 14px;
   font-weight: 600;
-  margin-left: auto;
   transition: all 150ms ease;
 }
 
@@ -101,11 +161,61 @@
   box-shadow: 0 4px 12px rgba(0, 255, 217, 0.3);
 }
 
+/* Tablet Responsive - revert to stacked/grid if needed, or keep pill if space permits.
+   User asked for "desktop view only", so let's be strict. */
+@media (max-width: 1024px) {
+  .socialHeader {
+    flex-direction: column-reverse;
+    /* Tabs below buttons like mobile */
+    align-items: stretch;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  /* Revert pill styles to grid/list */
+  .tabsPill {
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .actionButtonsContainer {
+    width: 100%;
+    padding: 0;
+    /* handled by parent */
+  }
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--surface-light);
+  color: var(--text-primary);
+  transition: all 150ms ease;
+  flex-shrink: 0;
+  /* Ensure perfect circle */
+}
+
+.iconButton:hover {
+  background-color: var(--primary-accent);
+  color: var(--bg-dark);
+  transform: scale(1.1);
+}
+
 .chatContainer {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
+  /* Ensure full height */
 }
 
 /* Add Friend Section */
@@ -207,6 +317,17 @@
   object-fit: cover;
 }
 
+.avatarPlaceholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4aa, #00a080);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
 .userName {
   font-size: 14px;
   font-weight: 500;
@@ -258,6 +379,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 16px;
+  /* Added padding */
 }
 
 .requestsList h3 {
@@ -274,6 +397,16 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
+}
+
+.requestItem.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.requestItem.clickable:hover {
+  background-color: var(--surface-hover);
+  transform: translateX(4px);
 }
 
 .acceptBtn {
@@ -370,5 +503,92 @@
   .tab {
     padding: 4px 8px;
     font-size: 11px;
+  }
+}
+
+/* Mobile Activity Badge and Drawer */
+.mobileActivityBadge {
+  display: none;
+  /* Hidden on Desktop */
+}
+
+.mobileActivityDrawer {
+  display: none;
+  /* Hidden/Removed on Desktop */
+}
+
+@media (max-width: 768px) {
+  .mobileActivityBadge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    top: 170px;
+    right: 0;
+    /* transform: translateY(-50%); Removed to place at specific top height */
+    background-color: #211f1f00;
+    width: 25px;
+    height: auto;
+    padding: 16px 0;
+    border-radius: 8px 0 0 8px;
+    color: var(--primary-accent);
+    border: 1px solid var(--border-color);
+    border-right: none;
+    z-index: 999;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .mobileActivityBadge span {
+    display: block;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .mobileActivityDrawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    /* Full width on mobile */
+    height: 100%;
+    background-color: var(--bg-dark);
+    z-index: 1000;
+    /* Top overlay */
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobileActivityDrawer.open {
+    transform: translateX(0);
+  }
+
+  .drawerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .drawerHeader h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .drawerContent {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
   }
 }

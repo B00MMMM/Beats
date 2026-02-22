@@ -18,6 +18,11 @@ const playlistSchema = new mongoose.Schema(
             type: String, // Clerk User ID
             required: true,
         },
+        availability: {
+            type: String,
+            enum: ['private', 'public'],
+            default: 'private',
+        },
     },
     { timestamps: true }
 );

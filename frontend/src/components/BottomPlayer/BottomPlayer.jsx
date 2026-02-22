@@ -1,4 +1,4 @@
-import { Heart, Volume2, VolumeX, Shuffle, SkipBack, Play, Pause, SkipForward, Repeat, List, Cast, Maximize, PlusCircle, Check } from 'lucide-react';
+import { Heart, Volume2, VolumeX, Shuffle, SkipBack, Play, Pause, SkipForward, Repeat, List, Cast, Maximize, PlusCircle, Check, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import styles from './BottomPlayer.module.css';
@@ -7,7 +7,7 @@ import { useAuth } from '@clerk/clerk-react';
 import axios from '../../api/axios';
 
 function BottomPlayer() {
-  const { currentTrack, isPlaying, duration, currentTime, volume, setVolume, togglePlayPause, handleProgressBarClick, isMuted, toggleMute, toggleShuffle, isShuffled, queue, playNext, playPrevious, likedSongs, toggleLike } = usePlayer();
+  const { currentTrack, isPlaying, duration, currentTime, volume, setVolume, togglePlayPause, handleProgressBarClick, isMuted, toggleMute, toggleShuffle, isShuffled, queue, playNext, playPrevious, likedSongs, toggleLike, isLoadingTrack } = usePlayer();
   const navigate = useNavigate();
   const location = useLocation();
   const { getToken } = useAuth();
@@ -108,8 +108,8 @@ function BottomPlayer() {
               className={styles.albumArt}
             />
           ) : (
-            <div className={styles.albumArtPlaceholder}>
-              <span>B</span>
+            <div className={`${styles.albumArtPlaceholder} ${isLoadingTrack ? styles.albumArtLoading : ''}`}>
+              {isLoadingTrack ? <Loader2 size={24} className={styles.placeholderSpinner} /> : <span>B</span>}
             </div>
           )}
           <div className={styles.trackDetails}>
@@ -157,13 +157,13 @@ function BottomPlayer() {
               <Shuffle size={18} />
             </button>
           )}
-          <button className={styles.controlButton} onClick={playPrevious}>
+          <button className={styles.controlButton} onClick={playPrevious} disabled={isLoadingTrack}>
             <SkipBack size={20} />
           </button>
-          <button className={styles.playButton} onClick={togglePlayPause} disabled={!currentTrack}>
-            {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
+          <button className={`${styles.playButton} ${isLoadingTrack ? styles.playButtonLoading : ''}`} onClick={togglePlayPause} disabled={!currentTrack || isLoadingTrack}>
+            {isLoadingTrack ? <Loader2 size={24} className={styles.spinnerIcon} /> : isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
           </button>
-          <button className={styles.controlButton} onClick={playNext}>
+          <button className={styles.controlButton} onClick={playNext} disabled={isLoadingTrack}>
             <SkipForward size={20} />
           </button>
           <button className={styles.controlButton}>

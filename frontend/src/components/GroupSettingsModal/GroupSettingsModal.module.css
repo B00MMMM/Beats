@@ -1,0 +1,452 @@
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+}
+
+.modalContent {
+    background: #000000;
+    border: 1px solid #384644;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(60, 91, 86, 0.3);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #333;
+}
+
+.modalHeader h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.closeBtn:hover {
+    color: #fff;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #292929;
+}
+
+.tab {
+    flex: 1;
+    padding: 16px;
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+    color: #fff;
+    background: rgb(32, 32, 32);
+}
+
+.tab.active {
+    color: #00FFD9;
+    border-bottom-color: #00FFD9;
+}
+
+.modalBody {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.modalBody::-webkit-scrollbar {
+    display: none;
+}
+
+/* Members Tab */
+.membersTab {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.addMemberBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #00ffd9;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin-bottom: 16px;
+}
+
+.addMemberBtn:hover {
+    background: #36968b;
+}
+
+.addMemberSection {
+    background: #1a1919;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.addMemberSection h4 {
+    margin: 0 0 12px 0;
+    color: #fff;
+}
+
+.emptyText {
+    color: #999;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.friendsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.friendItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    background: #1a1a1a;
+    border-radius: 6px;
+}
+
+.friendItem .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.friendItem span {
+    flex: 1;
+    color: #fff;
+}
+
+.addBtn {
+    padding: 6px 16px;
+    background: #00FFD9;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.addBtn:hover {
+    background: #00CCB3;
+}
+
+.membersList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.memberItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: #1a1919;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.memberItem:hover {
+    background: #2a2a2a;
+}
+
+.memberInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.memberInfo .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.memberName {
+    color: #fff;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.youBadge {
+    color: #999;
+    font-size: 0.85rem;
+    font-weight: normal;
+}
+
+.adminBadge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #ffd700;
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+.memberActions {
+    display: flex;
+    gap: 8px;
+}
+
+.actionBtn {
+    padding: 8px;
+    background: #333;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.actionBtn:hover {
+    background: #444;
+}
+
+.removeBtn {
+    background: #dc3545;
+}
+
+.removeBtn:hover {
+    background: #c82333;
+}
+
+/* Settings Tab */
+.settingsTab {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.settingItem {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.settingItem label {
+    color: #999;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.nameDisplay {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: #1a1919;
+    border-radius: 8px;
+    color: #fff;
+}
+
+.editBtn {
+    padding: 8px;
+    background: #333;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.editBtn:hover {
+    background: #444;
+}
+
+.editNameContainer {
+    display: flex;
+    gap: 8px;
+}
+
+.nameInput {
+    flex: 1;
+    padding: 12px;
+    background: #252525;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.nameInput:focus {
+    outline: none;
+    border-color: #00FFD9;
+}
+
+.saveBtn {
+    padding: 12px 20px;
+    background: #00FFD9;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.saveBtn:hover {
+    background: #00CCB3;
+}
+
+.cancelBtn {
+    padding: 12px 20px;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.cancelBtn:hover {
+    background: #444;
+}
+
+.imageUpload {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.currentImage {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #252525;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.currentImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.imagePlaceholder {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.uploadBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #1a1919;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.uploadBtn:hover {
+    background: #444;
+}
+
+.dangerZone {
+    padding-top: 24px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.leaveBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex: 1;
+}
+
+.leaveBtn:hover {
+    background: #c82333;
+}
+
+.dismissBtn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.dismissBtn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}

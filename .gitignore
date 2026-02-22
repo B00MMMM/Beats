@@ -4,6 +4,8 @@ node_modules/
 # Environment variables
 .env
 *.local
+*.md
+!README.md
 
 # Logs
 logs/
@@ -40,5 +42,3 @@ backend/tmp/
 
 # Credentials (sensitive)
 backend/credentials.json
-
-

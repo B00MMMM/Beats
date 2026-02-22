@@ -3,6 +3,8 @@ import { useAuth } from '@clerk/clerk-react';
 import axios from '../api/axios';
 import { useSocket } from './SocketContext'; // Import
 
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const PlayerContext = createContext();
 
 export const usePlayer = () => useContext(PlayerContext);
@@ -26,25 +28,40 @@ export const PlayerProvider = ({ children }) => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isShuffled, setIsShuffled] = useState(false);
   const [likedSongs, setLikedSongs] = useState(new Set());
+  const [isLoadingTrack, setIsLoadingTrack] = useState(false);
+  const [streamUrl, setStreamUrl] = useState('');
+  const pendingSeekRef = useRef(null); // Stores position to restore after token-refresh reload
+  const [playContext, setPlayContext] = useState(null); // { type: 'playlist'|'album'|'artist', id: string, title: string, cover: string }
+
 
   useEffect(() => {
     if (currentTrack) {
       localStorage.setItem('lastPlayed', JSON.stringify(currentTrack));
-      if (audioRef.current) {
-        audioRef.current.load();
-        if (isPlaying) {
-          audioRef.current.play();
-        }
+
+      // Keep lastPlaylistSession in sync with the currently playing song
+      if (currentTrack.deezerId) {
+        try {
+          const session = localStorage.getItem('lastPlaylistSession');
+          if (session) {
+            const parsed = JSON.parse(session);
+            parsed.songDeezerId = String(currentTrack.deezerId);
+            localStorage.setItem('lastPlaylistSession', JSON.stringify(parsed));
+          }
+        } catch (e) { /* ignore parse errors */ }
       }
 
-      // Record History only when track changes
+      // Record History only when track changes and has valid data
       const recordHistory = async () => {
         try {
           const token = await getToken();
-          if (token) {
-            // Record History
+          if (token && currentTrack.deezerId && currentTrack.title) {
             await axios.post('/users/history',
-              { songData: currentTrack },
+              {
+                songData: currentTrack,
+                contextType: playContext?.type || 'song',
+                contextId: playContext?.id,
+                contextData: playContext // { title, cover }
+              },
               { headers: { Authorization: `Bearer ${token}` } }
             );
           }
@@ -56,20 +73,58 @@ export const PlayerProvider = ({ children }) => {
       if (userId) {
         recordHistory();
       }
-
     }
   }, [currentTrack?.deezerId]);
+
+  // Load and play audio when streamUrl is ready (avoids race condition with async token fetch)
+  useEffect(() => {
+    if (streamUrl && audioRef.current) {
+      audioRef.current.load();
+
+      // If resuming with a refreshed token, restore the playback position
+      if (pendingSeekRef.current !== null) {
+        const seekTo = pendingSeekRef.current;
+        pendingSeekRef.current = null;
+        const restorePosition = () => {
+          audioRef.current.currentTime = seekTo;
+        };
+        audioRef.current.addEventListener('loadedmetadata', restorePosition, { once: true });
+      }
+
+      if (isPlaying) {
+        audioRef.current.play().catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.error('Audio play error:', err);
+            if (err.name === 'NotSupportedError') {
+              console.warn("Playback failed: Source not supported or rate limited.");
+              setIsPlaying(false);
+            }
+          }
+        });
+
+      }
+    }
+
+  }, [streamUrl]);
 
   // Update activity when play/pause state changes
   useEffect(() => {
     const updateActivity = async () => {
       if (!userId || !currentTrack) return;
-      
+
       try {
         const token = await getToken();
         if (token) {
+          const songId = currentTrack.deezerId || currentTrack.id;
+
+          // Debug check - if playing but no ID, avoid sending bad data
+          if (isPlaying && !songId) {
+            console.warn("Skipping activity update: No valid songId found for", currentTrack.title);
+            return;
+          }
+
           const activity = isPlaying ? {
-            songId: currentTrack.deezerId || currentTrack.id,
+            songId: songId,
             title: currentTrack.title,
             artist: typeof currentTrack.artist === 'string' ? currentTrack.artist : currentTrack.artist?.name,
             cover: currentTrack.cover || currentTrack.album?.cover_medium,
@@ -100,7 +155,7 @@ export const PlayerProvider = ({ children }) => {
       )) {
         try {
           // Use the proxy endpoint directly
-          const response = await axios.get(`http://localhost:5000/api/songs/${currentTrack.deezerId}`);
+          const response = await axios.get(`${BACKEND_URL}/api/songs/${currentTrack.deezerId}`);
           const fullTrack = response.data;
 
           setCurrentTrack(prev => ({
@@ -115,7 +170,7 @@ export const PlayerProvider = ({ children }) => {
     };
 
     enrichTrackData();
-  }, [currentTrack]);
+  }, [currentTrack?.deezerId]);
 
   const fetchLikedSongs = async () => {
     if (!userId) return;
@@ -185,7 +240,11 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play();
+        audioRef.current.play().catch(err => {
+          if (err.name !== 'AbortError') {
+            console.error('Play error on toggle:', err);
+          }
+        });
       } else {
         audioRef.current.pause();
       }
@@ -196,27 +255,34 @@ export const PlayerProvider = ({ children }) => {
     if (track?.deezerId === currentTrack?.deezerId) {
       togglePlayPause();
     } else {
-      // If playing a single track not in queue, reset queue often, but for now simple fallback
-      // Ideally, single play might clear queue or be "next up"
+      // Stop old audio immediately to prevent flash of previous song
+      if (audioRef.current) audioRef.current.pause();
+      setStreamUrl('');
       setQueue([track]);
       setOriginalQueue([track]);
       setCurrentIndex(0);
       setCurrentTrack(track);
       setIsPlaying(true);
+      setPlayContext(null); // Clear playlist context for single track
+      // Clear playlist session — single track play has no playlist to restore
+      localStorage.removeItem('lastPlaylistSession');
     }
   };
 
-  const playPlaylist = (songs, startIndex = 0) => {
+  const playPlaylist = (songs, startIndex = 0, sourcePlaylistId = null, playlistData = null) => {
     if (!songs || songs.length === 0) return;
+
+    // Stop old audio immediately to prevent flash of previous song
+    if (audioRef.current) audioRef.current.pause();
+    setStreamUrl('');
 
     setOriginalQueue(songs);
 
+    let selectedTrack;
     if (isShuffled) {
       const shuffled = [...songs];
-      // Keep the start track first, shuffle others
       const first = shuffled[startIndex];
       const others = shuffled.filter((_, i) => i !== startIndex);
-      // Fisher-Yates shuffle
       for (let i = others.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [others[i], others[j]] = [others[j], others[i]];
@@ -225,12 +291,35 @@ export const PlayerProvider = ({ children }) => {
       setQueue(NEW_QUEUE);
       setCurrentIndex(0);
       setCurrentTrack(NEW_QUEUE[0]);
+      selectedTrack = NEW_QUEUE[0];
     } else {
       setQueue(songs);
       setCurrentIndex(startIndex);
       setCurrentTrack(songs[startIndex]);
+      selectedTrack = songs[startIndex];
     }
     setIsPlaying(true);
+
+    // Set Context
+    if (sourcePlaylistId && playlistData && sourcePlaylistId !== 'favorites') { // Exclude favorites
+      setPlayContext({
+        type: 'playlist',
+        id: sourcePlaylistId,
+        title: playlistData.title,
+        cover: playlistData.cover || playlistData.imageUrl || playlistData.image, // Handle different cover field names
+      });
+
+    } else {
+      setPlayContext(null);
+    }
+
+    // Persist playlist session so queue can be restored on next visit
+    if (sourcePlaylistId && selectedTrack?.deezerId) {
+      localStorage.setItem('lastPlaylistSession', JSON.stringify({
+        playlistId: sourcePlaylistId,
+        songDeezerId: String(selectedTrack.deezerId),
+      }));
+    }
   };
 
   const toggleShuffle = () => {
@@ -267,6 +356,9 @@ export const PlayerProvider = ({ children }) => {
     if (queue.length === 0) return;
     const nextIndex = currentIndex + 1;
     if (nextIndex < queue.length) {
+      // Stop old audio immediately to prevent flash of previous song
+      if (audioRef.current) audioRef.current.pause();
+      setStreamUrl('');
       setCurrentIndex(nextIndex);
       setCurrentTrack(queue[nextIndex]);
       setIsPlaying(true);
@@ -280,6 +372,9 @@ export const PlayerProvider = ({ children }) => {
     if (queue.length === 0) return;
     const prevIndex = currentIndex - 1;
     if (prevIndex >= 0) {
+      // Stop old audio immediately to prevent flash of previous song
+      if (audioRef.current) audioRef.current.pause();
+      setStreamUrl('');
       setCurrentIndex(prevIndex);
       setCurrentTrack(queue[prevIndex]);
       setIsPlaying(true);
@@ -296,7 +391,22 @@ export const PlayerProvider = ({ children }) => {
     setIsPlaying(false);
   };
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
+    if (!isPlaying && currentTrack?.deezerId) {
+      // Refresh token before resuming to avoid expired-token failures
+      try {
+        const token = await getToken();
+        const base = `${BACKEND_URL}/api/songs/stream/${currentTrack.deezerId}`;
+        const newUrl = token ? `${base}?token=${token}` : base;
+        if (newUrl !== streamUrl) {
+          // Save current position so it's restored after load()
+          pendingSeekRef.current = audioRef.current?.currentTime || 0;
+          setStreamUrl(newUrl);
+        }
+      } catch (e) {
+        console.warn('Token refresh failed, attempting play anyway:', e);
+      }
+    }
     setIsPlaying(!isPlaying);
   };
 
@@ -344,6 +454,25 @@ export const PlayerProvider = ({ children }) => {
   const [analyser, setAnalyser] = useState(null);
   const audioContextRef = useRef(null);
   const sourceRef = useRef(null);
+
+  // Build stream URL with auth token (so backend can check user's plan)
+
+  useEffect(() => {
+    const buildStreamUrl = async () => {
+      if (!currentTrack?.deezerId) {
+        setStreamUrl('');
+        return;
+      }
+      try {
+        const token = await getToken();
+        const base = `${BACKEND_URL}/api/songs/stream/${currentTrack.deezerId}`;
+        setStreamUrl(token ? `${base}?token=${token}` : base);
+      } catch {
+        setStreamUrl(`${BACKEND_URL}/api/songs/stream/${currentTrack.deezerId}`);
+      }
+    };
+    buildStreamUrl();
+  }, [currentTrack?.deezerId]);
 
   useEffect(() => {
     if (audioRef.current && !audioContextRef.current) {
@@ -414,6 +543,66 @@ export const PlayerProvider = ({ children }) => {
     }
   }, [userId]);
 
+  // Restore queue from last playlist session on mount
+  const hasRestoredRef = useRef(false);
+  useEffect(() => {
+    if (!userId || hasRestoredRef.current) return;
+    hasRestoredRef.current = true;
+
+    const restoreSession = async () => {
+      try {
+        const savedSession = localStorage.getItem('lastPlaylistSession');
+        if (!savedSession) return;
+
+        const { playlistId, songDeezerId } = JSON.parse(savedSession);
+        if (!playlistId) return;
+
+        const token = await getToken();
+        if (!token) return;
+
+        let songs = [];
+        if (playlistId === 'favorites') {
+          const res = await axios.get('/users/favorites', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          songs = res.data;
+        } else {
+          const res = await axios.get(`/playlists/${playlistId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          songs = res.data?.songs;
+
+          // Restore Context
+          if (res.data) {
+            setPlayContext({
+              type: 'playlist',
+              id: playlistId,
+              title: res.data.title,
+              cover: res.data.image || res.data.cover,
+            });
+          }
+        }
+
+        if (!songs || songs.length === 0) return;
+
+        // Find the song that was playing
+        const matchIndex = songs.findIndex(s => String(s.deezerId) === String(songDeezerId));
+        const startIdx = matchIndex !== -1 ? matchIndex : 0;
+
+        // Set queue without auto-playing
+        setOriginalQueue(songs);
+        setQueue(songs);
+        setCurrentIndex(startIdx);
+        setCurrentTrack(songs[startIdx]);
+        // Don't auto-play — user can press play when ready
+      } catch (error) {
+        console.error('Error restoring playlist session:', error);
+      }
+    };
+
+    restoreSession();
+  }, [userId]);
+
   const value = {
     currentTrack,
     isPlaying,
@@ -442,14 +631,16 @@ export const PlayerProvider = ({ children }) => {
     fetchLikedSongs,
     playlists,      // Exported
     fetchPlaylists, // Exported
-    setPlaylists    // Exported (optional, but useful)
+    setPlaylists,   // Exported (optional, but useful)
+    isLoadingTrack, // Loading state for async track fetching
+    setIsLoadingTrack
   };
 
   return (
     <PlayerContext.Provider value={value}>
       <audio
         ref={audioRef}
-        src={currentTrack ? `http://localhost:5000/api/songs/stream/${currentTrack.deezerId}` : ''}
+        src={streamUrl}
         crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}

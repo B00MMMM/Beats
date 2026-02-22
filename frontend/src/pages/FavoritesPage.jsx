@@ -45,10 +45,18 @@ function FavoritesPage() {
 
     if (isLoading) return <div style={{ color: 'white', padding: '32px' }}>Loading...</div>
 
+    const themeColor = '#00FFD9'; // Teal for Favorites
+
     return (
-        <div className={styles.playlistPage}>
+        <div
+            className={styles.playlistPage}
+            style={{ background: `linear-gradient(to bottom, ${themeColor}66 0%, #121212 100%)` }}
+        >
             <div className={styles.mainContent}>
-                <div className={styles.playlistHeader}>
+                <div
+                    className={styles.playlistHeader}
+                    style={{ background: `linear-gradient(to bottom, ${themeColor}40 0%, rgba(0,0,0,0) 100%)` }}
+                >
                     <div className={styles.coverContainer}>
                         <Heart size={80} fill="white" color="white" />
                     </div>
@@ -71,7 +79,9 @@ function FavoritesPage() {
                 <div className={styles.actionsBar}>
                     <button
                         className={styles.playButtonMain}
-                        onClick={() => favorites.length > 0 && playPlaylist(favorites, 0)}
+                        onClick={() => favorites.length > 0 && playPlaylist(favorites, 0, 'favorites', { title: 'Liked Songs', cover: favorites[0]?.cover || favorites[0]?.album?.cover_medium })}
+
+
                         disabled={favorites.length === 0}
                     >
                         {isPlaying && favorites.some(s => s.deezerId === currentTrack?.deezerId) ? (
@@ -103,7 +113,9 @@ function FavoritesPage() {
                                     dateAdded={song.createdAt ? new Date(song.createdAt).toLocaleDateString() : 'Unknown'}
                                     duration={formatDuration(song.duration)}
                                     isPlaying={currentTrack?.deezerId === song.deezerId}
-                                    onPlay={() => playPlaylist(favorites, index)}
+                                    onPlay={() => playPlaylist(favorites, index, 'favorites', { title: 'Liked Songs', cover: favorites[0]?.cover || favorites[0]?.album?.cover_medium })}
+
+
                                     isLiked={true} // It's the liked songs page!
                                     onLike={() => toggleLike(song)}
                                 />

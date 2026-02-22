@@ -4,6 +4,7 @@ import App from './App'
 import './index.css'
 import { PlayerProvider } from './context/PlayerContext'
 import { SocketContextProvider } from './context/SocketContext'
+import { AIChatProvider } from './context/AIChatContext'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { BrowserRouter as Router } from 'react-router-dom'
 
@@ -19,7 +20,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
         <SocketContextProvider>
           <PlayerProvider>
-            <App />
+            <AIChatProvider>
+              <App />
+            </AIChatProvider>
           </PlayerProvider>
         </SocketContextProvider>
       </ClerkProvider>

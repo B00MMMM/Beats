@@ -471,3 +471,33 @@
     min-width: 30px;
   }
 }
+
+/* Loading states */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinnerIcon {
+  animation: spin 0.8s linear infinite;
+}
+
+.placeholderSpinner {
+  animation: spin 0.8s linear infinite;
+  color: #000;
+}
+
+.albumArtLoading {
+  background: linear-gradient(135deg, #00FFD9 0%, #00B8A9 100%);
+  opacity: 0.7;
+}
+
+.playButtonLoading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.controlButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

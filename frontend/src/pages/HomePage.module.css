@@ -12,8 +12,8 @@
   /* Ensure it spans width */
   min-width: 0;
   /* Important for grid/flex inside to respect bounds */
-  overflow-x: hidden;
   /* Prevent page scroll */
+  padding: 24px 32px;
 }
 
 .section {
@@ -137,8 +137,21 @@
     font-size: 13px;
   }
 
-  /* On mobile maybe duplicate single row? Or keep grid behavior? */
-  /* User requested scrollable row format */
+  /* Hide scrollbars for horizontal lists on mobile */
+  .horizontalScroll,
+  .twoRowGrid {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .mainContent {
+    padding: 0;
+  }
+
+  .horizontalScroll::-webkit-scrollbar,
+  .twoRowGrid::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {

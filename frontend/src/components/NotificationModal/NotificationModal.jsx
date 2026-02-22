@@ -18,7 +18,7 @@ function NotificationModal({ isOpen, onClose }) {
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!isOpen) return
-      
+
       try {
         setLoading(true)
         const token = await getToken()
@@ -69,7 +69,7 @@ function NotificationModal({ isOpen, onClose }) {
     const handleNotification = (notification) => {
       setNotifications(prev => {
         // Avoid duplicates by _id or by type+user combination
-        const exists = prev.some(n => 
+        const exists = prev.some(n =>
           n._id === notification._id ||
           (n.type === notification.type && n.from?.id === notification.from?.id)
         )
@@ -107,6 +107,12 @@ function NotificationModal({ isOpen, onClose }) {
         return <UserX size={18} />
       case 'friend-removed':
         return <UserMinus size={18} />
+      case 'group-dismissed':
+        return <Users size={18} /> // Or a trash/ban icon
+      case 'group-removed':
+        return <UserMinus size={18} />
+      case 'group-added':
+        return <Users size={18} />
       default:
         return <Users size={18} />
     }
@@ -122,6 +128,12 @@ function NotificationModal({ isOpen, onClose }) {
         return styles.iconDeclined
       case 'friend-removed':
         return styles.iconRemoved
+      case 'group-dismissed':
+        return styles.iconRemoved // Use red color
+      case 'group-removed':
+        return styles.iconRemoved // Use red color
+      case 'group-added':
+        return styles.iconAccepted // Use green color
       default:
         return ''
     }
@@ -195,7 +207,7 @@ function NotificationModal({ isOpen, onClose }) {
 
         {notifications.length > 0 && (
           <div className={styles.footer}>
-            <button 
+            <button
               className={styles.viewAllButton}
               onClick={() => {
                 onClose()

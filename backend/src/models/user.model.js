@@ -18,29 +18,51 @@ const userSchema = new mongoose.Schema(
         uniqueId: {
             type: String,
             unique: true,
-            sparse: true,
+            sparse: true  // Allows multiple null values if uniqueId is optional
+        },
+        role: {
+            type: String,
+            enum: ['user', 'admin'],
+            default: 'user'
+        },
+        isAdmin: {
+            type: Boolean,
+            default: false
         },
         isActivityShared: {
             type: Boolean,
-            default: true,
+            default: false // Default to false for privacy
         },
         currentActivity: {
-            songId: String,
-            title: String,
-            artist: String,
-            cover: String,
-            updatedAt: Date,
+            songId: { type: String, default: null }, // Deezer ID needed for streaming
+            title: { type: String, default: null },
+            artist: { type: String, default: null },
+            album: { type: String, default: null },
+            cover: { type: String, default: null },
+            duration: { type: Number, default: null },
+            timestamp: { type: Date, default: null } // When the activity started
         },
         friends: [{
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'User'
         }],
         friendRequests: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+            status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+            createdAt: { type: Date, default: Date.now }
         }],
+        plan: {
+            type: String,
+            enum: ['iron', 'gold', 'diamond', 'test'],
+            default: 'iron'
+        },
+
+        planExpiresAt: {
+            type: Date,
+            default: null
+        }
     },
-    { timestamps: true, } // Automatically manage createdAt and updatedAt fields
+    { timestamps: true }
 );
 
 export const User = mongoose.model("User", userSchema);

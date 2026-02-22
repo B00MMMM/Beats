@@ -97,7 +97,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Main Content */
@@ -269,6 +271,94 @@
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
   transform: scale(1.05);
+}
+
+/* Playlist Menu Styles */
+.playlistActionWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.playlistMenu {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  background-color: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.menuHeader {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b3b3b3;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.menuItem {
+  padding: 10px 12px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.menuItem:hover {
+  background-color: hsla(0, 0%, 100%, .1);
+}
+
+.playlistTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.checkIcon {
+  color: var(--primary-accent);
+  flex-shrink: 0;
+}
+
+.emptyMsg {
+  padding: 16px;
+  text-align: center;
+  color: #b3b3b3;
+  font-size: 13px;
 }
 
 .actionBtnActive {
@@ -629,4 +719,39 @@
 
 .textBtn {
   composes: showAllBtn;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+
+  /* Enable scrolling without scrollbar */
+  .mainContent {
+    overflow-y: auto;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+    padding-bottom: 40px;
+    /* Add some padding at bottom */
+  }
+
+  .mainContent::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+  }
+
+  /* Hide volume control */
+  .volumeSection {
+    display: none;
+  }
+
+  /* Center playback controls */
+  .controlsRow {
+    justify-content: center;
+  }
+
+  /* Ensure Song Info is centered */
+  .songInfo {
+    text-align: center;
+  }
 }

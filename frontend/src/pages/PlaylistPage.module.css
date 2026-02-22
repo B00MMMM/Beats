@@ -38,6 +38,9 @@
   background-color: var(--surface-dark);
   box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
   position: relative;
+}
+
+.coverContainer.editable {
   cursor: pointer;
 }
 
@@ -97,6 +100,69 @@
   color: white;
   text-transform: uppercase;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.typeRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #404040;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggleSlider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggleSwitch input:checked+.toggleSlider {
+  background-color: #00FFD9;
+}
+
+.toggleSwitch input:checked+.toggleSlider:before {
+  transform: translateX(20px);
+}
+
+.toggleSwitch:hover .toggleSlider {
+  background-color: #505050;
+}
+
+.toggleSwitch input:checked:hover+.toggleSlider {
+  background-color: #00e6c3;
 }
 
 .playlistName {
@@ -105,9 +171,12 @@
   font-weight: 900;
   color: white;
   line-height: 1;
-  cursor: pointer;
   letter-spacing: -2px;
   text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.playlistName.editable {
+  cursor: pointer;
 }
 
 .description {
@@ -115,6 +184,9 @@
   font-size: 15px;
   margin-top: 8px;
   margin-bottom: 8px;
+}
+
+.description.editable {
   cursor: pointer;
 }
 
@@ -430,6 +502,20 @@
   transform: scale(1.05);
 }
 
+.mobileOnly {
+  display: none;
+}
+
+.desktopOnly {
+  display: flex;
+}
+
+.actionButtonsRight {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .tableHeader {
@@ -438,6 +524,14 @@
 }
 
 @media (max-width: 768px) {
+  .mobileOnly {
+    display: flex;
+  }
+
+  .desktopOnly {
+    display: none;
+  }
+
   .playlistHeader {
     flex-direction: column;
     align-items: center;
@@ -469,6 +563,194 @@
   }
 
   .actionsBar {
-    justify-content: center;
+    justify-content: space-between;
+    /* Space out left (toggle) and right (buttons) */
+    padding: 16px 24px;
+    width: 100%;
   }
+
+  .actionButtonsRight {
+    gap: 16px;
+  }
+
+  .searchSection {
+    margin: 0 16px 32px 16px;
+  }
+
+  .searchHeader {
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .searchHeader h2 {
+    display: block;
+    /* Show text again */
+    font-size: 18px;
+    /* Reduced size */
+    text-align: left;
+    width: 100%;
+  }
+
+  .searchBar {
+    width: 100%;
+  }
+
+  .mainContent {
+    overflow-x: hidden;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+  }
+
+  .mainContent::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+  }
+}
+
+/* Dropdown Menu */
+.dropdownContainer {
+  position: relative;
+}
+
+.iconButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.iconButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: scale(1.1);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdownItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.dropdownItem:hover {
+  background: var(--surface-dark);
+}
+
+.dropdownItem.danger {
+  color: #ff4444;
+}
+
+.dropdownItem.danger:hover {
+  background: rgba(255, 68, 68, 0.1);
+}
+
+/* Confirmation Dialog */
+.confirmOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+
+.confirmDialog {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.confirmDialog h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.confirmDialog p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.confirmActions button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: var(--surface-dark);
+}
+
+.deleteButton {
+  background: #ff4444;
+  border: none;
+  color: white;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: #ff2222;
+}
+
+.confirmActions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

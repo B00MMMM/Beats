@@ -1,0 +1,16 @@
+Tables found: [('tracks',)]
+
+--- Schema for tracks ---
+(0, 'deezer_id', 'TEXT', 0, None, 1)
+(1, 'title', 'TEXT', 0, None, 0)
+(2, 'artist', 'TEXT', 0, None, 0)
+(3, 'has_drive', 'INTEGER', 0, None, 0)
+(4, 'created_at', 'TEXT', 0, None, 0)
+
+--- First 5 rows of tracks ---
+('1765429257', '1985', 'Bo Burnham', 1, '2026-01-21T08:46:34.499Z')
+('8164652', '2 Bad', 'Michael Jackson', 1, '2026-01-21T08:46:35.609Z')
+('1369147482', '3:15 (Breathe)', 'Russ', 1, '2026-01-21T08:46:36.717Z')
+('4315389', '505', 'Arctic Monkeys', 1, '2026-01-21T08:46:37.815Z')
+('3398208091', '7 Summers', 'Morgan Wallen', 1, '2026-01-21T08:46:38.872Z')
+Total rows in tracks: 510

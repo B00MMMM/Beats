@@ -3,6 +3,7 @@ import { UserButton, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSocket } from '../../context/SocketContext'
+import { useAIChat } from '../../context/AIChatContext'
 import NotificationModal from '../NotificationModal/NotificationModal'
 import axios from '../../api/axios'
 import styles from './TopNavbar.module.css'
@@ -14,6 +15,7 @@ function TopNavbar() {
   const navigate = useNavigate();
   const { getToken } = useAuth();
   const { socket } = useSocket();
+  const { toggleAIChat, isAIChatOpen } = useAIChat();
 
   // Fetch initial notification count (unread)
   useEffect(() => {
@@ -88,17 +90,28 @@ function TopNavbar() {
       </div>
 
       <div className={styles.rightSection}>
-        <button className={styles.mobileSearchButton}>
-          <Search size={20} />
+        <button
+          className={`${styles.mobileAIButton} ${isAIChatOpen ? styles.active : ''}`}
+          onClick={toggleAIChat}
+        >
+          <Sparkles size={20} />
         </button>
-        <button className={styles.mobileCameraButton}>
-          <Camera size={20} />
+        <button className={styles.mobileNotificationButton} onClick={handleNotificationClick}>
+          <Bell size={20} />
+          {notificationCount > 0 && (
+            <span className={styles.mobileNotificationBadge}>
+              {notificationCount > 9 ? '9+' : notificationCount}
+            </span>
+          )}
         </button>
-        <button className={styles.aiButton}>
+        <button
+          className={`${styles.aiButton} ${isAIChatOpen ? styles.active : ''}`}
+          onClick={toggleAIChat}
+        >
           <Sparkles size={18} />
           <span>AI Chat</span>
         </button>
-        <button className={styles.premiumButton}>
+        <button className={styles.premiumButton} onClick={() => navigate('/premium')}>
           <span>Explore Premium</span>
         </button>
         <button className={styles.iconButton} onClick={handleNotificationClick}>
@@ -110,16 +123,16 @@ function TopNavbar() {
           )}
         </button>
         <SignedIn>
-          <UserButton afterSignOutUrl="/sign-in" />
+          <UserButton afterSignOutUrl="/" />
         </SignedIn>
         <SignedOut>
           <a href="/sign-in" className={styles.signInButton}>Sign In</a>
         </SignedOut>
       </div>
 
-      <NotificationModal 
-        isOpen={showNotifications} 
-        onClose={() => setShowNotifications(false)} 
+      <NotificationModal
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
       />
     </div>
   )

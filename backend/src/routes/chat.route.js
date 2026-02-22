@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend } from '../controller/chat.controller.js';
+import { getUsers, getMessages, sendMessage, getOnlineUsers, searchUsers, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getFriendRequests, removeFriend, createGroup, getMyGroups, getGroupById, getGroupMessages, sendGroupMessage, addGroupMember, removeGroupMember, promoteToAdmin, demoteAdmin, updateGroupName, updateGroupImage, leaveGroup, dismissGroup, getAIConversation, markMessagesAsRead } from '../controller/chat.controller.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -12,6 +12,13 @@ router.get('/messages/:recipientId', protectRoute, getMessages);
 
 // Send a message
 router.post('/messages', protectRoute, sendMessage);
+
+// Mark messages as read
+router.post('/messages/read', protectRoute, markMessagesAsRead);
+
+// Get AI conversation data
+router.get('/ai-conversation/:conversationId/:messageId', protectRoute, getAIConversation);
+router.get('/ai-conversation/:conversationId', protectRoute, getAIConversation);
 
 // Get online users
 router.get('/online', protectRoute, getOnlineUsers);
@@ -26,4 +33,24 @@ router.post('/friends/decline', protectRoute, declineFriendRequest);
 router.get('/friends/requests', protectRoute, getFriendRequests);
 router.post('/friends/remove', protectRoute, removeFriend);
 
+// Groups
+router.post('/groups', protectRoute, createGroup);
+router.get('/groups', protectRoute, getMyGroups);
+router.get('/groups/:id', protectRoute, getGroupById);
+router.get('/groups/:groupId/messages', protectRoute, getGroupMessages);
+router.post('/groups/messages', protectRoute, sendGroupMessage);
+
+// Group Management
+router.post('/groups/:groupId/members', protectRoute, addGroupMember);
+router.delete('/groups/:groupId/members/:memberId', protectRoute, removeGroupMember);
+router.post('/groups/:groupId/admins/:memberId', protectRoute, promoteToAdmin);
+router.delete('/groups/:groupId/admins/:memberId', protectRoute, demoteAdmin);
+router.put('/groups/:groupId/name', protectRoute, updateGroupName);
+router.put('/groups/:groupId/image', protectRoute, updateGroupImage);
+router.post('/groups/:groupId/leave', protectRoute, leaveGroup);
+router.delete('/groups/:groupId', protectRoute, dismissGroup);
+
+
 export default router;
+
+
