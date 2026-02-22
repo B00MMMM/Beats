@@ -61,4 +61,4 @@ The application follows a modern MERN-like stack (MongoDB, Express, React, Node.
 - **Rate Limiting & Security:** Includes basic security middleware to protect against common web vulnerabilities and control request rates.
 
 ---
-*Built with ❤️ for learning purposes.*
+*Built with ❤️ for listening to music.*
