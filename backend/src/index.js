@@ -87,6 +87,14 @@ app.use(cors({
 
 app.use(express.json()); // to parse the req.body
 
+// Public response for the backend's base URL
+app.get("/", (_req, res) => {
+    res.status(200).json({
+        message: "Beats backend is running",
+        status: "ok"
+    });
+});
+
 // Forward query token to Authorization header (for <audio> elements that can't set headers)
 app.use((req, res, next) => {
     if (req.query.token && !req.headers.authorization) {
